@@ -1,0 +1,135 @@
+/* ===============================
+   MAIN SIDEBAR CONTAINER
+=============================== */
+.sidebar {
+  width: 280px;
+  height: 100vh;
+  background: #f7f7f7;
+  border-right: 1px solid #e5e5e5;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  transition: width 0.25s ease;
+  overflow: hidden;
+}
+
+.sidebar.collapsed {
+  width: 90px;
+}
+
+/* ===============================
+   HEADER
+=============================== */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidebar-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #222;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #555;
+  cursor: pointer;
+}
+
+.toggle-btn:hover {
+  color: #000;
+}
+
+/* ===============================
+   MENU WRAPPER (scrollable)
+=============================== */
+.sidebar-menu-wrapper {
+  flex-grow: 1;
+  overflow-y: auto;
+  margin-top: 20px;
+}
+
+.sidebar-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-menu li {
+  margin-bottom: 5px;
+}
+
+/* LINK STYLING */
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  color: #555;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 500;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-link .icon {
+  font-size: 20px;
+  color: #666;
+}
+
+.sidebar-link:hover {
+  background: #ececec;
+  color: #111;
+}
+
+.sidebar-link.active {
+  background: #dbe7ff;
+  color: #1a4ed8 !important;
+  font-weight: 600;
+}
+
+.sidebar-link.active .icon {
+  color: #1a4ed8;
+}
+
+/* ===============================
+   BOTTOM SECTION
+=============================== */
+.sidebar-bottom {
+  margin-top: auto;
+  padding-top: 10px;
+}
+
+.sidebar-divider {
+  height: 1px;
+  background: #e3e3e3;
+  margin-bottom: 15px;
+}
+
+/* Full-width logout button */
+.sidebar-footer .sidebar-link.logout,
+.sidebar-bottom .sidebar-link.logout {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 14px 18px;
+  border: 1px solid #d9534f;
+  border-radius: 12px;
+  background: #fff;
+  color: #d9534f !important;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.sidebar-bottom .sidebar-link.logout:hover {
+  background: #f5d6d5;
+  color: #bf2a26 !important;
+  border-color: #bf2a26;
+}

@@ -1,0 +1,45 @@
+/* src/components/BookingModal.css */
+.booking-modal-calendar .selected-date {
+  background-color: #0d6efd !important;
+  color: white !important;
+  border-radius: 50% !important;
+}
+
+.booking-modal-calendar .react-datepicker__day--highlighted {
+  background-color: #0d6efd;
+  color: white;
+  border-radius: 50%;
+}
+
+.booking-modal-calendar .react-datepicker__day--selected,
+.booking-modal-calendar .react-datepicker__day--in-selecting-range,
+.booking-modal-calendar .react-datepicker__day--in-range {
+  background-color: #0d6efd;
+  color: white;
+  border-radius: 50%;
+}
+
+.booking-modal-calendar .react-datepicker__day:hover {
+  background-color: #f8f9fa;
+}
+
+.booking-modal-calendar .react-datepicker {
+  width: 100%;
+  border: none;
+  font-family: inherit;
+}
+
+.booking-modal-calendar .react-datepicker__header {
+  background-color: transparent;
+  border-bottom: none;
+  padding-top: 0;
+}
+
+.booking-modal-calendar .react-datepicker__month-container {
+  width: 100%;
+}
+
+.booking-modal-calendar .react-datepicker__day-name {
+  color: #6c757d;
+  font-weight: 500;
+}
