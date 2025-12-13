@@ -5,11 +5,11 @@ import {
   CheckCircle,
   XCircle,
   ExclamationCircle,
-  Trash
+  Trash,
 } from "react-bootstrap-icons";
 import Swal from "sweetalert2";
 
-const LeaveCard = ({ leave, onDelete, onViewMC }) => {
+const LeaveCard = ({ leave, role, onDelete, onViewMC, onReview }) => {
   const confirmDelete = () => {
     Swal.fire({
       title: "Delete this application?",
@@ -18,7 +18,7 @@ const LeaveCard = ({ leave, onDelete, onViewMC }) => {
       showCancelButton: true,
       confirmButtonText: "Yes, delete it",
       cancelButtonText: "Cancel",
-      confirmButtonColor: "#d33"
+      confirmButtonColor: "#d33",
     }).then((result) => {
       if (result.isConfirmed) onDelete(leave._id);
     });
@@ -27,20 +27,19 @@ const LeaveCard = ({ leave, onDelete, onViewMC }) => {
   const icons = {
     Approved: <CheckCircle size={20} className="text-success" />,
     Rejected: <XCircle size={20} className="text-danger" />,
-    Pending: <ExclamationCircle size={20} className="text-warning" />
+    Pending: <ExclamationCircle size={20} className="text-warning" />,
   };
 
   const statusBadge = {
     Approved: "badge bg-success",
     Rejected: "badge bg-danger",
-    Pending: "badge bg-warning text-dark"
+    Pending: "badge bg-warning text-dark",
   };
 
   return (
     <Card className="p-4 shadow-sm mb-3 rounded-4 border position-relative">
-
-      {/* DELETE BUTTON (PENDING ONLY) */}
-      {leave.status === "Pending" && (
+      {/* STUDENT DELETE (PENDING ONLY) */}
+      {role === "student" && leave.status === "Pending" && (
         <Button
           variant="danger"
           size="sm"
@@ -51,9 +50,6 @@ const LeaveCard = ({ leave, onDelete, onViewMC }) => {
             borderRadius: "50%",
             width: "36px",
             height: "36px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center"
           }}
           onClick={confirmDelete}
         >
@@ -74,12 +70,12 @@ const LeaveCard = ({ leave, onDelete, onViewMC }) => {
 
       <p className="text-muted mb-1">{leave.team}</p>
 
-      {/* PERIOD & DURATION */}
+      {/* PERIOD */}
       <div className="row mt-3">
         <div className="col-md-6">
           <small className="text-muted">Leave Period:</small>
           <p>
-            {new Date(leave.startDate).toLocaleDateString()} -{" "}
+            {new Date(leave.startDate).toLocaleDateString()} –{" "}
             {new Date(leave.endDate).toLocaleDateString()}
           </p>
         </div>
@@ -108,17 +104,31 @@ const LeaveCard = ({ leave, onDelete, onViewMC }) => {
             </div>
           </div>
 
-          <Button 
-  variant="primary"
-  onClick={() => onViewMC(leave._id)}
->
-  View MC
-</Button>
-
+          <Button variant="primary" onClick={() => onViewMC(leave._id)}>
+            View MC
+          </Button>
         </div>
       </div>
 
-      {/* COACH VERIFICATION */}
+      {/* COACH ACTIONS */}
+      {role === "coach" && leave.status === "Pending" && (
+        <div className="d-flex gap-2 mt-4">
+          <Button
+            variant="success"
+            onClick={() => onReview(leave._id, "Approved")}
+          >
+            Approve
+          </Button>
+          <Button
+            variant="danger"
+            onClick={() => onReview(leave._id, "Rejected")}
+          >
+            Reject
+          </Button>
+        </div>
+      )}
+
+      {/* VERIFICATION INFO */}
       {leave.status !== "Pending" && (
         <div className="mt-4 border-top pt-3">
           <div className="d-flex gap-5 text-muted">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "../../api/axios";
 import {
   Container,
@@ -110,8 +110,8 @@ const StudentMedicalPage = () => {
 
   return (
     <div
-       className="student-medical-wrapper"
-    style={{ padding: "24px 24px", boxSizing: "border-box" }}
+      className="student-medical-wrapper"
+      style={{ padding: "24px 24px", boxSizing: "border-box" }}
     >
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -189,6 +189,7 @@ const StudentMedicalPage = () => {
             <LeaveCard
               key={leave._id}
               leave={leave}
+              role="student"
               onDelete={deleteLeave}
               onViewMC={handleViewMC}
             />

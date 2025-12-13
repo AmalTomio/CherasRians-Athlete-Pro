@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo } from "react";
 import {
   FiHome,
   FiUsers,
+  FiUser,
   FiClipboard,
   FiBell,
   FiCalendar,
@@ -56,9 +57,9 @@ export default function Sidebar({ onToggle }) {
       coach: [
         ["Dashboard", FiHome, "/dashboard"],
         ["My Teams", FiUsers, "/teams"],
-        ["Players", FiUsers, "/coach/players"],
+        ["Players", FiUser, "/coach/players"],
         ["Schedules", FiCalendar, "/schedules"],
-        ["Facilities", FiCalendar, "/coach/facilities"],
+        ["Facilities", FiFileText, "/coach/facilities"],
         ["Medical Leave", FiFileText, "/coach/medical"],
         ["Attendance", FiClipboard, "/attendance"],
         ["Equipment", FiTool, "/equipment"],
