@@ -12,6 +12,7 @@
   position: fixed;
   transition: width 0.25s ease;
   overflow: hidden;
+  z-index: 100;
 }
 
 .sidebar.collapsed {

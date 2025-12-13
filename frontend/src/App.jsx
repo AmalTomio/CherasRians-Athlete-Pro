@@ -11,11 +11,10 @@ import ManageStudents from "./pages/Exco/ManageStudents";
 import Players from "./pages/Coach/Players";
 import CoachFacilities from "./pages/Coach/Facilities";
 import ExcoBooking from "./pages/Exco/Booking";
-
-
+import Medical from "./pages/Student/Medical";
+import MedicalLeaveReview from "./pages/Coach/MedicalLeaveReview";
 import ProtectedRoute from "./components/ProtectedRoute";
 import WithSidebar from "./layouts/WithSidebar";
-
 
 export default function App() {
   return (
@@ -67,13 +66,33 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-
+ <Route
+          path="/coach/medical"
+          element={
+            <ProtectedRoute>
+              <WithSidebar>
+                <MedicalLeaveReview />
+              </WithSidebar>
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/exco/booking"
           element={
             <ProtectedRoute>
               <WithSidebar>
                 <ExcoBooking />
+              </WithSidebar>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/student/medical"
+          element={
+            <ProtectedRoute>
+              <WithSidebar>
+                <Medical/>
               </WithSidebar>
             </ProtectedRoute>
           }

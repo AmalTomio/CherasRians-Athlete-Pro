@@ -26,7 +26,7 @@ export default function AppBar() {
         padding: "0 25px",
         background: "#ffffff",
         borderBottom: "1px solid #e5e5e5",
-        position: "sticky",
+        position: "relative",
         top: 0,
         zIndex: 10,
       }}

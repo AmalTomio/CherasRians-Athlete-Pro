@@ -9,6 +9,7 @@ import {
   FiTool,
   FiMenu,
   FiLogOut,
+  FiFileText,
 } from "react-icons/fi";
 
 import "./Sidebar.css";
@@ -35,7 +36,7 @@ export default function Sidebar({ onToggle }) {
 
   // Auto-collapse on small screens
   useEffect(() => {
-    const updateCollapse = () => setCollapsed(window.innerWidth < 1024);
+    const updateCollapse = () => setCollapsed(window.innerWidth < 1025);
     updateCollapse();
     window.addEventListener("resize", updateCollapse);
     return () => window.removeEventListener("resize", updateCollapse);
@@ -48,6 +49,7 @@ export default function Sidebar({ onToggle }) {
         ["Dashboard", FiHome, "/dashboard"],
         ["Training Schedule", FiCalendar, "/schedule"],
         ["Attendance", FiClipboard, "/attendance"],
+        ["Medical Leave", FiFileText, "/student/medical"],
         ["Performance", FiUsers, "/performance"],
         ["Announcements", FiBell, "/announcements"],
       ],
@@ -57,7 +59,7 @@ export default function Sidebar({ onToggle }) {
         ["Players", FiUsers, "/coach/players"],
         ["Schedules", FiCalendar, "/schedules"],
         ["Facilities", FiCalendar, "/coach/facilities"],
-
+        ["Medical Leave", FiFileText, "/coach/medical"],
         ["Attendance", FiClipboard, "/attendance"],
         ["Equipment", FiTool, "/equipment"],
         ["Announcements", FiBell, "/announcements"],
