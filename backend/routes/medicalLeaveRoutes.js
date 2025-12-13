@@ -8,9 +8,9 @@ const {
   getStudentLeaves,
   getCoachPendingLeaves,
   reviewLeave,
-  //   getLeaveStats,
   getFile,
   getLeaveDetails,
+  getCoachLeaves,
 } = require("../controllers/medicalLeaveController");
 
 // Import your auth middleware correctly
@@ -41,26 +41,27 @@ router.get("/details/:leaveId", verifyToken, getLeaveDetails);
 // COACH ROUTES
 router.get("/coach/pending", verifyToken, requireCoach, getCoachPendingLeaves);
 router.patch("/coach/:leaveId", verifyToken, requireCoach, reviewLeave);
+router.get("/coach", verifyToken, requireCoach, getCoachLeaves);
 
 // GET MC PDF for specific leave
-router.get("/file/:leaveId", verifyToken, async (req, res) => {
-  try {
-    const leave = await MedicalLeave.findById(req.params.leaveId);
+// router.get("/file/:leaveId", verifyToken, async (req, res) => {
+//   try {
+//     const leave = await MedicalLeave.findById(req.params.leaveId);
 
-    if (!leave || !leave.file || !leave.file.buffer)
-      return res.status(404).json({ message: "File not found" });
+//     if (!leave || !leave.file || !leave.file.buffer)
+//       return res.status(404).json({ message: "File not found" });
 
-    res.set({
-      "Content-Type": leave.file.mimetype,
-      "Content-Disposition": `inline; filename="${leave.file.originalname}"`,
-    });
+//     res.set({
+//       "Content-Type": leave.file.mimetype,
+//       "Content-Disposition": `inline; filename="${leave.file.originalname}"`,
+//     });
 
-    return res.send(leave.file.buffer);
-  } catch (err) {
-    console.error("MC VIEW ERROR:", err);
-    res.status(500).json({ message: "Server error" });
-  }
-});
+//     return res.send(leave.file.buffer);
+//   } catch (err) {
+//     console.error("MC VIEW ERROR:", err);
+//     res.status(500).json({ message: "Server error" });
+//   }
+// });
 
 // DELETE leave (student only if pending)
 router.delete("/student/:leaveId", verifyToken, async (req, res) => {
