@@ -11,6 +11,7 @@ const MedicalLeaveReview = () => {
   const [reviewLoading, setReviewLoading] = useState(false);
   const [showPdf, setShowPdf] = useState(false);
   const [pdfUrl, setPdfUrl] = useState(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   useEffect(() => {
     fetchLeaves();
@@ -84,6 +85,8 @@ const MedicalLeaveReview = () => {
 
   const viewMC = async (leaveId) => {
     try {
+      setPdfLoading(true);
+
       const res = await api.get(`/medical/file/${leaveId}`, {
         responseType: "blob",
         headers: {
@@ -184,8 +187,12 @@ const MedicalLeaveReview = () => {
         show={showPdf}
         onHide={() => {
           setShowPdf(false);
-          URL.revokeObjectURL(pdfUrl);
-          setPdfUrl(null);
+          setPdfLoading(false);
+
+          if (pdfUrl) {
+            URL.revokeObjectURL(pdfUrl);
+            setPdfUrl(null);
+          }
         }}
         size="xl"
         centered
@@ -194,14 +201,63 @@ const MedicalLeaveReview = () => {
           <Modal.Title>Medical Certificate</Modal.Title>
         </Modal.Header>
 
-        <Modal.Body style={{ height: "80vh", padding: 0 }}>
+        <Modal.Body
+          style={{ height: "80vh", padding: 0, position: "relative" }}
+        >
+          {/* SKELETON LOADER */}
+          {pdfLoading && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                background: "#f8f9fa",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 2,
+              }}
+            >
+              <div style={{ width: "60%" }}>
+                <div className="placeholder-glow mb-3">
+                  <div
+                    className="placeholder col-12"
+                    style={{ height: "20px" }}
+                  />
+                </div>
+                <div className="placeholder-glow mb-3">
+                  <div
+                    className="placeholder col-10"
+                    style={{ height: "20px" }}
+                  />
+                </div>
+                <div className="placeholder-glow mb-3">
+                  <div
+                    className="placeholder col-8"
+                    style={{ height: "20px" }}
+                  />
+                </div>
+                <div className="placeholder-glow">
+                  <div
+                    className="placeholder col-6"
+                    style={{ height: "20px" }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* PDF IFRAME */}
           {pdfUrl && (
             <iframe
               src={pdfUrl}
-              title="Medical Certificate PDF"
+              title="Medical Certificate"
               width="100%"
               height="100%"
-              style={{ border: "none" }}
+              style={{
+                border: "none",
+                visibility: pdfLoading ? "hidden" : "visible",
+              }}
+              onLoad={() => setPdfLoading(false)}
             />
           )}
         </Modal.Body>
