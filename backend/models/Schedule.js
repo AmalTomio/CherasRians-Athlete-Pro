@@ -17,6 +17,12 @@ const scheduleSchema = new mongoose.Schema(
       enum: ["pending", "approved", "rejected"],
       default: "pending"
     },
+    sessionType: {
+  type: String,
+  enum: ["training", "practice", "tryout", "event", "meeting"],
+  required: true
+},
+
   },
   { timestamps: true }
 );
