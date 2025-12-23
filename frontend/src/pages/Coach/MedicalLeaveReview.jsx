@@ -118,32 +118,40 @@ const MedicalLeaveReview = () => {
         </p>
       </div>
       {/* STATS */}
-      <Row className="mb-4 gy-3">
-        <Col md={3}>
-          <Card className="p-3 shadow-sm">
-            <p className="text-muted mb-1">Total</p>
-            <h4>{stats.total}</h4>
-          </Card>
-        </Col>
-        <Col md={3}>
-          <Card className="p-3 shadow-sm">
-            <p className="text-muted mb-1">Pending</p>
-            <h4 className="text-warning">{stats.pending}</h4>
-          </Card>
-        </Col>
-        <Col md={3}>
-          <Card className="p-3 shadow-sm">
-            <p className="text-muted mb-1">Approved</p>
-            <h4 className="text-success">{stats.approved}</h4>
-          </Card>
-        </Col>
-        <Col md={3}>
-          <Card className="p-3 shadow-sm">
-            <p className="text-muted mb-1">Rejected</p>
-            <h4 className="text-danger">{stats.rejected}</h4>
-          </Card>
-        </Col>
-      </Row>
+    <div className="row mb-4 gy-3">
+  <div className="col-md-3">
+    <div className="card border-primary">
+      <div className="card-body text-center">
+        <h5 className="card-title text-primary">Total</h5>
+        <h2 className="card-text">{stats.total}</h2>
+      </div>
+    </div>
+  </div>
+  <div className="col-md-3">
+    <div className="card border-warning">
+      <div className="card-body text-center">
+        <h5 className="card-title text-warning">Pending</h5>
+        <h2 className="card-text">{stats.pending}</h2>
+      </div>
+    </div>
+  </div>
+  <div className="col-md-3">
+    <div className="card border-success">
+      <div className="card-body text-center">
+        <h5 className="card-title text-success">Approved</h5>
+        <h2 className="card-text">{stats.approved}</h2>
+      </div>
+    </div>
+  </div>
+  <div className="col-md-3">
+    <div className="card border-danger">
+      <div className="card-body text-center">
+        <h5 className="card-title text-danger">Rejected</h5>
+        <h2 className="card-text">{stats.rejected}</h2>
+      </div>
+    </div>
+  </div>
+</div>
       {/* TABS */}
       <Tab.Container activeKey={activeTab} onSelect={setActiveTab}>
         <Nav variant="pills" className="mb-3">
