@@ -3,6 +3,9 @@ const Facility = require("../models/Facility");
 const Notification = require("../models/Notification");
 const User = require("../models/User");
 const Schedule = require("../models/Schedule");
+const EquipmentRequest = require("../models/EquipmentRequest");
+const Equipment = require("../models/Equipment");
+
 const moment = require("moment-timezone");
 
 const TZ = "Asia/Kuala_Lumpur";
@@ -21,7 +24,9 @@ exports.checkAvailability = async (req, res) => {
     const { facilityId, slots } = req.body;
 
     if (!facilityId || !Array.isArray(slots) || slots.length === 0) {
-      return res.status(400).json({ message: "facilityId and slots required" });
+      return res
+        .status(400)
+        .json({ message: "Facility ID and slots required" });
     }
 
     const facility = await Facility.findById(facilityId);
@@ -29,17 +34,14 @@ exports.checkAvailability = async (req, res) => {
       return res.status(404).json({ message: "Facility not found" });
     }
 
-    if (
-      facility.status === "maintenance" ||
-      facility.status === "in_maintenance"
-    ) {
+    if (["maintenance", "in_maintenance"].includes(facility.status)) {
       return res.json({ available: false, reason: "facility_in_maintenance" });
     }
 
     const results = [];
 
-    for (const s of slots) {
-      const { date, startTime, endTime } = s;
+    for (const slot of slots) {
+      const { date, startTime, endTime } = slot;
 
       if (!date || !startTime || !endTime) {
         results.push({
@@ -58,7 +60,7 @@ exports.checkAvailability = async (req, res) => {
         .tz(`${date} ${endTime}`, "YYYY-MM-DD HH:mm", TZ)
         .toDate();
 
-      if (endAt <= startAt) {
+      if (!startAt || !endAt || endAt <= startAt) {
         results.push({
           date,
           available: false,
@@ -66,6 +68,51 @@ exports.checkAvailability = async (req, res) => {
         });
         continue;
       }
+
+      /* ================= CHECK BOOKINGS ================= */
+      const bookingConflict = await Booking.findOne({
+        facilityId,
+        status: { $in: ["pending", "approved"] },
+        startAt: { $lt: endAt },
+        endAt: { $gt: startAt },
+      }).lean();
+
+      if (bookingConflict) {
+        results.push({
+          date,
+          available: false,
+          reason: "booking_conflict",
+          conflictId: bookingConflict._id,
+        });
+        continue;
+      }
+
+      /* ================= CHECK SCHEDULES ================= */
+      const sessionDate = moment(startAt).tz(TZ).startOf("day").toDate();
+
+      const scheduleConflict = await Schedule.findOne({
+        facilityId,
+        status: "approved",
+        sessionDate,
+        startTime: { $lt: endTime },
+        endTime: { $gt: startTime },
+      }).lean();
+
+      if (scheduleConflict) {
+        results.push({
+          date,
+          available: false,
+          reason: "schedule_conflict",
+          conflictId: scheduleConflict._id,
+        });
+        continue;
+      }
+
+      /* ================= AVAILABLE ================= */
+      results.push({
+        date,
+        available: true,
+      });
     }
 
     const available = results.every((r) => r.available);
@@ -124,12 +171,13 @@ exports.createBooking = async (req, res) => {
         });
       }
 
-      const denormEquipment = equipmentRequests.map((er) => ({
-        equipmentId: er.equipmentId,
-        equipmentName: er.equipmentName || "",
-        quantity: er.quantity || 1,
-        reason: er.reason || "",
-      }));
+      const denormEquipment = (equipmentRequests || [])
+        .filter((er) => er.quantity > 0)
+        .map((er) => ({
+          equipmentId: er.equipmentId,
+          equipmentName: er.equipmentName || "",
+          quantity: er.quantity,
+        }));
 
       const booking = new Booking({
         facilityId,
@@ -206,6 +254,8 @@ exports.getPendingBookings = async (req, res) => {
 
 /* ================= APPROVE / REJECT BOOKING ================= */
 
+/* ================= APPROVE / REJECT BOOKING ================= */
+
 exports.approveBooking = async (req, res) => {
   try {
     const { id } = req.params;
@@ -240,7 +290,60 @@ exports.approveBooking = async (req, res) => {
     booking.approvedAt = new Date();
     await booking.save();
 
-    // ONLY these reasons create attendance sessions
+    /* ===== AUTO-DEDUCT EQUIPMENT FROM BOOKING ===== */
+    const equipmentResults = [];
+
+    for (const reqItem of booking.equipmentRequests || []) {
+      const equipment = await Equipment.findById(reqItem.equipmentId);
+      if (!equipment) continue;
+
+      const qtyRequested = reqItem.quantity;
+      const qtyAvailable = equipment.quantityAvailable;
+      const qtyApproved = Math.min(qtyRequested, qtyAvailable);
+
+      if (qtyApproved > 0) {
+        await Equipment.findByIdAndUpdate(equipment._id, {
+          $inc: { quantityAvailable: -qtyApproved },
+        });
+      }
+      if (qtyAvailable <= 0) {
+        equipmentResults.push({
+          equipmentId: reqItem.equipmentId,
+          requested: qtyRequested,
+          approved: 0,
+        });
+        continue;
+      }
+
+      // deduct stock
+      await Equipment.findByIdAndUpdate(equipment._id, {
+        $inc: { quantityAvailable: -qtyApproved },
+      });
+
+      // optional: create audit record
+      await EquipmentRequest.create({
+        equipmentId: equipment._id,
+        bookingId: booking._id,
+
+        coachId: booking.coachId,
+
+        quantityRequested: qtyRequested,
+        quantityApproved: qtyApproved,
+        status:
+          qtyApproved === qtyRequested ? "approved" : "partially_approved",
+        processedBy: exco.userId || exco._id,
+        processedAt: new Date(),
+        notes: "Auto-approved with booking",
+      });
+
+      equipmentResults.push({
+        equipmentId: reqItem.equipmentId,
+        requested: qtyRequested,
+        approved: qtyApproved,
+      });
+    }
+
+    /* ===== SCHEDULE CREATION ===== */
     const attendanceReasons = ["training", "tryout"];
     let schedule = null;
 
@@ -283,7 +386,12 @@ exports.approveBooking = async (req, res) => {
       },
     });
 
-    res.json({ booking, scheduleCreated: !!schedule, schedule });
+    return res.json({
+      booking,
+      scheduleCreated: !!schedule,
+      schedule,
+      equipmentProcessed: equipmentResults,
+    });
   } catch (err) {
     console.error("approveBooking error:", err);
     res.status(500).json({ message: "Server error" });

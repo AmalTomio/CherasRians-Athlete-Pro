@@ -68,9 +68,10 @@ export default function Sidebar({ onToggle }) {
       exco: [
         ["Dashboard", FiHome, "/dashboard"],
         ["Manage Students", FiUsers, "/exco/manageStudents"],
-        ["Facilities", FiTool, "/facilities"],
+        ["Manage Coaches", FiUsers, "/exco/manageCoaches"],
+        ["Facilities", FiTool, "/exco/facilities"],
         ["Booking", FiCalendar, "/exco/booking"],
-        ["Equipment", FiTool, "/equipment-management"],
+        ["Equipment", FiTool, "/exco/equipment"],
         ["Announcements", FiBell, "/announcements"],
       ],
     };

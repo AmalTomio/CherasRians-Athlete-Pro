@@ -14,7 +14,9 @@ import Dashboard from "./pages/Dashboard";
 // Exco Pages
 import ManageStudents from "./pages/Exco/ManageStudents";
 import ExcoBooking from "./pages/Exco/Booking";
-
+import EquipmentManagement from "./pages/Exco/Equipment";
+import ExcoFacilities from "./pages/Exco/Facilities";
+import Coaches from "./pages/Exco/Coaches";
 // Coach Pages
 import Players from "./pages/Coach/Players";
 import CoachFacilities from "./pages/Coach/Facilities";
@@ -62,11 +64,44 @@ export default function App() {
         />
 
         <Route
+          path="/exco/manageCoaches"
+          element={
+            <ProtectedRoute allowedRoles={["exco"]}>
+              <WithSidebar>
+                <Coaches />
+              </WithSidebar>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/exco/booking"
           element={
             <ProtectedRoute allowedRoles={["exco"]}>
               <WithSidebar>
                 <ExcoBooking />
+              </WithSidebar>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/exco/equipment"
+          element={
+            <ProtectedRoute allowedRoles={["exco"]}>
+              <WithSidebar>
+                <EquipmentManagement />
+              </WithSidebar>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/exco/facilities"
+          element={
+            <ProtectedRoute allowedRoles={["exco"]}>
+              <WithSidebar>
+                <ExcoFacilities />
               </WithSidebar>
             </ProtectedRoute>
           }

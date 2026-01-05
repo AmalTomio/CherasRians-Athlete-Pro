@@ -16,11 +16,10 @@ export default function BookingModal({ facility, onClose, onBooked }) {
 
   // Equipment Request States
   const [showEquipmentRequest, setShowEquipmentRequest] = useState(false);
+  const [equipmentRequests, setEquipmentRequests] = useState([]);
   const [equipmentList, setEquipmentList] = useState([]);
   const [selectedEquipment, setSelectedEquipment] = useState("");
-  const [requestQuantity, setRequestQuantity] = useState(1);
   const [loadingEquipment, setLoadingEquipment] = useState(false);
-  const [submittingRequest, setSubmittingRequest] = useState(false);
 
   // Fetch available equipment when component mounts
   useEffect(() => {
@@ -31,8 +30,8 @@ export default function BookingModal({ facility, onClose, onBooked }) {
   const fetchAvailableEquipment = async () => {
     try {
       setLoadingEquipment(true);
-      const res = await api.get("/equipment/available");
-      setEquipmentList(res.data);
+      const res = await api.get("/equipment");
+      setEquipmentList(res.data.equipment || []);
     } catch (err) {
       console.error("Error fetching equipment:", err);
       errorAlert("Failed to load equipment list");
@@ -77,12 +76,6 @@ export default function BookingModal({ facility, onClose, onBooked }) {
       )
     );
   };
-
-  // const getSlot24hTime = (slot) => {
-  //   const timeString = `${slot.hour}:${slot.minute} ${slot.ampm}`;
-  //   const momentTime = moment(timeString, "hh:mm A");
-  //   return momentTime.isValid() ? momentTime.format("HH:mm") : "09:00";
-  // };
 
   const getStartTime24h = (slot) => {
     const t = `${slot.startHour}:${slot.startMinute} ${slot.startAmpm}`;
@@ -137,7 +130,7 @@ export default function BookingModal({ facility, onClose, onBooked }) {
         // Show which slots have conflicts
         const conflictSlots = res.data.slotResults.filter((r) => !r.available);
         if (conflictSlots.length > 0) {
-          errorAlert(`Conflicts found for ${conflictSlots.length} slot(s)`);
+          errorAlert(`This slots is not available`);
         } else {
           errorAlert("Not available for the selected slots.");
         }
@@ -150,51 +143,34 @@ export default function BookingModal({ facility, onClose, onBooked }) {
     }
   };
 
-  // Submit Equipment Request
-  const submitEquipmentRequest = async () => {
-    if (!selectedEquipment) {
-      return errorAlert("Please select equipment to request");
-    }
+  // BOOKING REQUEST
 
-    if (requestQuantity < 1) {
-      return errorAlert("Please enter a valid quantity");
-    }
-
-    try {
-      setSubmittingRequest(true);
-
-      // Get the first slot as reference date for equipment request
-      const firstSlot = slots[0];
-      if (!firstSlot) {
-        return errorAlert("Please select at least one date-time slot first");
+  const updateEquipmentQuantity = (equipmentId, equipmentName, quantity) => {
+    setEquipmentRequests((prev) => {
+      // remove if empty or zero
+      if (!quantity || quantity < 1) {
+        return prev.filter((e) => e.equipmentId !== equipmentId);
       }
 
-      const requestData = {
-        equipmentId: selectedEquipment,
-        quantityRequested: requestQuantity,
-        scheduleId: null, // This could be linked to a schedule if you have one
-        note: `Booking for ${facility.name} on ${moment(firstSlot.date).format(
-          "MMM D, YYYY"
-        )}`,
-      };
+      const exists = prev.find((e) => e.equipmentId === equipmentId);
 
-      const res = await api.post("/equipment/requests", requestData);
+      if (exists) {
+        return prev.map((e) =>
+          e.equipmentId === equipmentId ? { ...e, quantity } : e
+        );
+      }
 
-      successAlert("Equipment request submitted successfully!");
-      setShowEquipmentRequest(false);
-      setSelectedEquipment("");
-      setRequestQuantity(1);
-    } catch (err) {
-      console.error("Equipment request error:", err);
-      errorAlert(
-        err.response?.data?.message || "Failed to submit equipment request"
-      );
-    } finally {
-      setSubmittingRequest(false);
-    }
+      return [
+        ...prev,
+        {
+          equipmentId,
+          equipmentName,
+          quantity,
+        },
+      ];
+    });
   };
 
-  // BOOKING REQUEST
   const submitBooking = async () => {
     if (available === null)
       return errorAlert("Please check availability first.");
@@ -214,6 +190,7 @@ export default function BookingModal({ facility, onClose, onBooked }) {
         facilityId: facility._id,
         slots: slotsData,
         reason,
+        equipmentRequests,
       };
 
       const res = await api.post("/bookings", bookingData);
@@ -558,7 +535,7 @@ export default function BookingModal({ facility, onClose, onBooked }) {
                             {/* Equipment Selection */}
                             <div className="mb-3">
                               <label className="form-label small fw-bold">
-                                Select Equipment
+                                Equipment
                               </label>
                               <select
                                 className="form-select form-select-sm"
@@ -567,7 +544,7 @@ export default function BookingModal({ facility, onClose, onBooked }) {
                                   setSelectedEquipment(e.target.value)
                                 }
                               >
-                                <option value="">-- Select Equipment --</option>
+                                <option value="">Select Equipment</option>
                                 {equipmentList.map((equipment) => (
                                   <option
                                     key={equipment._id}
@@ -578,99 +555,74 @@ export default function BookingModal({ facility, onClose, onBooked }) {
                                   </option>
                                 ))}
                               </select>
+
                               {selectedEquipmentDetails && (
                                 <div className="mt-2 small text-muted">
                                   <span className="badge bg-info me-2">
                                     {selectedEquipmentDetails.category}
                                   </span>
-                                  {selectedEquipmentDetails.description}
                                 </div>
                               )}
                             </div>
 
-                            {/* Quantity Selection */}
-                            <div className="mb-3">
-                              <label className="form-label small fw-bold">
-                                Quantity
-                              </label>
-                              <div className="d-flex align-items-center">
-                                <button
-                                  className="btn btn-outline-secondary btn-sm"
-                                  onClick={() =>
-                                    setRequestQuantity(
-                                      Math.max(1, requestQuantity - 1)
-                                    )
-                                  }
-                                  disabled={requestQuantity <= 1}
-                                >
-                                  <i className="bi bi-dash"></i>
-                                </button>
+                            {selectedEquipmentDetails && (
+                              <div className="mb-3">
+                                <label className="form-label small fw-bold">
+                                  Quantity
+                                </label>
                                 <input
                                   type="number"
-                                  className="form-control form-control-sm text-center mx-2"
-                                  style={{ maxWidth: "80px" }}
-                                  value={requestQuantity}
+                                  className="form-control form-control-sm"
+                                  min="0"
+                                  max={
+                                    selectedEquipmentDetails.quantityAvailable
+                                  }
+                                  placeholder="Enter quantity"
+                                  value={
+                                    equipmentRequests.find(
+                                      (e) => e.equipmentId === selectedEquipment
+                                    )?.quantity || ""
+                                  }
                                   onChange={(e) =>
-                                    setRequestQuantity(
-                                      Math.max(1, parseInt(e.target.value) || 1)
+                                    updateEquipmentQuantity(
+                                      selectedEquipmentDetails._id,
+                                      selectedEquipmentDetails.name,
+                                      Number(e.target.value)
                                     )
                                   }
-                                  min="1"
-                                  max={
-                                    selectedEquipmentDetails?.quantityAvailable ||
-                                    99
-                                  }
                                 />
-                                <button
-                                  className="btn btn-outline-secondary btn-sm"
-                                  onClick={() =>
-                                    setRequestQuantity(requestQuantity + 1)
-                                  }
-                                  disabled={
-                                    selectedEquipmentDetails &&
-                                    requestQuantity >=
-                                      selectedEquipmentDetails.quantityAvailable
-                                  }
-                                >
-                                  <i className="bi bi-plus"></i>
-                                </button>
-                                {selectedEquipmentDetails && (
-                                  <span className="ms-2 small text-muted">
-                                    Max:{" "}
-                                    {selectedEquipmentDetails.quantityAvailable}
-                                  </span>
-                                )}
+                                <small className="text-muted">
+                                  Max:{" "}
+                                  {selectedEquipmentDetails.quantityAvailable}
+                                </small>
                               </div>
+                            )}
+
+                            <div className="alert alert-secondary py-2 small mt-2">
+                              <i className="bi bi-info-circle me-1"></i>
+                              Enter quantity to add equipment to this booking.
                             </div>
 
-                            {/* Submit Equipment Request Button */}
-                            <button
-                              type="button"
-                              className="btn btn-info btn-sm w-100"
-                              disabled={!selectedEquipment || submittingRequest}
-                              onClick={submitEquipmentRequest}
-                            >
-                              {submittingRequest ? (
-                                <>
-                                  <span
-                                    className="spinner-border spinner-border-sm me-2"
-                                    role="status"
-                                  ></span>
-                                  Submitting...
-                                </>
-                              ) : (
-                                <>
-                                  <i className="bi bi-check-circle me-2"></i>
-                                  Submit Equipment Request
-                                </>
-                              )}
-                            </button>
-
-                            <p className="small text-muted mt-2 mb-0">
-                              <i className="bi bi-info-circle me-1"></i>
-                              Equipment requests will be reviewed by exec
-                              members
-                            </p>
+                            {equipmentRequests.length > 0 && (
+                              <div className="mt-3">
+                                <p className="small fw-bold mb-1">
+                                  Requested Equipment
+                                </p>
+                                <ul className="list-group list-group-sm">
+                                  {equipmentRequests.map((er, idx) => (
+                                    <li
+                                      key={idx}
+                                      className="list-group-item d-flex justify-content-between align-items-center"
+                                    >
+                                      <span>{er.equipmentName}</span>
+                                      <span className="badge bg-secondary">
+                                        {er.quantity}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
                           </>
                         )}
                       </div>

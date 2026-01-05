@@ -13,17 +13,12 @@ export default function Chart({ stats }) {
   const options = {
     chart: {
       type: "donut",
+      width: "100%",
     },
 
     labels,
 
-    colors: [
-      "#4F46E5", // Football
-      "#10B981", // Volleyball
-      "#F59E0B", // Sepak Takraw
-      "#EC4899", // Badminton
-      "#3B82F6", // Netball
-    ],
+    colors: ["#4F46E5", "#10B981", "#F59E0B", "#EC4899", "#3B82F6"],
 
     legend: {
       position: "right",
@@ -34,7 +29,7 @@ export default function Chart({ stats }) {
         radius: 50,
       },
       itemMargin: {
-        vertical: 8,
+        vertical: 6,
       },
     },
 
@@ -44,19 +39,16 @@ export default function Chart({ stats }) {
         const value = series[seriesIndex];
 
         return `
-      <div style="
-        padding: 8px 12px;
-        font-size: 14px;
-      ">
-        <strong>${sport}</strong><br/>
-        ${value} students
-      </div>
-    `;
+          <div style="padding:8px 12px;font-size:14px">
+            <strong>${sport}</strong><br/>
+            ${value} students
+          </div>
+        `;
       },
     },
 
     dataLabels: {
-      enabled: false, // match Chart.js UX
+      enabled: false,
     },
 
     plotOptions: {
@@ -69,10 +61,21 @@ export default function Chart({ stats }) {
 
     responsive: [
       {
-        breakpoint: 768,
+        breakpoint: 1450,
         options: {
           legend: {
             position: "bottom",
+          },
+        },
+      },
+      {
+        breakpoint: 768,
+        options: {
+          chart: {
+            height: 300,
+          },
+          legend: {
+            fontSize: "13px",
           },
         },
       },
@@ -80,23 +83,15 @@ export default function Chart({ stats }) {
   };
 
   return (
-    <div
-      style={{
-        width: "100%",
-        height: "320px",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-      }}
-    >
+    <div className="chart-wrapper">
       <h5 className="text-center mb-3">Students Per Sport</h5>
 
-      <div style={{ width: "70%", height: "100%" }}>
+      <div className="chart-inner">
         <ReactApexChart
           options={options}
           series={series}
           type="donut"
-          height="100%"
+          height={280}
         />
       </div>
     </div>

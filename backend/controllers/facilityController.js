@@ -1,5 +1,3 @@
-// backend/controllers/facilityController.js
-
 const Facility = require("../models/Facility");
 const FacilityMaintenance = require("../models/FacilityMaintenance");
 
@@ -17,8 +15,12 @@ exports.getFacilities = async (req, res) => {
 // CREATE new facility (Exco only)
 exports.createFacility = async (req, res) => {
   try {
-    const { name, status } = req.body;
-    const facility = await Facility.create({ name, status });
+    const { name, status, capacity } = req.body;
+    const facility = await Facility.create({
+      name,
+      status,
+      capacity: Number(capacity) || 0,
+    });
     res.json({ message: "Facility created", facility });
   } catch (err) {
     console.error("Create facility error:", err);
@@ -38,11 +40,31 @@ exports.updateFacilityStatus = async (req, res) => {
       { new: true }
     );
 
-    if (!facility) return res.status(404).json({ message: "Facility not found" });
+    if (!facility)
+      return res.status(404).json({ message: "Facility not found" });
 
     res.json({ message: "Status updated", facility });
   } catch (err) {
     console.error("Update facility status error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// UPDATE facility details (FULL EDIT)
+exports.updateFacility = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const facility = await Facility.findByIdAndUpdate(id, req.body, {
+      new: true,
+    });
+
+    if (!facility)
+      return res.status(404).json({ message: "Facility not found" });
+
+    res.json({ message: "Facility updated", facility });
+  } catch (err) {
+    console.error("Update facility error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -64,9 +86,25 @@ exports.addMaintenance = async (req, res) => {
     await Facility.findByIdAndUpdate(facilityId, { status: "maintenance" });
 
     res.json({ message: "Maintenance recorded", record });
-
   } catch (err) {
     console.error("Add maintenance error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// DELETE facility
+exports.deleteFacility = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const facility = await Facility.findByIdAndDelete(id);
+    if (!facility) {
+      return res.status(404).json({ message: "Facility not found" });
+    }
+
+    res.json({ message: "Facility removed" });
+  } catch (err) {
+    console.error("Delete facility error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };

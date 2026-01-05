@@ -10,6 +10,7 @@ const coachRoutes = require("./routes/coachRoutes");
 const facilityRoutes = require("./routes/facilityRoutes");
 const medicalLeaveRoutes = require("./routes/medicalLeaveRoutes");
 const attendanceRoutes = require("./routes/attendanceRoutes");
+const studentRoutes = require("./routes/studentRoutes");
 
 // scheduler
 const { startWeeklyResetJobs } = require("./jobs/scheduler");
@@ -39,6 +40,7 @@ app.use("/api/medical", medicalLeaveRoutes);
 app.use("/api/leave", medicalLeaveRoutes);
 app.use("/uploads", express.static("uploads"));
 app.use("/api/attendance", attendanceRoutes);
+app.use("/api/students", studentRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));

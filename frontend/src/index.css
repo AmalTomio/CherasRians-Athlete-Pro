@@ -28,3 +28,52 @@ body {
   to   { opacity: 1; transform: scale(1); }
 }
 
+/* Row height */
+.equipment-row td {
+  padding-top: 25px;
+  padding-bottom: 25px;
+}
+
+/* Icon container */
+.equipment-icon {
+  width: 45px;
+  height: 45px;
+  border-radius: 20%;
+  background-color: #eef4ff; /* soft blue */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Icon itself */
+.equipment-icon i {
+  font-size: 18px;
+  color: #2563eb; /* bootstrap primary-ish */
+}
+
+/* Chart container */
+.chart-wrapper {
+  width: 100%;
+  height: 100%;
+}
+
+/* IMPORTANT: constrain ApexCharts */
+.chart-inner {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden; /* 🔥 prevents legend overflow */
+}
+
+/* ApexCharts legend fixes */
+.apexcharts-legend {
+  max-width: 100% !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  padding: 0 8px;
+}
+
+.apexcharts-legend-series {
+  margin: 4px 10px !important;
+  white-space: nowrap;
+}

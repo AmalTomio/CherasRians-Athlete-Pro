@@ -1,18 +1,11 @@
-import { FiBell } from "react-icons/fi";
-
 export default function AppBar() {
   const user = JSON.parse(localStorage.getItem("user"));
   const role = user?.role || "User";
   const firstName = user?.firstName || "";
   const sport = user?.sport || null; // for coaches OR assigned sport for players
 
-  const capitalize = (text) =>
-    text.charAt(0).toUpperCase() + text.slice(1);
+  const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 
-  // Example notifications
-  const notificationCount = 3;
-
-  // Format sport name nicely (e.g. sepak_takraw → Sepak Takraw)
   const formatSport = (s) =>
     s ? s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : null;
 
@@ -68,29 +61,7 @@ export default function AppBar() {
               gap: "6px",
             }}
           >
-            {sport ? formatSport(sport) : "Unassigned"}  Player
-          </span>
-        )}
-      </div>
-
-      {/* RIGHT SIDE — Notif Bell */}
-      <div style={{ position: "relative", cursor: "pointer" }}>
-        <FiBell size={26} color="#444" />
-
-        {notificationCount > 0 && (
-          <span
-            style={{
-              position: "absolute",
-              top: "-6px",
-              right: "-6px",
-              background: "#ff4d4f",
-              color: "#fff",
-              fontSize: "12px",
-              padding: "2px 6px",
-              borderRadius: "50%",
-            }}
-          >
-            {notificationCount}
+            {sport ? formatSport(sport) : "Unassigned"} Player
           </span>
         )}
       </div>

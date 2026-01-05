@@ -1,9 +1,11 @@
-// src/pages/Exco/ManageStudents.jsx
 import { useState, useEffect } from "react";
 import api from "../../api/axios";
 import { successAlert, errorAlert } from "../../utils/swal";
 import FiltersCard from "../../components/FiltersCard";
 
+/* ===========================
+   Skeleton Loader
+=========================== */
 function SkeletonRows({ cols = 5, rows = 6 }) {
   return (
     <tbody>
@@ -12,7 +14,7 @@ function SkeletonRows({ cols = 5, rows = 6 }) {
           {Array.from({ length: cols }).map((__, c) => (
             <td key={`s-${r}-${c}`}>
               <div className="placeholder-glow">
-                <span className="placeholder col-12" style={{ height: 20 }}></span>
+                <span className="placeholder col-12" style={{ height: 20 }} />
               </div>
             </td>
           ))}
@@ -22,12 +24,17 @@ function SkeletonRows({ cols = 5, rows = 6 }) {
   );
 }
 
+/* ===========================
+   Main Component
+=========================== */
 export default function ManageStudents() {
   const [students, setStudents] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
+  // Filters
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [year, setYear] = useState("");
   const [classGroup, setClassGroup] = useState("");
   const [sport, setSport] = useState("");
@@ -36,29 +43,41 @@ export default function ManageStudents() {
 
   const limit = 10;
 
-  // Fetch students
-  const fetchStudents = async (opts = {}) => {
+  /* ===========================
+     Debounce Search
+  =========================== */
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  /* ===========================
+     Fetch Students
+  =========================== */
+  const fetchStudents = async () => {
     setIsLoading(true);
     try {
       const res = await api.get("/exco/students", {
         params: {
           page,
           limit,
-          search,
+          search: debouncedSearch,
           year,
           classGroup,
           sport,
-          ...opts,
         },
       });
 
       const studentsOut = res.data.students.map((s) => ({
-        userId: s.userId || s._id || s._id?.toString?.() || s.userId,
+        userId: s.userId || s._id,
         ...s,
       }));
 
       setStudents(studentsOut);
-      setTotalPages(res.data.totalPages || Math.ceil((res.data.total || 0) / limit) || 1);
+      setTotalPages(res.data.totalPages || 1);
     } catch (err) {
       console.error(err);
       errorAlert("Failed to fetch students.");
@@ -67,16 +86,23 @@ export default function ManageStudents() {
     }
   };
 
+  /* ===========================
+     Auto Fetch on Filters/Page
+  =========================== */
   useEffect(() => {
     fetchStudents();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, debouncedSearch, year, classGroup, sport]);
 
-  const handleFilter = () => {
+  /* ===========================
+     Reset Page on Filter Change
+  =========================== */
+  useEffect(() => {
     setPage(1);
-    fetchStudents();
-  };
+  }, [debouncedSearch, year, classGroup, sport]);
 
+  /* ===========================
+     Assign Sport
+  =========================== */
   const handleAssignSport = async (studentId, selectedSport) => {
     try {
       await api.put(`/exco/students/${studentId}/sport`, {
@@ -91,9 +117,15 @@ export default function ManageStudents() {
     }
   };
 
+  /* ===========================
+     Render
+  =========================== */
   return (
     <div>
-      <h2 className="mb-4">Manage Students</h2>
+      <h2 className="mb-1">Manage Students</h2>
+      <p className="text-muted mb-4">
+        Overview Player in each sport.
+      </p>
 
       <FiltersCard
         search={search}
@@ -104,14 +136,16 @@ export default function ManageStudents() {
         setClassGroup={setClassGroup}
         sport={sport}
         setSport={setSport}
-        onFilter={handleFilter}
+        showYear
+        showClass
+        showSport
         onReset={() => {
+          setSearch("");
+          setYear("");
+          setClassGroup("");
+          setSport("");
           setPage(1);
-          fetchStudents();
         }}
-        showYear={true}
-        showClass={true}
-        showSport={true}
       />
 
       <div className="card p-3">
@@ -126,23 +160,24 @@ export default function ManageStudents() {
             </tr>
           </thead>
 
-          {/* Skeleton while loading */}
           {isLoading ? (
             <SkeletonRows cols={5} rows={6} />
           ) : (
             <tbody>
               {students.length > 0 ? (
                 students.map((s, index) => (
-                  <tr key={s.userId || s._id || index}>
-                    <td>{(page - 1) * limit + (index + 1)}</td>
-                    <td>{s.firstName + " " + s.lastName}</td>
+                  <tr key={s.userId}>
+                    <td>{(page - 1) * limit + index + 1}</td>
+                    <td>{`${s.firstName} ${s.lastName}`}</td>
                     <td>{s.year ?? "-"}</td>
                     <td>{s.classGroup ?? "-"}</td>
                     <td>
                       <select
                         className="form-select"
                         value={s.sport || ""}
-                        onChange={(e) => handleAssignSport(s.userId || s._id, e.target.value)}
+                        onChange={(e) =>
+                          handleAssignSport(s.userId, e.target.value)
+                        }
                       >
                         <option value="">Not Assigned</option>
                         <option value="football">Football</option>
@@ -165,7 +200,7 @@ export default function ManageStudents() {
           )}
         </table>
 
-        {/* PAGINATION */}
+        {/* Pagination */}
         <div className="d-flex justify-content-center mt-3">
           <ul className="pagination">
             <li className={`page-item ${page === 1 ? "disabled" : ""}`}>
@@ -178,17 +213,29 @@ export default function ManageStudents() {
             </li>
 
             {[...Array(totalPages)].map((_, i) => (
-              <li key={i} className={`page-item ${page === i + 1 ? "active" : ""}`}>
-                <button className="page-link" onClick={() => setPage(i + 1)}>
+              <li
+                key={i}
+                className={`page-item ${page === i + 1 ? "active" : ""}`}
+              >
+                <button
+                  className="page-link"
+                  onClick={() => setPage(i + 1)}
+                >
                   {i + 1}
                 </button>
               </li>
             ))}
 
-            <li className={`page-item ${page === totalPages ? "disabled" : ""}`}>
+            <li
+              className={`page-item ${
+                page === totalPages ? "disabled" : ""
+              }`}
+            >
               <button
                 className="page-link"
-                onClick={() => page < totalPages && setPage((p) => p + 1)}
+                onClick={() =>
+                  page < totalPages && setPage((p) => p + 1)
+                }
               >
                 Next
               </button>

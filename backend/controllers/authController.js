@@ -10,7 +10,13 @@ const JWT_SECRET = process.env.JWT_SECRET || "changeme";
 // helpers
 const isValidNRIC = (val) => /^[0-9]{12}$/.test(val);
 const VALID_ROLES = ["student", "coach", "exco"];
-const VALID_SPORTS = ["football", "volleyball", "sepak_takraw", "badminton", "netball"];
+const VALID_SPORTS = [
+  "football",
+  "volleyball",
+  "sepak_takraw",
+  "badminton",
+  "netball",
+];
 
 /* ============================================================
    REGISTER
@@ -40,9 +46,12 @@ exports.registerUser = async (req, res) => {
       if (!isValidNRIC(nric))
         return res.status(400).json({ message: "NRIC must be 12 digits." });
 
-      if (!classGroup) return res.status(400).json({ message: "Class required." });
+      if (!classGroup)
+        return res.status(400).json({ message: "Class required." });
       if (!year || year < 1 || year > 5)
-        return res.status(400).json({ message: "Year must be between 1 and 5." });
+        return res
+          .status(400)
+          .json({ message: "Year must be between 1 and 5." });
     }
 
     if ((role === "coach" || role === "exco") && !staffId)
@@ -52,7 +61,8 @@ exports.registerUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid sport." });
 
     const existing = await User.findOne({ email });
-    if (existing) return res.status(400).json({ message: "Email already exists." });
+    if (existing)
+      return res.status(400).json({ message: "Email already exists." });
 
     const hashedStaffId = staffId ? await bcrypt.hash(staffId, 10) : undefined;
     const encryptedNRIC = nric ? encrypt(nric) : undefined;
@@ -77,7 +87,6 @@ exports.registerUser = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
-
 
 /* ============================================================
    LOGIN
@@ -127,7 +136,6 @@ exports.loginUser = async (req, res) => {
       });
     }
 
-    // FIXED JWT PAYLOAD — contains BOTH userId and _id
     const token = jwt.sign(
       {
         userId: matched._id,
@@ -142,7 +150,11 @@ exports.loginUser = async (req, res) => {
     );
 
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    await Session?.create?.({ userId: matched._id, jwtToken: token, expiresAt });
+    await Session?.create?.({
+      userId: matched._id,
+      jwtToken: token,
+      expiresAt,
+    });
 
     return res.json({
       message: "Login successful.",
@@ -162,7 +174,6 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-
 /* ============================================================
    GET LOGGED IN USER (auth/me)
 =============================================================== */
@@ -171,12 +182,9 @@ exports.getMe = async (req, res) => {
     // req.user comes from verifyToken
     const id = req.user.userId || req.user._id;
 
-    const user = await User.findById(id).select(
-      "-nricEncrypted -staffId -__v"
-    );
+    const user = await User.findById(id).select("-nricEncrypted -staffId -__v");
 
-    if (!user)
-      return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json({ message: "User not found" });
 
     return res.json(user);
   } catch (err) {

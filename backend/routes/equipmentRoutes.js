@@ -5,22 +5,21 @@ const router = express.Router();
 const equipmentController = require("../controllers/equipmentController");
 const { verifyToken, requireCoach, requireExco } = require("../middleware/authMiddleware");
 
-// Public / authenticated read
+// ===== Equipment =====
 router.get("/", verifyToken, equipmentController.getEquipmentList);
 
-// Create equipment (Exco only)
+// NEW: available equipment only
+router.get("/available", verifyToken, equipmentController.getAvailableEquipment);
+
+// EXCO
 router.post("/", verifyToken, requireExco, equipmentController.createEquipment);
 
-// Coach: request equipment
-router.post("/request", verifyToken, requireCoach, equipmentController.requestEquipment);
-
-// Coach: report damage
-router.post("/report-damage", verifyToken, requireCoach, equipmentController.reportDamage);
-
-// Exco: list all requests
+// ===== Equipment Requests =====
+router.post("/requests", verifyToken, requireCoach, equipmentController.requestEquipment);
 router.get("/requests", verifyToken, requireExco, equipmentController.listRequests);
-
-// Exco: process request
 router.post("/requests/:id/process", verifyToken, requireExco, equipmentController.processRequest);
+
+// ===== Damage =====
+router.post("/report-damage", verifyToken, requireCoach, equipmentController.reportDamage);
 
 module.exports = router;

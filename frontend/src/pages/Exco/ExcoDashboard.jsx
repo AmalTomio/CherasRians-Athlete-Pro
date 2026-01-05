@@ -27,14 +27,14 @@ export default function ExcoDashboard() {
   return (
     <div>
       <h2 className="mb-1">Exco Dashboard</h2>
-      <p className="text-muted mb-4">Overview of students assigned to each sport.</p>
+      <p className="text-muted mb-4">
+        Overview of students assigned to each sport.
+      </p>
 
       <div className="container-fluid">
         <div className="row g-4">
-          {/* Chart - left column on row 1 */}
-          <div className="col-12 col-md-6">
+          <div className="col-12 col-xl-6">
             <div className="card p-4 h-100">
-              {/* pass stats into Chart */}
               <Chart stats={stats} />
             </div>
           </div>
