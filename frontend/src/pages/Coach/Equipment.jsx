@@ -7,6 +7,7 @@ import { ToolsIcon, AlertIcon, CheckIcon } from "@primer/octicons-react";
 export default function CoachEquipment() {
   const [equipment, setEquipment] = useState([]);
   const [selected, setSelected] = useState(null);
+  const [showDamageModal, setShowDamageModal] = useState(false);
 
   const fetchEquipment = async () => {
     const res = await api.get("/equipment");
@@ -76,7 +77,10 @@ export default function CoachEquipment() {
                 <td className="text-end">
                   <button
                     className="btn btn-outline-danger btn-sm"
-                    onClick={() => setSelected(e)}
+                    onClick={() => {
+                      setSelected(e);
+                      setShowDamageModal(true);
+                    }}
                   >
                     Report Damage
                   </button>
@@ -87,13 +91,19 @@ export default function CoachEquipment() {
         </table>
       </div>
 
-      {selected && (
-        <DamageReportModal
-          equipment={selected}
-          onClose={() => setSelected(null)}
-          onSaved={fetchEquipment}
-        />
-      )}
+      <DamageReportModal
+        show={showDamageModal}
+        equipmentList={equipment.filter((eq) => eq.quantityAvailable > 0)}
+        onClose={() => {
+          setShowDamageModal(false);
+          setSelected(null);
+        }}
+        onReported={() => {
+          fetchEquipment();
+          setShowDamageModal(false);
+          setSelected(null);
+        }}
+      />
     </div>
   );
 }
