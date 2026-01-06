@@ -190,6 +190,30 @@ exports.createBooking = async (req, res) => {
         createdBy: user.userId || user._id,
       });
 
+      for (const er of equipmentRequests || []) {
+        const equipment = await Equipment.findById(er.equipmentId);
+
+        if (!equipment || !equipment.isActive) {
+          return res.status(400).json({
+            message: `Invalid equipment selected`,
+          });
+        }
+
+        const usableQuantity =
+          equipment.quantityTotal - equipment.quantityDamaged;
+
+        if (er.quantity > usableQuantity) {
+          return res.status(400).json({
+            message: `${equipment.name} only has ${usableQuantity} usable units`,
+          });
+        }
+
+        // 🔒 reserve stock immediately
+        await Equipment.findByIdAndUpdate(equipment._id, {
+          $inc: { quantityAvailable: -er.quantity },
+        });
+      }
+
       await booking.save();
       createdBookings.push(booking);
 
@@ -293,56 +317,7 @@ exports.approveBooking = async (req, res) => {
     /* ===== AUTO-DEDUCT EQUIPMENT FROM BOOKING ===== */
     const equipmentResults = [];
 
-    for (const reqItem of booking.equipmentRequests || []) {
-      const equipment = await Equipment.findById(reqItem.equipmentId);
-      if (!equipment) continue;
-
-      const qtyRequested = reqItem.quantity;
-      const qtyAvailable = equipment.quantityAvailable;
-      const qtyApproved = Math.min(qtyRequested, qtyAvailable);
-
-      if (qtyApproved > 0) {
-        await Equipment.findByIdAndUpdate(equipment._id, {
-          $inc: { quantityAvailable: -qtyApproved },
-        });
-      }
-      if (qtyAvailable <= 0) {
-        equipmentResults.push({
-          equipmentId: reqItem.equipmentId,
-          requested: qtyRequested,
-          approved: 0,
-        });
-        continue;
-      }
-
-      // deduct stock
-      await Equipment.findByIdAndUpdate(equipment._id, {
-        $inc: { quantityAvailable: -qtyApproved },
-      });
-
-      // optional: create audit record
-      await EquipmentRequest.create({
-        equipmentId: equipment._id,
-        bookingId: booking._id,
-
-        coachId: booking.coachId,
-
-        quantityRequested: qtyRequested,
-        quantityApproved: qtyApproved,
-        status:
-          qtyApproved === qtyRequested ? "approved" : "partially_approved",
-        processedBy: exco.userId || exco._id,
-        processedAt: new Date(),
-        notes: "Auto-approved with booking",
-      });
-
-      equipmentResults.push({
-        equipmentId: reqItem.equipmentId,
-        requested: qtyRequested,
-        approved: qtyApproved,
-      });
-    }
-
+    
     /* ===== SCHEDULE CREATION ===== */
     const attendanceReasons = ["training", "tryout"];
     let schedule = null;

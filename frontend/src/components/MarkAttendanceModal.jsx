@@ -28,7 +28,6 @@ export default function MarkAttendanceModal({
       const initial = res.data.players.map((p) => ({
         playerId: p._id,
         name: `${p.firstName} ${p.lastName}`,
-        staffId: p.staffId,
         status: "Present",
         remarks: "",
       }));

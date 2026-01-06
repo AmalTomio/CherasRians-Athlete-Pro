@@ -1,4 +1,3 @@
-// backend/models/Equipment.js
 const mongoose = require("mongoose");
 
 const equipmentSchema = new mongoose.Schema(
@@ -7,7 +6,7 @@ const equipmentSchema = new mongoose.Schema(
     category: { type: String, required: true, index: true },
     quantityTotal: { type: Number, required: true, min: 0 },
     quantityAvailable: { type: Number, required: true, min: 0 },
-    quantityDamaged: { type: Number, default: 0, min: 0 }, // optional vendor / location fields
+    quantityDamaged: { type: Number, default: 0, min: 0 }, 
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     isActive: { type: Boolean, default: true },
   },

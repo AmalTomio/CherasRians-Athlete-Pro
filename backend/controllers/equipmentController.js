@@ -21,10 +21,14 @@ exports.getAvailableEquipment = async (req, res) => {
   try {
     const items = await Equipment.find({
       isActive: true,
-      quantityAvailable: { $gt: 0 },
-    }).sort({ name: 1 });
+      $expr: {
+        $gt: [{ $subtract: ["$quantityTotal", "$quantityDamaged"] }, 0],
+      },
+    })
+      .sort({ name: 1 })
+      .lean();
 
-    res.json(items);
+    res.json({ equipment: items });
   } catch (err) {
     console.error("Get available equipment error:", err);
     res.status(500).json({ message: "Server error" });
@@ -34,11 +38,7 @@ exports.getAvailableEquipment = async (req, res) => {
 // Create equipment (EXCO)
 exports.createEquipment = async (req, res) => {
   try {
-    const {
-      name,
-      category,
-      quantityTotal = 0,
-    } = req.body;
+    const { name, category, quantityTotal = 0 } = req.body;
 
     if (!name || !category || quantityTotal == null) {
       return res.status(400).json({
@@ -63,7 +63,6 @@ exports.createEquipment = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 // Coach: request equipment for a booking/session
 exports.requestEquipment = async (req, res) => {
@@ -102,11 +101,9 @@ exports.requestEquipment = async (req, res) => {
 
       // Optional but GOOD: ensure coach owns this booking
       if (String(booking.coachId) !== String(coachId)) {
-        return res
-          .status(403)
-          .json({
-            message: "You can only request equipment for your own booking",
-          });
+        return res.status(403).json({
+          message: "You can only request equipment for your own booking",
+        });
       }
     }
 
@@ -134,7 +131,7 @@ exports.requestEquipment = async (req, res) => {
 // Coach: report equipment damage
 exports.reportDamage = async (req, res) => {
   try {
-    const reporter = req.user?.userId || req.user?._id;
+    const reporter = req.user.userId || req.user._id;
     const {
       equipmentId,
       quantityDamaged,
@@ -144,13 +141,22 @@ exports.reportDamage = async (req, res) => {
     } = req.body;
 
     if (!equipmentId || !quantityDamaged) {
-      return res
-        .status(400)
-        .json({ message: "Missing equipmentId or quantityDamaged" });
+      return res.status(400).json({ message: "Missing fields" });
     }
 
-    const eq = await Equipment.findById(equipmentId);
-    if (!eq) return res.status(404).json({ message: "Equipment not found" });
+    const equipment = await Equipment.findById(equipmentId);
+    if (!equipment) {
+      return res.status(404).json({ message: "Equipment not found" });
+    }
+
+    if (quantityDamaged > equipment.quantityAvailable) {
+      return res.status(400).json({
+        message: "Damaged quantity exceeds available stock",
+      });
+    }
+
+    const images =
+      req.files?.map((f) => `/uploads/equipment-damage/${f.filename}`) || [];
 
     const report = await DamageReport.create({
       equipmentId,
@@ -159,18 +165,21 @@ exports.reportDamage = async (req, res) => {
       quantityDamaged,
       damageDescription: description,
       severity,
-      status: "reported",
+      images,
     });
 
-    // update equipment counters (decrement available, increment damaged)
+    // ✅ AUTO-DEDUCT (you already wanted this)
     await Equipment.findByIdAndUpdate(equipmentId, {
       $inc: {
         quantityDamaged: quantityDamaged,
-        quantityAvailable: -Math.abs(quantityDamaged),
+        quantityAvailable: -quantityDamaged,
       },
     });
 
-    return res.status(201).json({ message: "Damage report submitted", report });
+    res.status(201).json({
+      message: "Damage reported successfully",
+      report,
+    });
   } catch (err) {
     console.error("Damage report error:", err);
     res.status(500).json({ message: "Server error" });

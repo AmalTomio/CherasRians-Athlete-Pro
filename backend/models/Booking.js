@@ -1,25 +1,40 @@
 // backend/models/Booking.js
 const mongoose = require("mongoose");
 
-const equipmentRequestSchema = new mongoose.Schema({
-  equipmentId: { type: mongoose.Schema.Types.ObjectId, ref: "Equipment", required: true },
-  equipmentName: { type: String, required: true },
-  quantity: { type: Number, required: true, min: 1 },
-  reason: { type: String, default: "" },
-  status: {
-    type: String,
-    enum: ["pending", "approved", "rejected", "partially_approved"],
-    default: "pending",
+const equipmentRequestSchema = new mongoose.Schema(
+  {
+    equipmentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Equipment",
+      required: true,
+    },
+    equipmentName: { type: String, required: true },
+    quantity: { type: Number, required: true, min: 1 },
+    reason: { type: String, default: "" },
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected", "partially_approved"],
+      default: "pending",
+    },
+    approvedQuantity: { type: Number, default: 0 },
+    notes: { type: String },
   },
-  approvedQuantity: { type: Number, default: 0 },
-  notes: { type: String },
-}, { _id: false });
+  { _id: false }
+);
 
 const bookingSchema = new mongoose.Schema(
   {
-    coachId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    coachId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     coachName: { type: String },
-    facilityId: { type: mongoose.Schema.Types.ObjectId, ref: "Facility", required: true },
+    facilityId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Facility",
+      required: true,
+    },
     startAt: { type: Date, required: true },
     endAt: { type: Date, required: true },
 
@@ -40,6 +55,10 @@ const bookingSchema = new mongoose.Schema(
     approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     approvedAt: { type: Date },
 
+    equipmentReleased: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

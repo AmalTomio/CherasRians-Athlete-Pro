@@ -5,10 +5,6 @@ const User = require("../models/User");
 // Only these reasons allow attendance
 const ATTENDANCE_REASONS = ["training", "tryout"];
 
-/**
- * GET /api/attendance/sessions/coach
- * Fetch approved bookings usable for attendance
- */
 exports.getCoachSessions = async (req, res) => {
   try {
     const coachId = req.user.userId || req.user._id;
@@ -33,6 +29,7 @@ exports.getSessionPlayers = async (req, res) => {
     const coachId = req.user.userId || req.user._id;
     const { bookingId } = req.params;
 
+    // 1. Validate booking belongs to coach
     const booking = await Booking.findOne({
       _id: bookingId,
       coachId,
@@ -44,17 +41,23 @@ exports.getSessionPlayers = async (req, res) => {
       return res.status(403).json({ message: "Unauthorized access" });
     }
 
-    const coach = await User.findById(coachId);
+    // 2. Get coach sport
+    const coach = await User.findById(coachId).select("sport");
+
+    if (!coach || !coach.sport) {
+      return res.status(400).json({ message: "Coach sport not assigned" });
+    }
+
+    // 3. Get players by sport
     const players = await User.find({
       role: "student",
-      //   sport: coach.sport,
-      sport: schedule.sport,
-    }).select("firstName lastName classGroup");
+      sport: coach.sport,
+    }).select("firstName lastName classGroup sport");
 
-    res.json({ players });
+    return res.json({ players });
   } catch (err) {
     console.error("Get Session Players Error:", err);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 

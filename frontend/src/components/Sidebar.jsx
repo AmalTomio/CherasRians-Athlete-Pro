@@ -62,7 +62,7 @@ export default function Sidebar({ onToggle }) {
         ["Facilities", FiFileText, "/coach/facilities"],
         ["Medical Leave", FiFileText, "/coach/medical"],
         ["Attendance", FiClipboard, "/coach/attendance"],
-        ["Equipment", FiTool, "/dashboard/equipment"],
+        ["Equipment", FiTool, "/coach/equipment"],
         ["Announcements", FiBell, "/dashboard/announcements"],
       ],
       exco: [

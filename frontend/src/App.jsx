@@ -17,12 +17,13 @@ import ExcoBooking from "./pages/Exco/Booking";
 import EquipmentManagement from "./pages/Exco/Equipment";
 import ExcoFacilities from "./pages/Exco/Facilities";
 import Coaches from "./pages/Exco/Coaches";
+
 // Coach Pages
 import Players from "./pages/Coach/Players";
 import CoachFacilities from "./pages/Coach/Facilities";
 import MedicalLeaveReview from "./pages/Coach/MedicalLeaveReview";
 import Attendance from "./pages/Coach/Attendance";
-
+import Equipment from "./pages/Coach/Equipment";
 // Student Pages
 import Medical from "./pages/Student/Medical";
 
@@ -152,6 +153,16 @@ export default function App() {
           }
         />
 
+        <Route
+          path="/coach/equipment"
+          element={
+            <ProtectedRoute allowedRoles={["coach"]}>
+              <WithSidebar>
+                <Equipment />
+              </WithSidebar>
+            </ProtectedRoute>
+          }
+        />
         {/* Student Routes */}
         <Route
           path="/student/medical"

@@ -69,7 +69,7 @@ export default function EquipmentManagement() {
       {/* Stats */}
       <div className="row g-4 mb-4">
         <StatCard
-          title="Total Items"
+          title="Total Equipment"
           value={totalItems}
           icon={<PackageIcon size={22} />}
           iconBg="#eef2ff"
@@ -112,7 +112,7 @@ export default function EquipmentManagement() {
             <table className="table mb-0 align-middle">
               <thead className="table-light">
                 <tr>
-                  <th>Item Name</th>
+                  <th>Equipment</th>
                   <th>Category</th>
                   <th>Total</th>
                   <th>Available</th>

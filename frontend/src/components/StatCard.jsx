@@ -12,13 +12,11 @@ export default function StatCard({
         style={{ background: "#ffffff" }}
       >
         <div className="card-body d-flex align-items-center justify-content-between">
-          {/* LEFT: TEXT */}
           <div>
             <div className="text-muted fw-medium mb-1">{title}</div>
             <div className="fs-2 fw-bold">{value}</div>
           </div>
 
-          {/* RIGHT: ICON */}
           {icon && (
             <div
               className="d-flex align-items-center justify-content-center"

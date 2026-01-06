@@ -1,4 +1,3 @@
-// backend/controllers/excoController.js
 const User = require("../models/User");
 const { decrypt } = require("../utils/crypto");
 

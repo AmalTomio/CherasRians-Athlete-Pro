@@ -30,7 +30,7 @@ export default function BookingModal({ facility, onClose, onBooked }) {
   const fetchAvailableEquipment = async () => {
     try {
       setLoadingEquipment(true);
-      const res = await api.get("/equipment");
+      const res = await api.get("/equipment/available");
       setEquipmentList(res.data.equipment || []);
     } catch (err) {
       console.error("Error fetching equipment:", err);

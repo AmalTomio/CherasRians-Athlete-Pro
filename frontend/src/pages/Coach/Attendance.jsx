@@ -107,7 +107,6 @@ export default function Attendance() {
                 <tr>
                   <th>#</th>
                   <th>Name</th>
-                  <th>Student ID</th>
                   <th>Status</th>
                   <th>Remarks</th>
                 </tr>
@@ -119,7 +118,6 @@ export default function Attendance() {
                     <td>
                       {a.playerId?.firstName} {a.playerId?.lastName}
                     </td>
-                    <td>{a.playerId?.staffId}</td>
                     <td>{a.status}</td>
                     <td>{a.remarks || "-"}</td>
                   </tr>
