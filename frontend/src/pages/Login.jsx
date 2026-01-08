@@ -38,9 +38,9 @@ export default function Login() {
   return (
     <Auth title="Log in" subtitle="Welcome back! Please enter your details.">
       <div className="mb-3">
-        <label className="form-label fw-bold">Select Role</label>
+        <label className="form-label">Select Role</label>
         <select
-          className="form-select form-select-lg"
+          className="form-select"
           value={role}
           onChange={(e) => {
             setRole(e.target.value);
@@ -57,12 +57,12 @@ export default function Login() {
       {/* NRIC / STAFF ID INPUT */}
       {role && (
         <div className="mb-3">
-          <label className="form-label fw-bold">
+          <label className="form-label">
             {role === "student" ? "NRIC (12 digits)" : "Staff ID"}
           </label>
           <input
             type="text"
-            className="form-control form-control-lg"
+            className="form-control"
             placeholder={
               role === "student" ? "Enter NRIC (12 digits)" : "Enter Staff ID"
             }

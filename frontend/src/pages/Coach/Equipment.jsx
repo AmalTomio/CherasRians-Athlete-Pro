@@ -25,8 +25,8 @@ export default function CoachEquipment() {
   };
 
   return (
-    <div className="container py-4">
-      <h2 className="mb-1">Equipment</h2>
+    <div>
+      <h2 className="mb-3">Equipment</h2>
       <p className="text-muted mb-4">View and report damaged equipment</p>
 
       {/* STATS */}

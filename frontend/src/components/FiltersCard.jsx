@@ -1,3 +1,4 @@
+// components/FiltersCard.jsx
 import React from "react";
 import {
   getClassOptionsForYear,
@@ -5,27 +6,39 @@ import {
 } from "../config/classGroups";
 
 export default function FiltersCard({
+  // SEARCH
   search,
   setSearch,
 
+  // YEAR / CLASS
   year,
   setYear,
-
   classGroup,
   setClassGroup,
 
+  // SPORT
   sport,
   setSport,
 
+  // STATUS
   status,
-  setStatus, // ✅ NEW
+  setStatus,
 
-  onReset,
+  // DATE RANGE (OPTIONAL)
+  startDate = "",
+  setStartDate = () => {},
+  endDate = "",
+  setEndDate = () => {},
 
+  // UI FLAGS
   showYear = true,
   showClass = true,
   showSport = true,
-  showStatus = false, // ✅ NEW
+  showStatus = false,
+  showDate = false,
+
+  // ACTION
+  onReset,
 
   searchPlaceholder = "Enter name...",
 }) {
@@ -53,7 +66,32 @@ export default function FiltersCard({
             />
           </div>
 
-          {/* YEAR (PLAYERS ONLY) */}
+          {/* DATE FILTER (OPTIONAL) */}
+          {showDate && (
+            <>
+              <div className="col-lg-2 col-md-6">
+                <label className="form-label fw-bold">From</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+
+              <div className="col-lg-2 col-md-6">
+                <label className="form-label fw-bold">To</label>
+                <input
+                  type="date"
+                  className="form-control"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+            </>
+          )}
+
+          {/* YEAR */}
           {showYear && (
             <div className="col-lg-2 col-md-6">
               <label className="form-label fw-bold">Form</label>
@@ -72,7 +110,7 @@ export default function FiltersCard({
             </div>
           )}
 
-          {/* CLASS (PLAYERS ONLY) */}
+          {/* CLASS */}
           {showClass && (
             <div className="col-lg-2 col-md-6">
               <label className="form-label fw-bold">Class</label>
@@ -111,7 +149,7 @@ export default function FiltersCard({
             </div>
           )}
 
-          {/* STATUS (COACH ONLY) */}
+          {/* STATUS */}
           {showStatus && (
             <div className="col-lg-2 col-md-6">
               <label className="form-label fw-bold">Status</label>
@@ -121,8 +159,10 @@ export default function FiltersCard({
                 onChange={(e) => setStatus(e.target.value)}
               >
                 <option value="">All</option>
-                <option value="active">Active</option>
-                <option value="retired">Retired</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+                <option value="cancelled">Cancelled</option>
               </select>
             </div>
           )}
@@ -130,6 +170,7 @@ export default function FiltersCard({
           {/* ACTIONS */}
           <div className="col-lg-3 col-md-12 d-flex gap-2">
             <button
+              type="button"
               className="btn btn-outline-secondary w-100"
               onClick={onReset}
             >

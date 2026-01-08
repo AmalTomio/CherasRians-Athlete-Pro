@@ -1,210 +1,221 @@
+// exco/Bookings.jsx
 import { useEffect, useState } from "react";
 import api from "../../api/axios";
 import moment from "moment";
-import { successAlert, errorAlert } from "../../utils/swal";
 import Swal from "sweetalert2";
+import { formatStatus } from "../../utils/format";
+
+import { successAlert, errorAlert } from "../../utils/swal";
+import FiltersCard from "../../components/FiltersCard";
 
 export default function Bookings() {
-  const [requests, setRequests] = useState([]);
+  const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchRequests = async () => {
+  // Filters
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  const fetchBookings = async () => {
     try {
-      const res = await api.get("/exco/bookings/pending");
-      setRequests(res.data.bookings || []);
+      setLoading(true);
+      const res = await api.get("/exco/bookings");
+      setBookings(res.data.bookings || []);
     } catch (err) {
-      console.error("Failed to load bookings:", err);
-      errorAlert("Failed to fetch booking requests.");
+      errorAlert("Failed to fetch bookings.");
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchBookings();
+  }, []);
+
   const handleDecision = async (id, approve) => {
+    const result = await Swal.fire({
+      title: `${approve ? "Approve" : "Reject"} Booking?`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: approve ? "Approve" : "Reject",
+      confirmButtonColor: approve ? "#16a34a" : "#dc2626",
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
-      // Show confirmation dialog
-      const result = await Swal.fire({
-        title: `${approve ? "Approve" : "Reject"} Booking?`,
-        text: approve
-          ? "Are you sure you want to approve this booking request?"
-          : "Are you sure you want to reject this booking request?",
-        icon: "question",
-        showCancelButton: true,
-        confirmButtonText: approve ? "Yes, Approve!" : "Yes, Reject!",
-        confirmButtonColor: approve ? "#28a745" : "#dc3545",
-        cancelButtonColor: "#6c757d",
-        reverseButtons: true,
-      });
-
-      if (result.isConfirmed) {
-        // Use the correct endpoint with /approve suffix
-        await api.put(`/exco/bookings/${id}/approve`, { approve });
-
-        if (approve) {
-          successAlert("Booking approved!");
-        } else {
-          successAlert("Booking rejected!");
-        }
-
-        fetchRequests();
-      }
-    } catch (err) {
-      console.error("Approval error:", err);
-      errorAlert(err.response?.data?.message || "Failed to update booking.");
+      await api.put(`/exco/bookings/${id}/approve`, { approve });
+      successAlert(`Booking ${approve ? "approved" : "rejected"}`);
+      fetchBookings();
+    } catch {
+      errorAlert("Failed to update booking.");
     }
   };
 
-  useEffect(() => {
-    fetchRequests();
-  }, []);
+  // ===== FILTER LOGIC =====
+  const filtered = bookings.filter((b) => {
+    const q = search.toLowerCase();
+
+    const matchSearch =
+      !search ||
+      b.facilityId?.name?.toLowerCase().includes(q) ||
+      b.coachName?.toLowerCase().includes(q);
+
+    const matchStatus = !status || b.status === status;
+
+    const matchStart =
+      !startDate || moment(b.startAt).isSameOrAfter(startDate, "day");
+
+    const matchEnd =
+      !endDate || moment(b.startAt).isSameOrBefore(endDate, "day");
+
+    return matchSearch && matchStatus && matchStart && matchEnd;
+  });
+
+  const pending = filtered.filter((b) => b.status === "pending");
+  const history = filtered.filter((b) => b.status !== "pending");
 
   return (
     <div>
-      <h2 className="mb-1">Booking Requests</h2>
-      <p className="text-muted mb-4">Review and approve facility bookings.</p>
+      <h2 className="mb-1">Booking Management</h2>
+      <p className="text-muted mb-4">
+        Review booking requests and view booking history
+      </p>
 
-      <div className="container-fluid">
-        {loading ? (
-          <div className="text-center py-4">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <p className="mt-2 text-muted">Loading booking requests...</p>
-          </div>
-        ) : requests.length === 0 ? (
-          <div className="alert alert-info">
-            <i className="bi bi-info-circle me-2"></i>
-            No pending bookings at the moment.
-          </div>
-        ) : (
-          <div className="row g-4">
-            {requests.map((req) => (
-              <div key={req._id} className="col-12 col-lg-6">
-                <div className="card shadow-sm p-3 h-100">
-                  {/* Header */}
-                  <div className="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                      <h5 className="fw-bold mb-1">
-                        {req.facilityId?.name || "Facility"}
-                      </h5>
-                      <small className="text-muted">
-                        Requested by:{" "}
-                        <strong>{req.coachName || "Coach"}</strong>
-                      </small>
-                    </div>
-                    <span className="badge bg-warning">Pending</span>
-                  </div>
+      {/* FILTERS */}
+      <FiltersCard
+        search={search}
+        setSearch={setSearch}
+        status={status}
+        setStatus={setStatus}
+        startDate={startDate}
+        setStartDate={setStartDate}
+        endDate={endDate}
+        setEndDate={setEndDate}
+        showYear={false}
+        showClass={false}
+        showSport={false}
+        showStatus
+        showDate
+        searchPlaceholder="Search facility or coach..."
+        onReset={() => {
+          setSearch("");
+          setStatus("");
+          setStartDate("");
+          setEndDate("");
+        }}
+      />
 
-                  <hr className="my-2" />
+      {/* ===== PENDING BOOKINGS ===== */}
+      {loading ? (
+        <div className="text-center py-5">
+          <div className="spinner-border text-primary" />
+        </div>
+      ) : pending.length === 0 ? (
+        <div className="alert alert-info">No pending bookings found</div>
+      ) : (
+        <div className="row g-4">
+          {pending.map((req) => (
+            <div key={req._id} className="col-lg-6">
+              <div className="card shadow-sm p-3 h-100">
+                <div className="d-flex justify-content-between mb-2">
+                  <h5 className="fw-bold">{req.facilityId?.name}</h5>
+                  <span className="badge bg-warning">
+                    {formatStatus(req.status)}
+                  </span>
+                </div>
 
-                  {/* Date & Time */}
-                  <div className="mb-2">
-                    <p className="mb-1">
-                      <strong>Date:</strong>{" "}
-                      {req.startAt
-                        ? moment(req.startAt).format("dddd, MMM D YYYY")
-                        : "N/A"}
-                    </p>
-                    <p className="mb-2">
-                      <strong>Time:</strong>{" "}
-                      {req.startAt
-                        ? moment(req.startAt)
-                            .tz("Asia/Kuala_Lumpur")
-                            .format("h:mm A")
-                        : "N/A"}{" "}
-                      {req.endAt
-                        ? moment(req.endAt)
-                            .tz("Asia/Kuala_Lumpur")
-                            .format("h:mm A")
-                        : "N/A"}
-                    </p>
-                    {req.startAt && req.endAt && (
-                      <p className="mb-2">
-                        <strong>Duration:</strong>{" "}
-                        {Math.round(
-                          ((new Date(req.endAt) - new Date(req.startAt)) /
-                            (1000 * 60 * 60)) *
-                            10
-                        ) / 10}{" "}
-                        hours
-                      </p>
-                    )}
-                  </div>
+                <div className="text-muted small mb-2">
+                  Coach: <strong>{req.coachName}</strong>
+                </div>
 
-                  {/* Reason */}
-                  <div className="mb-2">
-                    <p className="mb-1">
-                      <strong>Reason:</strong>
-                    </p>
-                    <p className="text-muted mb-2">
-                      {req.reason || "Not specified"}
-                    </p>
-                  </div>
+                <div className="mb-2">
+                  {moment(req.startAt).format("MMM D YYYY")} <br />
+                  {moment(req.startAt).format("h:mm A")} –{" "}
+                  {moment(req.endAt).format("h:mm A")}
+                </div>
 
-                  {/* Equipment */}
-                  <div className="mb-3">
-                    <p className="mb-1">
-                      <strong>Equipment Requested:</strong>
-                    </p>
-                    {req.equipmentRequests?.length > 0 ? (
-                      <ul className="list-group list-group-flush small">
-                        {req.equipmentRequests.map((eq, i) => (
-                          <li key={i} className="list-group-item px-0 py-1">
-                            <div className="d-flex justify-content-between align-items-center">
-                              <span>{eq.equipmentName}</span>
-                              <span className="badge bg-secondary">
-                                {eq.quantity} pcs
-                              </span>
-                            </div>
-                            {eq.reason && (
-                              <div className="text-muted small mt-1">
-                                Reason: {eq.reason}
-                              </div>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-muted small mb-0">
-                        No equipment requested
-                      </p>
-                    )}
-                  </div>
+                <p className="text-muted">{req.reason}</p>
 
-                  {/* Request Info */}
-                  <div className="mt-auto">
-                    <div className="small text-muted border-top pt-2">
-                      <div>
-                        <strong>Requested:</strong>{" "}
-                        {req.createdAt
-                          ? moment(req.createdAt)
-                              .tz("Asia/Kuala_Lumpur")
-                              .format("MMM D, h:mm A")
-                          : "N/A"}
-                      </div>
-                    </div>
-
-                    {/* Buttons */}
-                    <div className="d-flex gap-2 justify-content-end mt-3">
-                      <button
-                        className="btn btn-outline-danger"
-                        onClick={() => handleDecision(req._id, false)}
-                      >
-                        Reject
-                      </button>
-                      <button
-                        className="btn btn-success"
-                        onClick={() => handleDecision(req._id, true)}
-                      >
-                        Approve
-                      </button>
-                    </div>
-                  </div>
+                <div className="text-end mt-auto">
+                  <button
+                    className="btn btn-outline-danger me-2"
+                    onClick={() => handleDecision(req._id, false)}
+                  >
+                    Reject
+                  </button>
+                  <button
+                    className="btn btn-success"
+                    onClick={() => handleDecision(req._id, true)}
+                  >
+                    Approve
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ===== DIVIDER ===== */}
+      <div className="d-flex align-items-center my-5">
+        <div className="flex-grow-1 border-top"></div>
+        <span className="mx-3 text-muted fw-semibold">Booking History</span>
+        <div className="flex-grow-1 border-top"></div>
+      </div>
+
+      {/* ===== HISTORY TABLE ===== */}
+      <div className="card shadow-sm">
+        <table className="table align-middle mb-0">
+          <thead className="table-light">
+            <tr>
+              <th>Facility</th>
+              <th>Date & Time</th>
+              <th>Coach</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {history.length === 0 ? (
+              <tr>
+                <td colSpan="4" className="text-center py-4 text-muted">
+                  No booking history
+                </td>
+              </tr>
+            ) : (
+              history.map((b) => (
+                <tr key={b._id}>
+                  <td>{b.facilityId?.name}</td>
+                  <td>
+                    {moment(b.startAt).format("MMM D YYYY")}
+                    <div className="text-muted small">
+                      {moment(b.startAt).format("h:mm A")} –{" "}
+                      {moment(b.endAt).format("h:mm A")}
+                    </div>
+                  </td>
+                  <td>{b.coachName}</td>
+                  <td>
+                    <span
+                      className={`badge ${
+                        b.status === "approved"
+                          ? "bg-success"
+                          : bookings.status === "rejected"
+                          ? "bg-danger"
+                          : b.status === "cancelled"
+                          ? "bg-secondary"
+                          : "bg-warning"
+                      }`}
+                    >
+                      {formatStatus(b.status)}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

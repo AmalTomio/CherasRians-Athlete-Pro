@@ -92,7 +92,7 @@ exports.requestEquipment = async (req, res) => {
       });
     }
 
-    // 3️⃣ 🔥 VALIDATE BOOKING LINK (THIS IS YOUR QUESTION)
+    // validate linked booking (if provided)
     if (scheduleId) {
       const booking = await Booking.findById(scheduleId);
       if (!booking) {
@@ -107,7 +107,6 @@ exports.requestEquipment = async (req, res) => {
       }
     }
 
-    // 4️⃣ Create request
     const request = await EquipmentRequest.create({
       coachId,
       equipmentId,
@@ -117,7 +116,6 @@ exports.requestEquipment = async (req, res) => {
       status: "pending",
     });
 
-    // 5️⃣ Done
     res.status(201).json({
       message: "Equipment request submitted",
       request,
@@ -168,7 +166,6 @@ exports.reportDamage = async (req, res) => {
       images,
     });
 
-    // ✅ AUTO-DEDUCT (you already wanted this)
     await Equipment.findByIdAndUpdate(equipmentId, {
       $inc: {
         quantityDamaged: quantityDamaged,
@@ -282,6 +279,82 @@ exports.processRequest = async (req, res) => {
     }
   } catch (err) {
     console.error("Process equipment request error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// EXCO: Get ALL damage reports (global history)
+exports.getAllDamageReports = async (req, res) => {
+  try {
+    const reports = await DamageReport.find()
+      .populate("equipmentId", "name category")
+      .populate("reportedBy", "firstName lastName")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({ reports });
+  } catch (err) {
+    console.error("Get all damage reports error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+exports.resolveDamageReport = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const excoId = req.user.userId || req.user._id;
+
+    const report = await DamageReport.findById(id);
+    if (!report) {
+      return res.status(404).json({ message: "Damage report not found" });
+    }
+
+    if (report.status === "resolved") {
+      return res.status(400).json({ message: "Report already resolved" });
+    }
+
+    const equipment = await Equipment.findById(report.equipmentId);
+    if (!equipment) {
+      return res.status(404).json({ message: "Equipment not found" });
+    }
+
+    const qty = report.quantityDamaged;
+
+    await Equipment.findByIdAndUpdate(equipment._id, {
+      $inc: {
+        quantityDamaged: -qty,
+        quantityAvailable: qty,
+      },
+    });
+
+    report.status = "resolved";
+    report.resolvedBy = excoId;
+    report.resolvedAt = new Date();
+    await report.save();
+
+    return res.json({
+      message: "Damage resolved and inventory restored",
+      reportId: report._id,
+    });
+  } catch (err) {
+    console.error("Resolve damage error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getDamageReportsByEquipment = async (req, res) => {
+  try {
+    const { equipmentId } = req.params;
+
+    const reports = await DamageReport.find({ equipmentId })
+      .populate("reportedBy", "firstName lastName")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({ reports });
+  } catch (err) {
+    console.error("Get damage reports error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };

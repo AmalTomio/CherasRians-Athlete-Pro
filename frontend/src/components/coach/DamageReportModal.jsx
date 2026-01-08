@@ -49,7 +49,7 @@ export default function DamageReportModal({
       formData.append("quantityDamaged", quantityDamaged);
       formData.append("description", description);
       if (imageFile) {
-        formData.append("image", imageFile);
+        formData.append("images", imageFile);
       }
 
       await api.post("/equipment/report-damage", formData, {

@@ -28,13 +28,24 @@ const damageReportSchema = new mongoose.Schema(
       default: "low",
     },
 
-    // ✅ NEW
     images: [{ type: String }], // store uploaded file paths
 
     status: {
       type: String,
-      enum: ["reported", "reviewed", "resolved"],
+      enum: ["reported",  "resolved"],
       default: "reported",
+      index: true,
+    },
+    resolvedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    resolvedAt: Date,
+
+    resolutionType: {
+      type: String,
+      enum: ["repaired", "replaced"],
     },
   },
   { timestamps: true }

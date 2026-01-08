@@ -11,11 +11,15 @@ import {
 
 import EquipmentModal from "../../components/EquipmentModal";
 import StatCard from "../../components/StatCard";
+import DamageReportDetailsModal from "../../components/exco/DamageReportDetailsModal";
 
 export default function EquipmentManagement() {
   const [equipment, setEquipment] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
+  const [selectedEquipment, setSelectedEquipment] = useState(null);
+  const [showDamageModal, setShowDamageModal] = useState(false);
+  const [damageHistory, setDamageHistory] = useState([]);
 
   const fetchEquipment = async () => {
     try {
@@ -29,8 +33,18 @@ export default function EquipmentManagement() {
     }
   };
 
+  const fetchDamageHistory = async () => {
+    try {
+      const res = await api.get("/equipment/damage-reports");
+      setDamageHistory(res.data.reports || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     fetchEquipment();
+    fetchDamageHistory();
   }, []);
 
   // ===== STATS =====
@@ -118,6 +132,7 @@ export default function EquipmentManagement() {
                   <th>Available</th>
                   <th>In Use</th>
                   <th>Damaged</th>
+                  <th className="text-end">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -143,22 +158,93 @@ export default function EquipmentManagement() {
                       <td className="text-success">{e.quantityAvailable}</td>
                       <td className="text-primary">{inUse}</td>
                       <td className="text-danger">{e.quantityDamaged || 0}</td>
+
+                      <td className="text-end">
+                        {e.quantityDamaged > 0 && (
+                          <button
+                            className="btn btn-outline-danger btn-sm"
+                            onClick={() => {
+                              setSelectedEquipment(e);
+                              setShowDamageModal(true);
+                            }}
+                          >
+                            View Damage
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
-
-                {equipment.length === 0 && (
-                  <tr>
-                    <td colSpan="6" className="text-center py-4 text-muted">
-                      No equipment found
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
           )}
         </div>
       </div>
+
+      <div className="d-flex align-items-center my-5">
+        <div className="flex-grow-1 border-top"></div>
+        <div className="px-3">
+          <h4 className="mb-0 text-muted">Damage History</h4>
+        </div>
+        <div className="flex-grow-1 border-top"></div>
+      </div>
+      {/* ================= DAMAGE HISTORY ================= */}
+      {damageHistory.length > 0 && (
+        <div className="card shadow-sm mt-5">
+          <div className="card-body">
+            <h5 className="fw-semibold mb-4">Damage History</h5>
+
+            <div className="list-group list-group-flush">
+              {damageHistory.map((r) => (
+                <div
+                  key={r._id}
+                  className="list-group-item py-3 d-flex align-items-center justify-content-between"
+                >
+                  {/* LEFT */}
+                  <div className="d-flex align-items-center gap-3">
+                    <div
+                      className="rounded-circle d-flex align-items-center justify-content-center"
+                      style={{
+                        width: 44,
+                        height: 44,
+                        background: "#fee2e2",
+                        color: "#dc2626",
+                        fontWeight: 600,
+                      }}
+                    >
+                      <i className="bi bi-exclamation-triangle-fill"></i>
+                    </div>
+
+                    <div>
+                      <div className="fw-semibold">{r.equipmentId?.name}</div>
+                      <div className="small text-muted">
+                        {r.quantityDamaged} damaged · Reported by{" "}
+                        {r.reportedBy?.firstName} {r.reportedBy?.lastName}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* RIGHT */}
+                  <div className="text-end">
+                    <div className="small text-muted">
+                      {new Date(r.createdAt).toLocaleDateString()}
+                    </div>
+                    <span
+                      className={`badge ${
+                        r.status === "resolved"
+                          ? "bg-success"
+                          : "bg-warning text-dark"
+                      }`}
+                    >
+                      {r.status}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Equipment Modal */}
       {showAdd && (
@@ -168,6 +254,21 @@ export default function EquipmentManagement() {
             setShowAdd(false);
             fetchEquipment();
             successAlert("Equipment added successfully");
+          }}
+        />
+      )}
+
+      {showDamageModal && selectedEquipment && (
+        <DamageReportDetailsModal
+          equipment={selectedEquipment}
+          onClose={() => {
+            setShowDamageModal(false);
+            setSelectedEquipment(null);
+          }}
+          onResolved={() => {
+            setShowDamageModal(false);
+            setSelectedEquipment(null);
+            fetchEquipment();
           }}
         />
       )}

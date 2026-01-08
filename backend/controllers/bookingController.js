@@ -72,7 +72,7 @@ exports.checkAvailability = async (req, res) => {
       /* ================= CHECK BOOKINGS ================= */
       const bookingConflict = await Booking.findOne({
         facilityId,
-        status: { $in: ["pending", "approved"] },
+        status: { $in: ["ending", "approved"] },
         startAt: { $lt: endAt },
         endAt: { $gt: startAt },
       }).lean();
@@ -317,7 +317,6 @@ exports.approveBooking = async (req, res) => {
     /* ===== AUTO-DEDUCT EQUIPMENT FROM BOOKING ===== */
     const equipmentResults = [];
 
-    
     /* ===== SCHEDULE CREATION ===== */
     const attendanceReasons = ["training", "tryout"];
     let schedule = null;
@@ -369,6 +368,31 @@ exports.approveBooking = async (req, res) => {
     });
   } catch (err) {
     console.error("approveBooking error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ================================
+// EXCO: GET ALL BOOKINGS
+// ================================
+exports.getAllBookings = async (req, res) => {
+  try {
+    const bookings = await Booking.find()
+      .populate("facilityId", "name")
+      .populate("coachId", "firstName lastName")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const bookingsOut = bookings.map((b) => ({
+      ...b,
+      coachName: b.coachId
+        ? `${b.coachId.firstName} ${b.coachId.lastName}`
+        : "Unknown",
+    }));
+
+    res.json({ bookings: bookingsOut });
+  } catch (err) {
+    console.error("GET ALL BOOKINGS ERROR:", err);
     res.status(500).json({ message: "Server error" });
   }
 };

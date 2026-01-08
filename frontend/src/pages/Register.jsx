@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../api/axios";
-import { successAlert, errorAlert, warningAlert } from "../utils/swal";
-import { generateFakeUser } from "../utils/fakeData";
+import { successAlert, errorAlert } from "../utils/swal";
 
 import Auth from "../layouts/Auth";
 
@@ -24,31 +23,6 @@ export default function Register() {
   const [sport, setSport] = useState("");
 
   const navigate = useNavigate();
-
-  // =========================
-  // FAKE DATA (DEV ONLY)
-  // =========================
-  const fillFakeData = () => {
-    const fakeUser = generateFakeUser(role);
-
-    setFirstName(fakeUser.firstName);
-    setLastName(fakeUser.lastName);
-    setEmail(fakeUser.email);
-
-    if (role === "student") {
-      setNric(fakeUser.nric);
-      setYear(fakeUser.year || "");
-      setClassGroup(fakeUser.classGroup || "");
-    }
-
-    if (role !== "student") {
-      setStaffId(fakeUser.staffId);
-    }
-
-    if (role === "coach") {
-      setSport(fakeUser.sport);
-    }
-  };
 
   // =========================
   // REGISTER HANDLER
@@ -131,24 +105,11 @@ export default function Register() {
 
   return (
     <Auth title="Create Account" subtitle="Fill the form to continue.">
-      {/* Fake Data Button */}
-      {process.env.NODE_ENV === "development" && (
-        <div className="mb-3">
-          <button
-            type="button"
-            className="btn btn-outline-secondary btn-sm w-100"
-            onClick={fillFakeData}
-          >
-            🎲 Fill with Fake Data (Testing)
-          </button>
-        </div>
-      )}
-
       {/* ROLE */}
-      <div className="mb-4">
+      <div className="mb-3">
         <label className="form-label">Register As</label>
         <select
-          className="form-select form-select-lg"
+          className="form-select"
           value={role}
           onChange={(e) => {
             setRole(e.target.value);
@@ -171,7 +132,7 @@ export default function Register() {
           <label className="form-label">First Name</label>
           <input
             type="text"
-            className="form-control form-control-lg"
+            className="form-control"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
           />
@@ -181,7 +142,7 @@ export default function Register() {
           <label className="form-label">Last Name</label>
           <input
             type="text"
-            className="form-control form-control-lg"
+            className="form-control"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
           />
@@ -193,7 +154,7 @@ export default function Register() {
         <label className="form-label">Email</label>
         <input
           type="email"
-          className="form-control form-control-lg"
+          className="form-control"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
@@ -208,7 +169,7 @@ export default function Register() {
             <input
               type="text"
               maxLength={12}
-              className="form-control form-control-lg"
+              className="form-control"
               value={nric}
               onChange={(e) => setNric(e.target.value.replace(/\D/g, ""))}
             />
@@ -217,7 +178,7 @@ export default function Register() {
           <div className="mb-3">
             <label className="form-label">Year (1–5)</label>
             <select
-              className="form-select form-select-lg"
+              className="form-select"
               value={year}
               onChange={(e) => {
                 setYear(e.target.value);
@@ -237,7 +198,7 @@ export default function Register() {
           <div className="mb-3">
             <label className="form-label">Class</label>
             <select
-              className="form-select form-select-lg"
+              className="form-select"
               value={classGroup}
               onChange={(e) => setClassGroup(e.target.value)}
               disabled={!year} // disable until year selected
@@ -260,7 +221,7 @@ export default function Register() {
           <label className="form-label">Staff ID</label>
           <input
             type="text"
-            className="form-control form-control-lg"
+            className="form-control"
             value={staffId}
             onChange={(e) => setStaffId(e.target.value)}
           />
@@ -272,7 +233,7 @@ export default function Register() {
         <div className="mb-3">
           <label className="form-label">Sport</label>
           <select
-            className="form-select form-select-lg"
+            className="form-select"
             value={sport}
             onChange={(e) => setSport(e.target.value)}
           >
@@ -286,11 +247,11 @@ export default function Register() {
       )}
 
       {/* SUBMIT */}
-      <button className="btn btn-primary btn-lg w-100" onClick={handleRegister}>
+      <button className="btn btn-primary w-100 mt-2" onClick={handleRegister}>
         Register
       </button>
 
-      <p className="text-center mt-3">
+      <p className="text-center mt-3 mb-0">
         Already have an account?
         <Link to="/login" className="text-primary fw-bold ms-1">
           Login

@@ -51,4 +51,28 @@ router.post(
   upload.array("images", 3),
   equipmentController.reportDamage
 );
+
+// EXCO – All damage history
+router.get(
+  "/damage-reports",
+  verifyToken,
+  requireExco,
+  equipmentController.getAllDamageReports
+);
+
+// EXCO – Damage reports
+router.get(
+  "/:equipmentId/damage-reports",
+  verifyToken,
+  requireExco,
+  equipmentController.getDamageReportsByEquipment
+);
+
+router.post(
+  "/damage-reports/:id/resolve",
+  verifyToken,
+  requireExco,
+  equipmentController.resolveDamageReport
+);
+
 module.exports = router;

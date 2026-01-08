@@ -7,6 +7,7 @@ const { verifyToken, requireExco } = require("../middleware/authMiddleware");
 const {
   getPendingBookings,
   approveBooking,
+  getAllBookings,
 } = require("../controllers/bookingController");
 
 router.get("/students", verifyToken, requireExco, excoController.getStudents);
@@ -17,6 +18,8 @@ router.put(
   excoController.assignSport
 );
 router.get("/stats/sports", excoController.getSportStats);
+router.get("/bookings", verifyToken, requireExco, getAllBookings);
+
 router.get("/bookings/pending", verifyToken, requireExco, getPendingBookings);
 router.put("/bookings/:id/approve", verifyToken, requireExco, approveBooking);
 router.get(
