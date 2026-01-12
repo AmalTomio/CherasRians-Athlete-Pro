@@ -13,6 +13,7 @@ export default function BookingModal({ facility, onClose, onBooked }) {
   const [available, setAvailable] = useState(null);
   const [reason, setReason] = useState("");
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [playerCategory, setPlayerCategory] = useState("");
 
   // Equipment Request States
   const [showEquipmentRequest, setShowEquipmentRequest] = useState(false);
@@ -52,7 +53,7 @@ export default function BookingModal({ facility, onClose, onBooked }) {
         ...slots,
         {
           date,
-          startHour: "9",
+          startHour: "8",
           startMinute: "00",
           startAmpm: "AM",
           endHour: "10",
@@ -178,6 +179,9 @@ export default function BookingModal({ facility, onClose, onBooked }) {
     if (!available) return errorAlert("Facility is not available for booking.");
 
     if (!reason) return errorAlert("Please select a reason for booking.");
+    if (["training", "tryout"].includes(reason) && !playerCategory) {
+      return errorAlert("Please select player category.");
+    }
 
     try {
       const slotsData = slots.map((slot) => ({
@@ -190,6 +194,22 @@ export default function BookingModal({ facility, onClose, onBooked }) {
         facilityId: facility._id,
         slots: slotsData,
         reason,
+        equipmentRequests,
+
+        sessionType: reason,
+        sessionTitle:
+          reason === "training"
+            ? "Training Session"
+            : reason === "tryout"
+            ? "Tryout Session"
+            : reason === "event"
+            ? "Special Event"
+            : reason === "meeting"
+            ? "Team Meeting"
+            : "Facility Booking",
+        playerCategory: ["training", "tryout"].includes(reason)
+          ? playerCategory
+          : undefined,
         equipmentRequests,
       };
 
@@ -474,16 +494,35 @@ export default function BookingModal({ facility, onClose, onBooked }) {
                     <select
                       className="form-select"
                       value={reason}
-                      onChange={(e) => setReason(e.target.value)}
+                      onChange={(e) => {
+                        setReason(e.target.value);
+                        setPlayerCategory("");
+                      }}
                       required
                     >
                       <option value="">-- Select a reason --</option>
                       <option value="training">Training Session</option>
-                      <option value="tryout">Tryout/Trial</option>
+                      <option value="tryout">Tryout / Trial</option>
                       <option value="event">Special Event</option>
                       <option value="meeting">Team Meeting</option>
                       <option value="other">Other</option>
                     </select>
+
+                    {["training", "tryout"].includes(reason) && (
+                      <div className="mb-4">
+                        <h6 className="fw-bold mb-2">Player Category</h6>
+                        <select
+                          className="form-select"
+                          value={playerCategory}
+                          onChange={(e) => setPlayerCategory(e.target.value)}
+                          required
+                        >
+                          <option value="">-- Select Category --</option>
+                          <option value="U-15">U-15</option>
+                          <option value="U-18">U-18</option>
+                        </select>
+                      </div>
+                    )}
                   </div>
 
                   {/* Equipment Request Section */}

@@ -61,7 +61,7 @@ export default function Attendance() {
               <Spinner size="sm" />
             ) : (
               <Form.Select value={selectedSession} onChange={handleSessionChange}>
-                <option value="">-- Select session --</option>
+                <option value="">Select session</option>
                 {sessions.map((s) => (
                   <option key={s._id} value={s._id}>
                     {s.facilityId?.name} •{" "}

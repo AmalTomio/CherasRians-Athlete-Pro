@@ -41,6 +41,25 @@ const bookingSchema = new mongoose.Schema(
     // multiple equipment requests per booking
     equipmentRequests: [equipmentRequestSchema],
 
+    // session details (coach input)
+    sessionType: {
+      type: String,
+      enum: ["training", "tryout"],
+      required: true,
+    },
+
+    sessionTitle: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    playerCategory: {
+      type: String,
+      enum: ["U-15", "U-18"],
+      required: true,
+    },
+
     // status: pending -> approved / rejected / cancelled
     status: {
       type: String,

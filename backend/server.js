@@ -12,10 +12,9 @@ const facilityRoutes = require("./routes/facilityRoutes");
 const medicalLeaveRoutes = require("./routes/medicalLeaveRoutes");
 const attendanceRoutes = require("./routes/attendanceRoutes");
 const studentRoutes = require("./routes/studentRoutes");
-
+const scheduleRoutes = require("./routes/scheduleRoutes");
 // scheduler
 const { startWeeklyResetJobs } = require("./jobs/scheduler");
-
 
 const app = express();
 app.use(cors());
@@ -23,9 +22,8 @@ app.use(express.json());
 
 (async () => {
   try {
-    await connectDB(); // ensure DB connected
-    console.log("MongoDB connected — starting scheduler");
-    startWeeklyResetJobs(); // start cron jobs after DB is up
+    await connectDB(); 
+    startWeeklyResetJobs(); 
   } catch (err) {
     console.error("Failed to connect DB:", err);
     process.exit(1);
@@ -42,6 +40,9 @@ app.use("/api/medical", medicalLeaveRoutes);
 app.use("/api/leave", medicalLeaveRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/students", studentRoutes);
+app.use("/api/schedules", require("./routes/scheduleRoutes"));
+app.use("/api/team-lineup", require("./routes/teamLineupRoutes"));
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Backend running on port ${PORT}`));

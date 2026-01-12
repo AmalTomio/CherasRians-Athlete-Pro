@@ -48,17 +48,17 @@ export default function Sidebar({ onToggle }) {
     const baseMenu = {
       student: [
         ["Dashboard", FiHome, "/dashboard"],
-        ["Training Schedule", FiCalendar, "/schedule"],
+        ["Training Schedule", FiCalendar, "/student/schedule"],
         ["Attendance", FiClipboard, "/attendance"],
         ["Medical Leave", FiFileText, "/student/medical"],
         ["Performance", FiUsers, "/performance"],
         ["Announcements", FiBell, "/announcements"],
       ],
       coach: [
-        ["Dashboard", FiHome, "/dashboard"],
-        ["My Teams", FiUsers, "/dashboard/teams"],
+        ["Dashboard", FiHome, "/coach/dashboard"],
+        ["My Teams", FiUsers, "/coach/teams"],
         ["Players", FiUser, "/coach/players"],
-        ["Schedules", FiCalendar, "/dashboard/schedules"],
+        ["Schedules", FiCalendar, "/coach/schedule"],
         ["Facilities", FiFileText, "/coach/facilities"],
         ["Medical Leave", FiFileText, "/coach/medical"],
         ["Attendance", FiClipboard, "/coach/attendance"],

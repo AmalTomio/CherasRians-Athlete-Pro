@@ -146,7 +146,7 @@ export default function AuthLayout({ title, subtitle, children }) {
                 <TrophyIcon size={36} />
               </div>
               <div>
-                <h1 className="fw-bold mb-1 fs-3">Sport CMS</h1>
+                <h1 className="fw-bold mb-1 fs-3">CherasRians Atheletes Pro</h1>
                 <div className="fs-6 text-white-75">
                   Athletic Excellence Management
                 </div>

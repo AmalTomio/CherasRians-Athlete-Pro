@@ -5,8 +5,8 @@ import { errorAlert, successAlert } from "../../utils/swal";
 import PlayerForm from "../../components/PlayerForm";
 import FiltersCard from "../../components/FiltersCard";
 import SkeletonTableLoader from "../../components/SkeletonTableLoader";
-import Skeleton from "react-loading-skeleton"; // ADD THIS IMPORT
-import "react-loading-skeleton/dist/skeleton.css"; // ADD THIS IMPORT
+import Skeleton from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css"; 
 
 export default function Players() {
   const [players, setPlayers] = useState([]);
@@ -166,7 +166,7 @@ export default function Players() {
               <>
                 <thead>
                   <tr>
-                    <th>#</th>
+                    <th>No</th>
                     <th>Full Name</th>
                     <th>Year</th>
                     <th>Class</th>

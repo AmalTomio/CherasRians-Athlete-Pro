@@ -2,9 +2,12 @@ const Booking = require("../models/Booking");
 const Attendance = require("../models/Attendance");
 const User = require("../models/User");
 
-// Only these reasons allow attendance
-const ATTENDANCE_REASONS = ["training", "tryout"];
+// Only these session types allow attendance
+const ATTENDANCE_SESSION_TYPES = ["training", "tryout"];
 
+/**
+ * GET /api/attendance/sessions/coach
+ */
 exports.getCoachSessions = async (req, res) => {
   try {
     const coachId = req.user.userId || req.user._id;
@@ -12,7 +15,7 @@ exports.getCoachSessions = async (req, res) => {
     const sessions = await Booking.find({
       coachId,
       status: "approved",
-      reason: { $in: ATTENDANCE_REASONS },
+      sessionType: { $in: ATTENDANCE_SESSION_TYPES }, // ✅ FIX
     })
       .populate("facilityId", "name")
       .sort({ startAt: -1 });
@@ -24,40 +27,41 @@ exports.getCoachSessions = async (req, res) => {
   }
 };
 
+/**
+ * GET /api/attendance/session/:bookingId/players
+ */
 exports.getSessionPlayers = async (req, res) => {
   try {
     const coachId = req.user.userId || req.user._id;
     const { bookingId } = req.params;
 
-    // 1. Validate booking belongs to coach
     const booking = await Booking.findOne({
       _id: bookingId,
       coachId,
       status: "approved",
-      reason: { $in: ATTENDANCE_REASONS },
+      sessionType: { $in: ATTENDANCE_SESSION_TYPES }, // ✅ FIX
     });
 
     if (!booking) {
       return res.status(403).json({ message: "Unauthorized access" });
     }
 
-    // 2. Get coach sport
     const coach = await User.findById(coachId).select("sport");
 
-    if (!coach || !coach.sport) {
+    if (!coach?.sport) {
       return res.status(400).json({ message: "Coach sport not assigned" });
     }
 
-    // 3. Get players by sport
     const players = await User.find({
       role: "student",
       sport: coach.sport,
-    }).select("firstName lastName classGroup sport");
+      category: booking.playerCategory, // ✅ IMPORTANT
+    }).select("firstName lastName classGroup category");
 
-    return res.json({ players });
+    res.json({ players });
   } catch (err) {
     console.error("Get Session Players Error:", err);
-    return res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -69,11 +73,15 @@ exports.markAttendance = async (req, res) => {
     const coachId = req.user.userId || req.user._id;
     const { bookingId, records } = req.body;
 
+    if (!Array.isArray(records) || records.length === 0) {
+      return res.status(400).json({ message: "No attendance records provided" });
+    }
+
     const booking = await Booking.findOne({
       _id: bookingId,
       coachId,
       status: "approved",
-      reason: { $in: ATTENDANCE_REASONS },
+      sessionType: { $in: ATTENDANCE_SESSION_TYPES }, // ✅ FIX
     });
 
     if (!booking) {
@@ -87,12 +95,14 @@ exports.markAttendance = async (req, res) => {
           playerId: r.playerId,
         },
         update: {
-          bookingId,
-          playerId: r.playerId,
-          status: r.status,
-          remarks: r.remarks || "",
-          recordedBy: coachId,
-          recordedAt: new Date(),
+          $set: {
+            bookingId,
+            playerId: r.playerId,
+            status: r.status,
+            remarks: r.remarks || "",
+            recordedBy: coachId,
+            recordedAt: new Date(),
+          },
         },
         upsert: true,
       },
@@ -125,7 +135,7 @@ exports.getSessionAttendance = async (req, res) => {
     }
 
     const attendance = await Attendance.find({ bookingId })
-      .populate("playerId", "firstName lastName staffId")
+      .populate("playerId", "firstName lastName classGroup")
       .sort({ "playerId.firstName": 1 });
 
     res.json({ attendance });

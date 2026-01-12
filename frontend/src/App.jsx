@@ -24,9 +24,11 @@ import CoachFacilities from "./pages/Coach/Facilities";
 import MedicalLeaveReview from "./pages/Coach/MedicalLeaveReview";
 import Attendance from "./pages/Coach/Attendance";
 import Equipment from "./pages/Coach/Equipment";
+import Schedule from "./pages/Coach/Schedule";
+import Teams from "./pages/Coach/ManageTeams";
 // Student Pages
 import Medical from "./pages/Student/Medical";
-
+import PlayerSchedule from "./pages/Student/Schedule";
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
 import WithSidebar from "./layouts/WithSidebar";
@@ -109,6 +111,7 @@ export default function App() {
         />
 
         {/* Coach Routes */}
+
         <Route
           path="/coach/players"
           element={
@@ -141,7 +144,26 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-
+        <Route
+          path="/coach/teams"
+          element={
+            <ProtectedRoute allowedRoles={["coach"]}>
+              <WithSidebar>
+                <Teams />
+              </WithSidebar>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/coach/schedule"
+          element={
+            <ProtectedRoute allowedRoles={["coach"]}>
+              <WithSidebar>
+                <Schedule />
+              </WithSidebar>
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/coach/attendance"
           element={
@@ -174,7 +196,16 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-
+        <Route
+          path="/student/schedule"
+          element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <WithSidebar>
+                <PlayerSchedule />
+              </WithSidebar>
+            </ProtectedRoute>
+          }
+        />
         {/* 404 Not Found */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

@@ -19,14 +19,12 @@ export default function CoachCard({ coach, onUpdated }) {
     if (!result.isConfirmed) return;
 
     try {
-      // ✅ single API call
       const res = await api.put(`/exco/coaches/${_id}/status`, {
         isActive: !isActive,
       });
 
       successAlert("Coach status updated");
 
-      // ✅ immediately update parent state
       onUpdated?.(res.data.coach);
 
     } catch (err) {
@@ -101,7 +99,7 @@ export default function CoachCard({ coach, onUpdated }) {
             className="btn btn-outline-primary w-100"
             onClick={handleToggleStatus}
           >
-            {isActive ? "Retire" : "Activate"}
+            {isActive ? "End of Service (EoA)" : "Activate"}
           </button>
         </div>
       </div>

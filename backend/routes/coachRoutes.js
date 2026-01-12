@@ -7,6 +7,13 @@ const { verifyToken, requireCoach } = require("../middleware/authMiddleware");
 // GET players
 router.get("/players", verifyToken, requireCoach, coachController.getPlayers);
 
+router.get(
+  "/dashboard",
+  verifyToken,
+  requireCoach,
+  coachController.getCoachDashboard
+);
+
 // UPDATE player
 router.put("/players/:id", verifyToken, requireCoach, coachController.updatePlayer);
 

@@ -176,7 +176,7 @@ export default function Register() {
           </div>
 
           <div className="mb-3">
-            <label className="form-label">Year (1–5)</label>
+            <label className="form-label">Form (1–5)</label>
             <select
               className="form-select"
               value={year}
@@ -185,12 +185,12 @@ export default function Register() {
                 setClassGroup(""); // reset class when year changes
               }}
             >
-              <option value="">Select Year</option>
-              <option value="1">Year 1</option>
-              <option value="2">Year 2</option>
-              <option value="3">Year 3</option>
-              <option value="4">Year 4</option>
-              <option value="5">Year 5</option>
+              <option value="">Select Form</option>
+              <option value="1">Form 1</option>
+              <option value="2">Form 2</option>
+              <option value="3">Form 3</option>
+              <option value="4">Form 4</option>
+              <option value="5">Form 5</option>
             </select>
           </div>
 

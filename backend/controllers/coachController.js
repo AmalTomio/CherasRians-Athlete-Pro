@@ -1,6 +1,13 @@
 const User = require("../models/User");
+const Booking = require("../models/Booking");
+const Schedule = require("../models/Schedule");
+const Attendance = require("../models/Attendance");
+const moment = require("moment-timezone");
 
-// Helper to format status for frontend
+const TZ = "Asia/Kuala_Lumpur";
+
+/* ================= UTIL ================= */
+
 const formatStatus = (status) => {
   switch (status) {
     case "active":
@@ -14,12 +21,14 @@ const formatStatus = (status) => {
   }
 };
 
+/* ================= GET PLAYERS ================= */
+
 exports.getPlayers = async (req, res) => {
   try {
     const coachSport = req.user.sport;
 
-    // ⭐ FIXED → added year here
-    let { page = 1, limit = 10, search = "", year = "", classGroup = "" } = req.query;
+    let { page = 1, limit = 10, search = "", year = "", classGroup = "" } =
+      req.query;
 
     page = Number(page);
     limit = Number(limit);
@@ -27,7 +36,6 @@ exports.getPlayers = async (req, res) => {
 
     const filter = { role: "student", sport: coachSport };
 
-    // Search by name
     if (search.trim() !== "") {
       filter.$or = [
         { firstName: { $regex: search, $options: "i" } },
@@ -35,17 +43,14 @@ exports.getPlayers = async (req, res) => {
       ];
     }
 
-    // ⭐ FIXED: Year filter now works
     if (year !== "" && !isNaN(Number(year))) {
       filter.year = Number(year);
     }
 
-    // Class filter
     if (classGroup.trim() !== "") {
       filter.classGroup = classGroup;
     }
 
-    // Fetch players
     const [students, total] = await Promise.all([
       User.find(filter)
         .sort({ firstName: 1 })
@@ -56,7 +61,6 @@ exports.getPlayers = async (req, res) => {
       User.countDocuments(filter),
     ]);
 
-    // Format output
     const formatted = students.map((s) => ({
       _id: s._id,
       firstName: s.firstName,
@@ -78,20 +82,18 @@ exports.getPlayers = async (req, res) => {
       totalPages: Math.ceil(total / limit),
       total,
     });
-
   } catch (err) {
     console.error("getPlayers error:", err);
     return res.status(500).json({ message: "Server error" });
   }
 };
 
+/* ================= UPDATE PLAYER ================= */
+
 exports.updatePlayer = async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
-
-    console.log("Updating Player ID:", id);
-    console.log("Update Payload:", updates);
 
     const updated = await User.findOneAndUpdate(
       { _id: id, role: "student" },
@@ -107,9 +109,166 @@ exports.updatePlayer = async (req, res) => {
       message: "Player updated successfully",
       player: updated,
     });
-
   } catch (err) {
     console.error("UPDATE PLAYER ERROR:", err);
     return res.status(500).json({ message: "Server error" });
+  }
+};
+
+/* ================= COACH DASHBOARD ================= */
+
+exports.getCoachDashboard = async (req, res) => {
+  try {
+    const coachId = req.user._id;
+
+    /* ===== KPI ===== */
+
+    const upcomingSessions = await Schedule.countDocuments({
+      coachId,
+      sessionDate: { $gte: new Date() },
+      status: "approved",
+    });
+
+    const pendingBookings = await Booking.countDocuments({
+      coachId,
+      status: "pending",
+    });
+
+    const coach = await User.findById(coachId).select("sport");
+    const totalPlayers = await User.countDocuments({
+      role: "student",
+      sport: coach.sport,
+    });
+
+    /* ===== ATTENDANCE RATE (30 DAYS) ===== */
+
+    const fromDate = moment().subtract(30, "days").toDate();
+
+    const attendanceAgg = await Attendance.aggregate([
+      {
+        $match: {
+          recordedBy: coachId,
+          recordedAt: { $gte: fromDate },
+        },
+      },
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const totalAttendance = attendanceAgg.reduce(
+      (sum, a) => sum + a.count,
+      0
+    );
+
+    const presentCount =
+      attendanceAgg.find((a) => a._id === "present")?.count || 0;
+
+    const attendanceRate =
+      totalAttendance === 0
+        ? 0
+        : Math.round((presentCount / totalAttendance) * 100);
+
+    /* ===== CATEGORY DISTRIBUTION ===== */
+
+    const categoryAgg = await Schedule.aggregate([
+      { $match: { coachId, status: "approved" } },
+      {
+        $group: {
+          _id: "$playerCategory",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const categories = {
+      U15: categoryAgg.find((c) => c._id === "U-15")?.count || 0,
+      U18: categoryAgg.find((c) => c._id === "U-18")?.count || 0,
+    };
+
+    /* ===== WEEKLY SESSIONS ===== */
+
+    const weeklySessions = await Schedule.aggregate([
+      { $match: { coachId, status: "approved" } },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: "$sessionDate",
+              timezone: TZ,
+            },
+          },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+      { $limit: 7 },
+    ]);
+
+    /* ===== ATTENDANCE TREND ===== */
+
+    const attendanceTrend = await Attendance.aggregate([
+      {
+        $match: {
+          recordedBy: coachId,
+          recordedAt: { $gte: fromDate },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: "$recordedAt",
+              timezone: TZ,
+            },
+          },
+          present: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "present"] }, 1, 0],
+            },
+          },
+          total: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          date: "$_id",
+          rate: {
+            $round: [
+              {
+                $multiply: [{ $divide: ["$present", "$total"] }, 100],
+              },
+              0,
+            ],
+          },
+        },
+      },
+      { $sort: { date: 1 } },
+    ]);
+
+    /* ===== RESPONSE ===== */
+
+    res.json({
+      kpi: {
+        upcomingSessions,
+        totalPlayers,
+        attendanceRate,
+        pendingBookings,
+      },
+      categories,
+      weeklySessions: weeklySessions.map((w) => ({
+        date: w._id,
+        count: w.count,
+      })),
+      attendanceTrend,
+    });
+  } catch (err) {
+    console.error("Coach dashboard error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };

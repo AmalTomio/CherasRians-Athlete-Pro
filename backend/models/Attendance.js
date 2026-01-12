@@ -5,11 +5,13 @@ const attendanceSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Booking",
     required: true,
+    index: true,
   },
   playerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
+    index: true,
   },
   status: {
     type: String,
