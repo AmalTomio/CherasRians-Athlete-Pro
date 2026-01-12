@@ -80,6 +80,50 @@ exports.assignSport = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+exports.updateStudentAcademic = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { year, classGroup } = req.body;
+
+    if (!year || !classGroup) {
+      return res.status(400).json({ message: "Year and class are required." });
+    }
+
+    const updated = await User.findOneAndUpdate(
+      { _id: id, role: "student" },
+      { year: Number(year), classGroup },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: "Student not found." });
+    }
+
+    return res.json({ message: "Academic info updated." });
+  } catch (err) {
+    console.error("UPDATE STUDENT ACADEMIC ERROR:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+exports.deleteStudent = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deleted = await User.findOneAndDelete({
+      _id: id,
+      role: "student",
+    });
+
+    if (!deleted) {z
+      return res.status(404).json({ message: "Student not found." });
+    }
+
+    return res.json({ message: "Student deleted successfully." });
+  } catch (err) {
+    console.error("DELETE STUDENT ERROR:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
 
 exports.getSportStats = async (req, res) => {
   try {

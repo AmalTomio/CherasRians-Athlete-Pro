@@ -32,7 +32,6 @@ import PlayerSchedule from "./pages/Student/Schedule";
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
 import WithSidebar from "./layouts/WithSidebar";
-
 export default function App() {
   return (
     <BrowserRouter>

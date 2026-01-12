@@ -18,9 +18,7 @@ const VALID_SPORTS = [
   "netball",
 ];
 
-/* ============================================================
-   REGISTER
-=============================================================== */
+/* REGISTER */
 exports.registerUser = async (req, res) => {
   try {
     const {
@@ -192,3 +190,4 @@ exports.getMe = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+

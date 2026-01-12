@@ -233,10 +233,10 @@ export default function EquipmentManagement() {
                       className={`badge ${
                         r.status === "resolved"
                           ? "bg-success"
-                          : "bg-warning text-dark"
+                          : "bg-warning text-white"
                       }`}
                     >
-                      {r.status}
+                      {r.status?.charAt(0).toUpperCase() + r.status?.slice(1)}{" "}
                     </span>
                   </div>
                 </div>

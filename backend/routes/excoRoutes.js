@@ -36,5 +36,20 @@ router.put(
   requireExco,
   excoController.updateCoachStatus
 );
+// Update student academic info
+router.put(
+  "/students/:id/academic",
+  verifyToken,
+  requireExco,
+  excoController.updateStudentAcademic
+);
+
+// Delete student
+router.delete(
+  "/students/:id",
+  verifyToken,
+  requireExco,
+  excoController.deleteStudent
+);
 
 module.exports = router;

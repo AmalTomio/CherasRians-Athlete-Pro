@@ -4,7 +4,6 @@ import api from "../../api/axios";
 import moment from "moment";
 import Swal from "sweetalert2";
 import { formatStatus } from "../../utils/format";
-
 import { successAlert, errorAlert } from "../../utils/swal";
 import FiltersCard from "../../components/FiltersCard";
 
@@ -201,7 +200,7 @@ export default function Bookings() {
                       className={`badge ${
                         b.status === "approved"
                           ? "bg-success"
-                          : bookings.status === "rejected"
+                          : b.status === "rejected"
                           ? "bg-danger"
                           : b.status === "cancelled"
                           ? "bg-secondary"
