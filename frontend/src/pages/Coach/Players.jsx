@@ -1,12 +1,17 @@
-// src/pages/Coach/Players.jsx
 import { useState, useEffect, useCallback } from "react";
 import api from "../../api/axios";
 import { errorAlert, successAlert } from "../../utils/swal";
 import PlayerForm from "../../components/PlayerForm";
 import FiltersCard from "../../components/FiltersCard";
 import SkeletonTableLoader from "../../components/SkeletonTableLoader";
-import Skeleton from "react-loading-skeleton";
-import "react-loading-skeleton/dist/skeleton.css"; 
+import "react-loading-skeleton/dist/skeleton.css";
+import {
+  FiEdit2,
+  FiChevronLeft,
+  FiChevronRight,
+  FiUsers,
+  FiFilter,
+} from "react-icons/fi";
 
 export default function Players() {
   const [players, setPlayers] = useState([]);
@@ -25,39 +30,48 @@ export default function Players() {
   const limit = 10;
 
   // Memoized fetch function
-  const fetchPlayers = useCallback(async (customFilters = {}) => {
-    setIsLoading(true);
-    try {
-      const params = {
-        page: customFilters.page !== undefined ? customFilters.page : page,
-        limit,
-        search: customFilters.search !== undefined ? customFilters.search : search,
-        classGroup: customFilters.classGroup !== undefined ? customFilters.classGroup : classGroup,
-        year: customFilters.year !== undefined ? customFilters.year : year,
-      };
+  const fetchPlayers = useCallback(
+    async (customFilters = {}) => {
+      setIsLoading(true);
+      try {
+        const params = {
+          page: customFilters.page !== undefined ? customFilters.page : page,
+          limit,
+          search:
+            customFilters.search !== undefined ? customFilters.search : search,
+          classGroup:
+            customFilters.classGroup !== undefined
+              ? customFilters.classGroup
+              : classGroup,
+          year: customFilters.year !== undefined ? customFilters.year : year,
+        };
 
-      const res = await api.get("/coach/players", { params });
+        const res = await api.get("/coach/players", { params });
 
-      const students = res.data.students.map((s) => ({
-        _id: s._id || s.userId,
-        ...s,
-      }));
+        const students = res.data.students.map((s) => ({
+          _id: s._id || s.userId,
+          ...s,
+        }));
 
-      setPlayers(students);
-      setTotalPages(res.data.totalPages || Math.ceil((res.data.total || 0) / limit) || 1);
-      
-      if (isInitialLoad) {
-        setIsInitialLoad(false);
+        setPlayers(students);
+        setTotalPages(
+          res.data.totalPages || Math.ceil((res.data.total || 0) / limit) || 1
+        );
+
+        if (isInitialLoad) {
+          setIsInitialLoad(false);
+        }
+      } catch (err) {
+        console.error(err);
+        if (!isInitialLoad) {
+          errorAlert("Failed to fetch players.");
+        }
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err) {
-      console.error(err);
-      if (!isInitialLoad) {
-        errorAlert("Failed to fetch players.");
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, [page, search, year, classGroup, limit, isInitialLoad]);
+    },
+    [page, search, year, classGroup, limit, isInitialLoad]
+  );
 
   // Initial fetch on mount
   useEffect(() => {
@@ -67,7 +81,7 @@ export default function Players() {
   // Debounced fetch when filters change
   useEffect(() => {
     if (isInitialLoad) return;
-    
+
     const timeoutId = setTimeout(() => {
       setPage(1);
       fetchPlayers({ page: 1 });
@@ -93,11 +107,11 @@ export default function Players() {
     setYear("");
     setClassGroup("");
     setPage(1);
-    fetchPlayers({ 
-      page: 1, 
-      search: "", 
-      year: "", 
-      classGroup: "" 
+    fetchPlayers({
+      page: 1,
+      search: "",
+      year: "",
+      classGroup: "",
     });
   };
 
@@ -115,7 +129,7 @@ export default function Players() {
   const handleSave = async (id, payload) => {
     try {
       await api.put(`/coach/players/${id}`, payload);
-      successAlert("Player updated!");
+      successAlert("Player updated successfully!");
       fetchPlayers();
       closeModal();
     } catch (err) {
@@ -124,12 +138,13 @@ export default function Players() {
     }
   };
 
-  const getStatusBadgeClass = (status) => {
-    const statusLower = (status || "").toLowerCase();
-    if (statusLower === "active") return "bg-success";
-    if (statusLower === "injured") return "bg-warning";
-    if (statusLower === "inactive") return "bg-secondary";
-    return "bg-info";
+  // Modern Badge Styling
+  const getStatusBadgeStyle = (status) => {
+    const s = (status || "").toLowerCase();
+    if (s === "active") return { bg: "#dcfce7", color: "#166534" }; // Soft Green
+    if (s === "injured") return { bg: "#ffedd5", color: "#9a3412" }; // Soft Orange
+    if (s === "inactive") return { bg: "#f1f5f9", color: "#475569" }; // Soft Gray
+    return { bg: "#e0f2fe", color: "#0369a1" }; // Soft Blue
   };
 
   const formatStatusText = (status) => {
@@ -138,9 +153,33 @@ export default function Players() {
   };
 
   return (
-    <div>
-      <h2 className="mb-4">My Players</h2>
+    <div className="px-4 py-4">
+      {/* HEADER */}
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2
+            className="fw-bold mb-1 text-dark"
+            style={{ letterSpacing: "-0.5px" }}
+          >
+            My Players
+          </h2>
+          <p className="text-muted mb-0">
+            Manage athlete profiles and statuses
+          </p>
+        </div>
 
+        <div className="d-flex gap-2">
+          <button
+            className="btn btn-light text-primary fw-bold d-flex align-items-center gap-2 shadow-sm"
+            onClick={() => fetchPlayers()}
+            style={{ borderRadius: "10px" }}
+          >
+            <FiUsers /> Total: {players.length}
+          </button>
+        </div>
+      </div>
+
+      {/* FILTERS */}
       <FiltersCard
         search={search}
         setSearch={setSearch}
@@ -157,163 +196,242 @@ export default function Players() {
         showSport={false}
       />
 
-      <div className="card p-3">
+      {/* DATA TABLE CARD */}
+      <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
         <div className="table-responsive">
-          <table className="table table-striped table-hover">
-            {isLoading ? (
-              <SkeletonTableLoader rows={6} />
-            ) : (
-              <>
-                <thead>
-                  <tr>
-                    <th>No</th>
-                    <th>Full Name</th>
-                    <th>Year</th>
-                    <th>Class</th>
-                    <th>Category</th>
-                    <th>Position / Event</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {players.length > 0 ? (
-                    players.map((p, idx) => (
-                      <tr key={p._id || idx}>
-                        <td className="fw-semibold">{(page - 1) * limit + (idx + 1)}</td>
-                        <td>
-                          <div className="d-flex align-items-center">
-                            <div className="ms-2">
-                              <div className="fw-medium">{p.firstName} {p.lastName}</div>
-                              {p.email && (
-                                <small className="text-muted">{p.email}</small>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td>{p.year || "-"}</td>
-                        <td>{p.classGroup || "-"}</td>
-                        <td>{p.category || "-"}</td>
-                        <td>
-                          {p.sport === "badminton" 
-                            ? (p.badmintonCategory || "-") 
-                            : (p.position || "-")}
-                        </td>
-                        <td>
-                          <span className={`badge ${getStatusBadgeClass(p.status)}`}>
-                            {formatStatusText(p.status)}
+          <table className="table table-hover mb-0 align-middle">
+            <thead className="bg-light">
+              <tr>
+                <th
+                  className="py-3 px-4 text-uppercase text-secondary small fw-bold"
+                  style={{ letterSpacing: "1px" }}
+                >
+                  No
+                </th>
+                <th
+                  className="py-3 text-uppercase text-secondary small fw-bold"
+                  style={{ letterSpacing: "1px" }}
+                >
+                  Full Name
+                </th>
+                <th
+                  className="py-3 text-uppercase text-secondary small fw-bold"
+                  style={{ letterSpacing: "1px" }}
+                >
+                  Class Info
+                </th>
+                <th
+                  className="py-3 text-uppercase text-secondary small fw-bold"
+                  style={{ letterSpacing: "1px" }}
+                >
+                  Category
+                </th>
+                <th
+                  className="py-3 text-uppercase text-secondary small fw-bold"
+                  style={{ letterSpacing: "1px" }}
+                >
+                  Status
+                </th>
+                <th
+                  className="py-3 text-end px-4 text-uppercase text-secondary small fw-bold"
+                  style={{ letterSpacing: "1px" }}
+                >
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                // FIX: Render Loader DIRECTLY (No <tr>/<td> wrappers)
+                <SkeletonTableLoader rows={6} />
+              ) : players.length > 0 ? (
+                players.map((p, idx) => {
+                  const statusStyle = getStatusBadgeStyle(p.status);
+                  return (
+                    <tr
+                      key={p._id || idx}
+                      style={{ transition: "background 0.2s" }}
+                    >
+                      {/* NO */}
+                      <td className="px-4 fw-semibold text-secondary">
+                        {(page - 1) * limit + (idx + 1)}
+                      </td>
+
+                      {/* NAME (Clean Layout) */}
+                      <td>
+                        <div className="d-flex flex-column">
+                          <span className="fw-bold text-dark fs-6">
+                            {p.firstName} {p.lastName}
                           </span>
-                        </td>
-                        <td>
-                          <button 
-                            className="btn btn-warning btn-sm" 
-                            onClick={() => openEdit(p)}
-                            title="Edit player details"
-                          >
-                            <i className="bi bi-pencil me-1"></i>
-                            Edit
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="8" className="text-center py-4">
-                        <div className="text-muted">
-                          <i className="bi bi-people display-6"></i>
-                          <p className="mt-2 mb-0">No players found</p>
+                        </div>
+                      </td>
+
+                      {/* CLASS INFO */}
+                      <td>
+                        <div className="d-flex flex-column">
+                          <span className="fw-semibold text-dark">
+                            {p.classGroup || "-"}
+                          </span>
+                          <small className="text-muted">Form {p.year}</small>
+                        </div>
+                      </td>
+
+                      {/* CATEGORY & POSITION */}
+                      <td>
+                        <div className="d-flex flex-column">
+                          <span className="badge bg-light text-dark border w-auto align-self-start mb-1">
+                            {p.category || "-"}
+                          </span>
                           <small className="text-muted">
-                            {search || year || classGroup 
-                              ? "Try adjusting your filters" 
-                              : "No players in the system"}
+                            {p.sport === "badminton"
+                              ? p.badmintonCategory
+                              : p.position || "N/A"}
                           </small>
                         </div>
                       </td>
+
+                      {/* STATUS */}
+                      <td>
+                        <span
+                          className="badge rounded-pill fw-bold"
+                          style={{
+                            backgroundColor: statusStyle.bg,
+                            color: statusStyle.color,
+                            padding: "8px 12px",
+                          }}
+                        >
+                          <span
+                            className="d-inline-block rounded-circle me-2"
+                            style={{
+                              width: "6px",
+                              height: "6px",
+                              backgroundColor: statusStyle.color,
+                            }}
+                          ></span>
+                          {formatStatusText(p.status)}
+                        </span>
+                      </td>
+
+                      {/* ACTIONS */}
+                      <td className="text-end px-4">
+                        <button
+                          className="btn btn-sm btn-light text-primary shadow-sm"
+                          onClick={() => openEdit(p)}
+                          title="Edit Player"
+                          style={{
+                            borderRadius: "8px",
+                            width: "36px",
+                            height: "36px",
+                          }}
+                        >
+                          <FiEdit2 size={16} />
+                        </button>
+                      </td>
                     </tr>
-                  )}
-                </tbody>
-              </>
-            )}
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan="6" className="text-center py-5">
+                    <div className="d-flex flex-column align-items-center text-muted opacity-50">
+                      <FiUsers size={48} className="mb-3" />
+                      <h5 className="fw-bold">No players found</h5>
+                      <p className="mb-0">
+                        Try adjusting your search or filters
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
           </table>
         </div>
 
-        {/* Skeleton Pagination during loading */}
-        {isLoading ? (
-          <div className="d-flex justify-content-center mt-4">
-            <div className="d-flex align-items-center gap-2">
-              <Skeleton width={100} height={36} borderRadius={6} />
-              <Skeleton width={30} height={36} borderRadius={6} />
-              <Skeleton width={30} height={36} borderRadius={6} />
-              <Skeleton width={30} height={36} borderRadius={6} />
-              <Skeleton width={30} height={36} borderRadius={6} />
-              <Skeleton width={100} height={36} borderRadius={6} />
+        {/* PAGINATION */}
+        {!isLoading && players.length > 0 && (
+          <div className="card-footer bg-white border-top py-3 d-flex justify-content-between align-items-center px-4">
+            <div className="text-muted small">
+              Showing{" "}
+              <span className="fw-bold text-dark">
+                {(page - 1) * limit + 1}
+              </span>{" "}
+              to{" "}
+              <span className="fw-bold text-dark">
+                {Math.min(
+                  page * limit,
+                  page * limit -
+                    players.length +
+                    players.length +
+                    (page - 1) * limit
+                )}
+              </span>{" "}
+              of <span className="fw-bold text-dark">{totalPages * limit}</span>{" "}
+              entries
             </div>
-          </div>
-        ) : players.length > 0 && (
-          <div className="d-flex justify-content-center align-items-center mt-4">
-            <div className="d-flex align-items-center me-3">
-              <span className="text-muted me-2">Page</span>
-              <span className="fw-semibold">{page} of {totalPages}</span>
-            </div>
-            
-            <ul className="pagination mb-0">
-              <li className={`page-item ${page === 1 ? "disabled" : ""}`}>
-                <button 
-                  className="page-link" 
-                  onClick={() => page > 1 && setPage(page - 1)}
-                  disabled={page === 1}
-                >
-                  <i className="bi bi-chevron-left"></i> Previous
-                </button>
-              </li>
 
-              {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
-                let pageNum;
-                if (totalPages <= 5) {
-                  pageNum = i + 1;
-                } else if (page <= 3) {
-                  pageNum = i + 1;
-                } else if (page >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
-                } else {
-                  pageNum = page - 2 + i;
-                }
-                
-                return (
-                  <li key={pageNum} className={`page-item ${page === pageNum ? "active" : ""}`}>
-                    <button 
-                      className="page-link" 
-                      onClick={() => setPage(pageNum)}
-                    >
-                      {pageNum}
-                    </button>
-                  </li>
-                );
-              })}
+            <nav>
+              <ul className="pagination mb-0 gap-1">
+                <li className={`page-item ${page === 1 ? "disabled" : ""}`}>
+                  <button
+                    className="page-link border-0 rounded-3 text-secondary"
+                    onClick={() => page > 1 && setPage(page - 1)}
+                    disabled={page === 1}
+                  >
+                    <FiChevronLeft />
+                  </button>
+                </li>
 
-              <li className={`page-item ${page === totalPages ? "disabled" : ""}`}>
-                <button 
-                  className="page-link" 
-                  onClick={() => page < totalPages && setPage(page + 1)}
-                  disabled={page === totalPages}
+                {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) pageNum = i + 1;
+                  else if (page <= 3) pageNum = i + 1;
+                  else if (page >= totalPages - 2) pageNum = totalPages - 4 + i;
+                  else pageNum = page - 2 + i;
+
+                  return (
+                    <li key={pageNum} className="page-item">
+                      <button
+                        className={`page-link border-0 rounded-3 fw-bold ${
+                          page === pageNum
+                            ? "shadow-sm text-white"
+                            : "text-secondary"
+                        }`}
+                        style={{
+                          backgroundColor:
+                            page === pageNum ? "#6366f1" : "transparent", // Indigo Active
+                        }}
+                        onClick={() => setPage(pageNum)}
+                      >
+                        {pageNum}
+                      </button>
+                    </li>
+                  );
+                })}
+
+                <li
+                  className={`page-item ${
+                    page === totalPages ? "disabled" : ""
+                  }`}
                 >
-                  Next <i className="bi bi-chevron-right"></i>
-                </button>
-              </li>
-            </ul>
-            
-            <div className="ms-3 text-muted">
-              <small>Total: {players.length} players on this page</small>
-            </div>
+                  <button
+                    className="page-link border-0 rounded-3 text-secondary"
+                    onClick={() => page < totalPages && setPage(page + 1)}
+                    disabled={page === totalPages}
+                  >
+                    <FiChevronRight />
+                  </button>
+                </li>
+              </ul>
+            </nav>
           </div>
         )}
       </div>
 
       {showModal && selectedPlayer && (
-        <PlayerForm 
-          player={selectedPlayer} 
-          onClose={closeModal} 
-          onSave={handleSave} 
+        <PlayerForm
+          player={selectedPlayer}
+          onClose={closeModal}
+          onSave={handleSave}
         />
       )}
     </div>
