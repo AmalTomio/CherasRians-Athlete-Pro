@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
 // 1. New Sports Icon
-import { FaRunning } from "react-icons/fa"; 
+import { FaRunning, FaRegBuilding } from "react-icons/fa";
 import {
   FiHome,
   FiUsers,
@@ -14,7 +14,7 @@ import {
   FiLogOut,
   FiFileText,
   FiActivity,
-  FiGrid
+  FiGrid,
 } from "react-icons/fi";
 
 import "./Sidebar.css";
@@ -63,7 +63,7 @@ export default function Sidebar({ onToggle }) {
         ["My Teams", FiUsers, "/coach/teams"],
         ["Players", FiUser, "/coach/players"],
         ["Schedules", FiCalendar, "/coach/schedule"],
-        ["Facilities", FiFileText, "/coach/facilities"],
+        ["Facilities", FaRegBuilding, "/coach/facilities"],
         ["Med-Reviews", FiActivity, "/coach/medical"],
         ["Attendance", FiClipboard, "/coach/attendance"],
         ["Equipment", FiTool, "/coach/equipment"],
@@ -72,7 +72,7 @@ export default function Sidebar({ onToggle }) {
         ["Overview", FiHome, "/dashboard"],
         ["Students", FiUsers, "/exco/manageStudents"],
         ["Coaches", FiUser, "/exco/manageCoaches"],
-        ["Facilities", FiTool, "/exco/facilities"],
+        ["Facilities", FaRegBuilding, "/exco/facilities"],
         ["Booking", FiCalendar, "/exco/booking"],
         ["Inventory", FiTool, "/exco/equipment"],
         ["Notices", FiBell, "/announcements"],
@@ -94,7 +94,7 @@ export default function Sidebar({ onToggle }) {
         <div className="brand-wrapper">
           <div className="brand-logo">
             {/* 2. Using the Athlete Icon */}
-            <FaRunning style={{ marginLeft: "2px" }} /> 
+            <FaRunning style={{ marginLeft: "2px" }} />
           </div>
           {!collapsed && (
             <div className="brand-text">
@@ -124,7 +124,7 @@ export default function Sidebar({ onToggle }) {
                     <Icon />
                   </div>
                   {!collapsed && <span className="label">{label}</span>}
-                  
+
                   {isActive && !collapsed && <div className="active-glow" />}
                 </Link>
               </li>
@@ -137,9 +137,7 @@ export default function Sidebar({ onToggle }) {
       <div className="sidebar-footer">
         {!collapsed && (
           <div className="user-info">
-            <div className="user-avatar">
-              {getInitials(user.role)}
-            </div>
+            <div className="user-avatar">{getInitials(user.role)}</div>
             <div className="user-details">
               <span className="user-name text-truncate">
                 {user.firstName || user.role?.toUpperCase()}
@@ -148,7 +146,7 @@ export default function Sidebar({ onToggle }) {
             </div>
           </div>
         )}
-        
+
         <button className="logout-btn" onClick={handleLogout} title="Logout">
           <FiLogOut />
         </button>

@@ -5,7 +5,6 @@ const ALGO = "aes-256-cbc";
 const SECRET = process.env.CRYPTO_SECRET || ""; // must be 32 bytes ideally
 
 if (!SECRET || SECRET.length < 32) {
-  // Do not throw in require-time for dev convenience, but warn.
   console.warn(
     "CRYPTO_SECRET not set or too short. Set CRYPTO_SECRET in .env (32 chars recommended)."
   );

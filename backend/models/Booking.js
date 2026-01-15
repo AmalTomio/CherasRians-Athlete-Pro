@@ -44,7 +44,7 @@ const bookingSchema = new mongoose.Schema(
     // session details (coach input)
     sessionType: {
       type: String,
-      enum: ["training", "tryout"],
+      enum: ["training", "tryout", "event", "competition", "meeting"],
       required: true,
     },
 
@@ -57,7 +57,9 @@ const bookingSchema = new mongoose.Schema(
     playerCategory: {
       type: String,
       enum: ["U-15", "U-18"],
-      required: true,
+      required: function () {
+        return ["training", "tryout"].includes(this.sessionType);
+      },
     },
 
     // status: pending -> approved / rejected / cancelled

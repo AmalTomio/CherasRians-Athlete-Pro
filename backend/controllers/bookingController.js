@@ -15,7 +15,9 @@ exports.checkAvailability = async (req, res) => {
     const { facilityId, slots } = req.body;
 
     if (!facilityId || !Array.isArray(slots) || slots.length === 0) {
-      return res.status(400).json({ message: "Facility ID and slots required" });
+      return res
+        .status(400)
+        .json({ message: "Facility ID and slots required" });
     }
 
     const facility = await Facility.findById(facilityId);
@@ -84,9 +86,18 @@ exports.createBooking = async (req, res) => {
       equipmentRequests = [],
     } = req.body;
 
-    if (!sessionType || !sessionTitle || !playerCategory) {
+    // Basic required fields
+    if (!sessionType || !sessionTitle) {
       return res.status(400).json({
-        message: "Session type, title, and category are required",
+        message: "Session type and title are required",
+      });
+    }
+
+    // Category REQUIRED only for training / tryout
+    const requiresCategory = ["training", "tryout"].includes(sessionType);
+    if (requiresCategory && !playerCategory) {
+      return res.status(400).json({
+        message: "Player category is required for training and tryout sessions",
       });
     }
 
@@ -133,7 +144,7 @@ exports.createBooking = async (req, res) => {
         endAt,
         sessionType,
         sessionTitle,
-        playerCategory,
+        playerCategory: requiresCategory ? playerCategory : null,
         equipmentRequests: denormEquipment,
         reason,
         createdBy: user._id,
@@ -178,8 +189,6 @@ exports.createBooking = async (req, res) => {
     console.error("createBooking error:", err);
     res.status(500).json({ message: "Server error" });
   }
-
-  
 };
 
 /* ================= APPROVE / REJECT (EXCO) ================= */
@@ -208,10 +217,7 @@ exports.approveBooking = async (req, res) => {
 
     const coach = await User.findById(booking.coachId).lean();
 
-    const sessionDate = moment(booking.startAt)
-      .tz(TZ)
-      .startOf("day")
-      .toDate();
+    const sessionDate = moment(booking.startAt).tz(TZ).startOf("day").toDate();
 
     const schedule = await Schedule.create({
       coachId: booking.coachId,
