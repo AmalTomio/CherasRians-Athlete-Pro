@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../../api/axios";
 import FacilityCard from "../../components/FacilityCard";
 import BookingModal from "../../components/BookingModal";
+import { capitalizeFirst } from "../../utils/format";
 
 export default function FacilityList() {
   const [facilities, setFacilities] = useState([]);
@@ -27,12 +28,15 @@ export default function FacilityList() {
     try {
       setLoadingBookings(true);
       setBookingError(null);
-      
+
       // Use the correct endpoint from your backend
       const res = await api.get("/bookings/coach");
       setBookings(res.data.bookings || []);
     } catch (err) {
-      console.error("Failed to fetch bookings:", err.response?.status || err.message);
+      console.error(
+        "Failed to fetch bookings:",
+        err.response?.status || err.message
+      );
       setBookingError("Could not load booking history");
       // Set empty array as fallback
       setBookings([]);
@@ -65,11 +69,11 @@ export default function FacilityList() {
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'short', 
-      month: 'short', 
-      day: 'numeric',
-      year: 'numeric'
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
@@ -77,9 +81,9 @@ export default function FacilityList() {
   const formatTime = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit'
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -92,7 +96,7 @@ export default function FacilityList() {
     const diffMins = Math.floor(diffMs / 60000);
     const hours = Math.floor(diffMins / 60);
     const mins = diffMins % 60;
-    
+
     if (hours === 0) return `${mins} min`;
     if (mins === 0) return `${hours} hr`;
     return `${hours} hr ${mins} min`;
@@ -100,13 +104,18 @@ export default function FacilityList() {
 
   // Get status badge color
   const getStatusBadgeColor = (status) => {
-    if (!status) return 'secondary';
-    switch(status.toLowerCase()) {
-      case 'pending': return 'warning';
-      case 'approved': return 'success';
-      case 'rejected': return 'danger';
-      case 'cancelled': return 'secondary';
-      default: return 'secondary';
+    if (!status) return "secondary";
+    switch (status.toLowerCase()) {
+      case "pending":
+        return "warning";
+      case "approved":
+        return "success";
+      case "rejected":
+        return "danger";
+      case "cancelled":
+        return "secondary";
+      default:
+        return "secondary";
     }
   };
 
@@ -115,21 +124,26 @@ export default function FacilityList() {
     if (!equipmentRequests || equipmentRequests.length === 0) {
       return "No equipment";
     }
-    
-    const totalItems = equipmentRequests.reduce((sum, eq) => sum + eq.quantity, 0);
+
+    const totalItems = equipmentRequests.reduce(
+      (sum, eq) => sum + eq.quantity,
+      0
+    );
     const types = equipmentRequests.length;
-    
+
     if (types === 1) {
       return `${equipmentRequests[0].quantity} × ${equipmentRequests[0].equipmentName}`;
     }
-    
+
     return `${totalItems} items (${types} types)`;
   };
 
   return (
     <div>
       <h2 className="mb-3">Book Facilities</h2>
-      <p className="text-muted mb-4">Select a facility to create a booking request.</p>
+      <p className="text-muted mb-4">
+        Select a facility to create a booking request.
+      </p>
 
       {/* Facilities Section */}
       <div className="mb-5">
@@ -138,7 +152,10 @@ export default function FacilityList() {
             {loading
               ? [...Array(6)].map((_, i) => (
                   <div key={i} className="col-6 col-md-4 col-lg-3 col-xl-2">
-                    <div className="card p-4 placeholder-glow" style={{ height: "150px" }}>
+                    <div
+                      className="card p-4 placeholder-glow"
+                      style={{ height: "150px" }}
+                    >
                       <span className="placeholder col-8"></span>
                       <span className="placeholder col-6 mt-2"></span>
                       <span className="placeholder col-4 mt-2"></span>
@@ -146,7 +163,10 @@ export default function FacilityList() {
                   </div>
                 ))
               : facilities.map((fac) => (
-                  <div key={fac._id} className="col-6 col-md-4 col-lg-3 col-xl-2">
+                  <div
+                    key={fac._id}
+                    className="col-6 col-md-4 col-lg-3 col-xl-2"
+                  >
                     <FacilityCard facility={fac} onBook={openBooking} />
                   </div>
                 ))}
@@ -170,7 +190,8 @@ export default function FacilityList() {
             <i className="bi bi-exclamation-triangle me-2"></i>
             {bookingError}
             <div className="small mt-1">
-              Booking history feature is being set up. You can still make new bookings.
+              Booking history feature is being set up. You can still make new
+              bookings.
             </div>
           </div>
         ) : loadingBookings ? (
@@ -183,10 +204,15 @@ export default function FacilityList() {
         ) : bookings.length === 0 ? (
           <div className="text-center py-5">
             <div className="mb-3">
-              <i className="bi bi-calendar-x" style={{ fontSize: "3rem", color: "#6c757d" }}></i>
+              <i
+                className="bi bi-calendar-x"
+                style={{ fontSize: "3rem", color: "#6c757d" }}
+              ></i>
             </div>
             <h5 className="text-muted">No booking requests yet</h5>
-            <p className="text-muted">Select a facility above to make your first booking request.</p>
+            <p className="text-muted">
+              Select a facility above to make your first booking request.
+            </p>
           </div>
         ) : (
           <>
@@ -207,25 +233,34 @@ export default function FacilityList() {
                     <tr key={booking._id}>
                       <td>
                         <div className="d-flex align-items-center">
-                          <div 
+                          <div
                             className="rounded-circle bg-primary d-flex align-items-center justify-content-center me-2"
-                            style={{ width: '40px', height: '40px', color: 'white' }}
+                            style={{
+                              width: "40px",
+                              height: "40px",
+                              color: "white",
+                            }}
                           >
                             <i className="bi bi-building"></i>
                           </div>
                           <div>
-                            <strong>{booking.facilityId?.name || 'Facility'}</strong>
+                            <strong>
+                              {booking.facilityId?.name || "Facility"}
+                            </strong>
                             <div className="small text-muted">
-                              {booking.facilityId?.type || 'N/A'}
+                              {booking.facilityId?.type || "N/A"}
                             </div>
                           </div>
                         </div>
                       </td>
                       <td>
                         <div className="small">
-                          <div><strong>{formatDate(booking.startAt)}</strong></div>
                           <div>
-                            {formatTime(booking.startAt)} - {formatTime(booking.endAt)}
+                            <strong>{formatDate(booking.startAt)}</strong>
+                          </div>
+                          <div>
+                            {formatTime(booking.startAt)} -{" "}
+                            {formatTime(booking.endAt)}
                           </div>
                         </div>
                       </td>
@@ -240,22 +275,34 @@ export default function FacilityList() {
                         </div>
                       </td>
                       <td>
-                        <div className="small text-truncate" style={{ maxWidth: '150px' }} title={booking.reason}>
-                          {booking.reason || 'No reason provided'}
+                        <div
+                          className="small text-truncate"
+                          style={{ maxWidth: "150px" }}
+                          title={booking.reason}
+                        >
+                          {booking.reason
+                            ? capitalizeFirst(booking.reason)
+                            : "No reason provided"}
                         </div>
                       </td>
+
                       <td>
-                        <span className={`badge bg-${getStatusBadgeColor(booking.status)}`}>
-                          {booking.status ? 
-                            booking.status.charAt(0).toUpperCase() + booking.status.slice(1) : 
-                            'Unknown'
-                          }
+                        <span
+                          className={`badge bg-${getStatusBadgeColor(
+                            booking.status
+                          )}`}
+                        >
+                          {booking.status
+                            ? booking.status.charAt(0).toUpperCase() +
+                              booking.status.slice(1)
+                            : "Unknown"}
                         </span>
-                        {booking.approvedAt && booking.status === 'approved' && (
-                          <div className="small text-muted mt-1">
-                            Approved {formatDate(booking.approvedAt)}
-                          </div>
-                        )}
+                        {booking.approvedAt &&
+                          booking.status === "approved" && (
+                            <div className="small text-muted mt-1">
+                              Approved {formatDate(booking.approvedAt)}
+                            </div>
+                          )}
                       </td>
                     </tr>
                   ))}
@@ -269,7 +316,9 @@ export default function FacilityList() {
                 <div className="col-md-3">
                   <div className="card border-primary">
                     <div className="card-body text-center">
-                      <h5 className="card-title text-primary">Total Bookings</h5>
+                      <h5 className="card-title text-primary">
+                        Total Bookings
+                      </h5>
                       <h2 className="card-text">{bookings.length}</h2>
                     </div>
                   </div>
@@ -279,7 +328,7 @@ export default function FacilityList() {
                     <div className="card-body text-center">
                       <h5 className="card-title text-success">Approved</h5>
                       <h2 className="card-text">
-                        {bookings.filter(b => b.status === 'approved').length}
+                        {bookings.filter((b) => b.status === "approved").length}
                       </h2>
                     </div>
                   </div>
@@ -289,7 +338,7 @@ export default function FacilityList() {
                     <div className="card-body text-center">
                       <h5 className="card-title text-warning">Pending</h5>
                       <h2 className="card-text">
-                        {bookings.filter(b => b.status === 'pending').length}
+                        {bookings.filter((b) => b.status === "pending").length}
                       </h2>
                     </div>
                   </div>
@@ -297,11 +346,17 @@ export default function FacilityList() {
                 <div className="col-md-3">
                   <div className="card border-secondary">
                     <div className="card-body text-center">
-                      <h5 className="card-title text-secondary">Cancelled/Rejected</h5>
+                      <h5 className="card-title text-secondary">
+                        Cancelled/Rejected
+                      </h5>
                       <h2 className="card-text">
-                        {bookings.filter(b => 
-                          b.status === 'cancelled' || b.status === 'rejected'
-                        ).length}
+                        {
+                          bookings.filter(
+                            (b) =>
+                              b.status === "cancelled" ||
+                              b.status === "rejected"
+                          ).length
+                        }
                       </h2>
                     </div>
                   </div>
