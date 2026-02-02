@@ -1,5 +1,4 @@
 const Announcement = require("../models/Announcement");
-const Notification = require("../models/Notification");
 const User = require("../models/User");
 const { sendNotification } = require("../services/notificationService");
 
@@ -9,30 +8,27 @@ exports.createAnnouncement = async (req, res) => {
 
     const {
       title,
-      message,
+      content,
       targetRoles = [],
       targetSports = [],
       targetCategories = [],
       expiryDate,
     } = req.body;
 
-    if (!title || !message) {
+    if (!title || !content) {
       return res.status(400).json({ message: "Title and message required" });
     }
 
     const announcement = await Announcement.create({
       title,
-      message,
+      content,
       createdBy: user._id,
       targetRoles,
       targetSports,
       targetCategories,
       expiryDate,
+      isActive: true,
     });
-
-    /* =============================
-       FIND TARGET USERS
-    ============================= */
 
     const filter = {};
 
@@ -50,26 +46,17 @@ exports.createAnnouncement = async (req, res) => {
 
     const users = await User.find(filter).select("_id").lean();
 
-    /* =============================
-       CREATE NOTIFICATIONS
-    ============================= */
+    const io = req.app.get("io");
 
-    const notifications = users.map((u) => ({
-      toUser: u._id,
-      title: announcement.title,
-      message: announcement.message,
-      meta: { announcementId: announcement._id },
-    }));
-
-    const createdNotifications = await Notification.insertMany(notifications);
-
-    /* =============================
-       EMIT REAL-TIME
-    ============================= */
-
-    createdNotifications.forEach((n) => {
-      sendNotification(n.toUser.toString(), n);
-    });
+    for (const u of users) {
+      await sendNotification({
+        io,
+        toUser: u._id,
+        title: announcement.title,
+        message: announcement.content,
+        meta: { announcementId: announcement._id },
+      });
+    }
 
     res.status(201).json({
       message: "Announcement created",

@@ -3,8 +3,7 @@ const mongoose = require("mongoose");
 const announcementSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
-    message: { type: String, required: true },
-
+    content: { type: String, required: true }, 
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -16,7 +15,6 @@ const announcementSchema = new mongoose.Schema(
     targetCategories: [{ type: String }],
 
     expiryDate: { type: Date },
-
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }

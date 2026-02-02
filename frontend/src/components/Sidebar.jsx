@@ -67,6 +67,7 @@ export default function Sidebar({ onToggle }) {
         ["Med-Reviews", FiActivity, "/coach/medical"],
         ["Attendance", FiClipboard, "/coach/attendance"],
         ["Equipment", FiTool, "/coach/equipment"],
+        ["Announcement", FiBell, "/coach/announcements"],
       ],
       exco: [
         ["Overview", FiHome, "/dashboard"],
@@ -75,7 +76,7 @@ export default function Sidebar({ onToggle }) {
         ["Facilities", FaRegBuilding, "/exco/facilities"],
         ["Booking", FiCalendar, "/exco/booking"],
         ["Inventory", FiTool, "/exco/equipment"],
-        ["Notices", FiBell, "/announcements"],
+        ["Announcement", FiBell, "/announcements"],
       ],
     };
 

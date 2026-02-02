@@ -26,6 +26,7 @@ import Attendance from "./pages/Coach/Attendance";
 import Equipment from "./pages/Coach/Equipment";
 import Schedule from "./pages/Coach/Schedule";
 import Teams from "./pages/Coach/ManageTeams";
+import Announcements from "./pages/Coach/Announcement";
 // Student Pages
 import Medical from "./pages/Student/Medical";
 import PlayerSchedule from "./pages/Student/Schedule";
@@ -180,6 +181,16 @@ export default function App() {
             <ProtectedRoute allowedRoles={["coach"]}>
               <WithSidebar>
                 <Equipment />
+              </WithSidebar>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/coach/announcements"
+          element={
+            <ProtectedRoute allowedRoles={["coach"]}>
+              <WithSidebar>
+                <Announcements />
               </WithSidebar>
             </ProtectedRoute>
           }
