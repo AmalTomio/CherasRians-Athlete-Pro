@@ -270,7 +270,6 @@ const MedicalLeaveReview = () => {
           )}
         </Modal.Body>
       </Modal>
-      ;
     </div>
   );
 };

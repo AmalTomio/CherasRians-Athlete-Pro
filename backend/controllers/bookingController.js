@@ -179,8 +179,8 @@ exports.createBooking = async (req, res) => {
             title: "New facility booking request",
             message: `${booking.coachName} requested ${facility.name}`,
             meta: { bookingId: booking._id },
-          })
-        )
+          }),
+        ),
       );
     }
 
@@ -232,11 +232,17 @@ exports.approveBooking = async (req, res) => {
       status: "approved",
     });
 
-    await Notification.create({
+    const { sendNotification } = require("../services/notificationService");
+
+    await sendNotification({
+      io: req.app.get("io"),
       toUser: booking.coachId,
-      title: "Booking approved",
-      message: "Your facility booking has been approved",
-      meta: { bookingId: booking._id, scheduleId: schedule._id },
+      title: "Booking Approved",
+      message: "Your facility booking has been approved.",
+      meta: {
+        bookingId: booking._id,
+        scheduleId: schedule._id,
+      },
     });
 
     res.json({ booking, schedule });
@@ -284,20 +290,57 @@ exports.getPendingBookings = async (req, res) => {
 
 exports.getAllBookings = async (req, res) => {
   try {
-    const bookings = await Booking.find()
+    let { page = 1, limit = 10, search = "", status = "" } = req.query;
+
+    page = parseInt(page);
+    limit = parseInt(limit);
+    const skip = (page - 1) * limit;
+
+    const filter = {};
+
+    if (status) {
+      const statuses = status.split(",");
+      if (statuses.length > 1) {
+        filter.status = { $in: statuses };
+      } else {
+        filter.status = status;
+      }
+    }
+
+    let bookingsQuery = Booking.find(filter)
       .populate("facilityId", "name")
       .populate("coachId", "firstName lastName")
-      .sort({ createdAt: -1 })
-      .lean();
+      .sort({ createdAt: -1 });
 
-    const bookingsOut = bookings.map((b) => ({
+    const allMatching = await bookingsQuery.lean();
+
+    let filteredBookings = allMatching.map((b) => ({
       ...b,
       coachName: b.coachId
         ? `${b.coachId.firstName} ${b.coachId.lastName}`
         : "Unknown",
+      facilityName: b.facilityId ? b.facilityId.name : "Unknown",
     }));
 
-    res.json({ bookings: bookingsOut });
+    if (search) {
+      const q = search.toLowerCase();
+      filteredBookings = filteredBookings.filter(
+        (b) =>
+          b.coachName.toLowerCase().includes(q) ||
+          b.facilityName.toLowerCase().includes(q),
+      );
+    }
+
+    const total = filteredBookings.length;
+    const paginatedBookings = filteredBookings.slice(skip, skip + limit);
+
+    res.json({
+      bookings: paginatedBookings,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1,
+    });
   } catch (err) {
     console.error("GET ALL BOOKINGS ERROR:", err);
     res.status(500).json({ message: "Server error" });

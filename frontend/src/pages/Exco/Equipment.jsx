@@ -1,25 +1,38 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import api from "../../api/axios";
-
 import { successAlert, errorAlert } from "../../utils/swal";
-import {
-  PackageIcon,
-  CheckCircleIcon,
-  SyncIcon,
-  AlertIcon,
-} from "@primer/octicons-react";
-
 import EquipmentModal from "../../components/EquipmentModal";
 import StatCard from "../../components/StatCard";
 import DamageReportDetailsModal from "../../components/exco/DamageReportDetailsModal";
+import Table from "../../components/Table";
+import SkeletonTableLoader from "../../components/SkeletonTableLoader";
+import { 
+  FiBox, 
+  FiCheckCircle, 
+  FiRefreshCw, 
+  FiAlertTriangle, 
+  FiPlus, 
+  FiSearch,
+  FiTool,
+  FiCalendar,
+  FiUser
+} from "react-icons/fi";
 
 export default function EquipmentManagement() {
   const [equipment, setEquipment] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
+  
+  // Damage Modal State
   const [selectedEquipment, setSelectedEquipment] = useState(null);
   const [showDamageModal, setShowDamageModal] = useState(false);
+  
+  // Damage History State
   const [damageHistory, setDamageHistory] = useState([]);
+  const [damageTab, setDamageTab] = useState("reported"); 
+
+  // Filters
+  const [search, setSearch] = useState("");
 
   const fetchEquipment = async () => {
     try {
@@ -47,206 +60,286 @@ export default function EquipmentManagement() {
     fetchDamageHistory();
   }, []);
 
-  // ===== STATS =====
-  const totalItems = equipment.reduce((s, e) => s + e.quantityTotal, 0);
-  const available = equipment.reduce((s, e) => s + e.quantityAvailable, 0);
-  const damaged = equipment.reduce((s, e) => s + (e.quantityDamaged || 0), 0);
-  const inUse = totalItems - available - damaged;
+  // ===== STATS CALCULATION =====
+  const stats = useMemo(() => {
+    const total = equipment.reduce((s, e) => s + e.quantityTotal, 0);
+    const available = equipment.reduce((s, e) => s + e.quantityAvailable, 0);
+    const damaged = equipment.reduce((s, e) => s + (e.quantityDamaged || 0), 0);
+    const inUse = total - available - damaged;
+    return { total, available, damaged, inUse };
+  }, [equipment]);
+
+  // ===== FILTER DATA =====
+  const filteredEquipment = equipment.filter(e => 
+    e.name.toLowerCase().includes(search.toLowerCase()) ||
+    e.category?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const filteredDamage = damageHistory.filter(r => {
+    if (damageTab === "reported") return r.status !== "resolved";
+    if (damageTab === "resolved") return r.status === "resolved";
+    return true;
+  });
+
+  // ===== INVENTORY COLUMNS =====
+  const inventoryColumns = [
+    {
+      label: "No",
+      key: "no",
+      className: "px-4 fw-semibold text-secondary",
+      accessor: (_, idx) => idx + 1
+    },
+    {
+      label: "Equipment Info",
+      key: "name",
+      accessor: (row) => (
+        <div className="d-flex align-items-center gap-3">
+          <div 
+            className="rounded-3 d-flex align-items-center justify-content-center text-white shadow-sm"
+            style={{ 
+              width: "40px", height: "40px", 
+              background: "linear-gradient(135deg, #6366f1 0%, #4338ca 100%)" // Indigo
+            }}
+          >
+            <FiBox size={18} />
+          </div>
+          <div>
+            <div className="fw-bold text-dark">{row.name}</div>
+            <small className="text-muted text-uppercase" style={{ fontSize: "0.7rem", letterSpacing: "0.5px" }}>
+              {row.category || "General"}
+            </small>
+          </div>
+        </div>
+      )
+    },
+    {
+      label: "Total",
+      key: "total",
+      accessor: "quantityTotal",
+      className: "fw-bold text-dark"
+    },
+    {
+      label: "Available",
+      key: "available",
+      accessor: (row) => <span className="text-success fw-bold">{row.quantityAvailable}</span>
+    },
+    {
+      label: "In Use",
+      key: "inUse",
+      accessor: (row) => {
+        const inUse = row.quantityTotal - row.quantityAvailable - (row.quantityDamaged || 0);
+        return <span className="text-primary fw-bold">{inUse}</span>;
+      }
+    },
+    {
+      label: "Damaged",
+      key: "damaged",
+      accessor: (row) => (
+        row.quantityDamaged > 0 ? (
+          <span className="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 rounded-pill">
+            {row.quantityDamaged} Units
+          </span>
+        ) : (
+          <span className="text-muted">-</span>
+        )
+      )
+    },
+    {
+      label: "Action",
+      key: "action",
+      className: "text-end px-4",
+      accessor: (row) => (
+        row.quantityDamaged > 0 && (
+          <button
+            className="btn btn-sm btn-outline-danger shadow-sm fw-bold d-inline-flex align-items-center gap-2"
+            onClick={() => {
+              setSelectedEquipment(row);
+              setShowDamageModal(true);
+            }}
+            style={{ borderRadius: "8px" }}
+          >
+            <FiAlertTriangle /> View Reports
+          </button>
+        )
+      )
+    }
+  ];
+
+  // ===== DAMAGE HISTORY COLUMNS =====
+  const damageColumns = [
+    {
+      label: "No",
+      key: "no",
+      className: "px-4 fw-semibold text-secondary",
+      accessor: (_, idx) => idx + 1
+    },
+    {
+      label: "Item Details",
+      key: "item",
+      accessor: (row) => (
+        <div className="fw-bold text-dark">
+          {row.equipmentId?.name || "Unknown Item"}
+        </div>
+      )
+    },
+    {
+      label: "Qty",
+      key: "qty",
+      accessor: (row) => (
+        <span className="badge bg-light text-dark border fw-bold">
+          {row.quantityDamaged}
+        </span>
+      )
+    },
+    {
+      label: "Reported By",
+      key: "reporter",
+      accessor: (row) => (
+        <div className="d-flex align-items-center gap-2 text-muted small fw-medium">
+          <FiUser /> {row.reportedBy?.firstName} {row.reportedBy?.lastName}
+        </div>
+      )
+    },
+    {
+      label: "Date",
+      key: "date",
+      accessor: (row) => (
+        <div className="d-flex align-items-center gap-2 text-muted small">
+          <FiCalendar /> {new Date(row.createdAt).toLocaleDateString()}
+        </div>
+      )
+    },
+    {
+      label: "Status",
+      key: "status",
+      className: "text-end px-4",
+      accessor: (row) => {
+        const isResolved = row.status === "resolved";
+        return (
+          <span className={`badge rounded-pill px-3 py-2 border ${
+            isResolved 
+              ? "bg-success-subtle text-success border-success-subtle" 
+              : "bg-warning-subtle text-warning border-warning-subtle"
+          }`}>
+            {isResolved ? "Resolved" : "Reported"}
+          </span>
+        );
+      }
+    }
+  ];
 
   return (
-    <div>
-      {/* Header */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
+    <div className="px-4 py-4">
+      {/* HEADER */}
+      <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
         <div>
-          <h2 className="mb-1">Equipment Management</h2>
-          <p className="text-muted">
-            Manage equipment inventory and approve requests
-          </p>
+          <h2 className="fw-bold mb-1 text-dark" style={{ letterSpacing: "-0.5px" }}>
+            Equipment Management
+          </h2>
+          <p className="text-muted mb-0">Manage inventory, track availability, and handle damage reports.</p>
         </div>
 
-        <button className="btn btn-primary" onClick={() => setShowAdd(true)}>
-          <i className="bi bi-plus-circle me-2"></i>
-          Add New Equipment
+        <button 
+          className="btn text-white shadow-sm fw-bold d-flex align-items-center gap-2 px-4 py-2"
+          onClick={() => setShowAdd(true)}
+          style={{
+            background: "linear-gradient(135deg, #6366f1 0%, #4338ca 100%)", // Indigo
+            borderRadius: "10px",
+            border: "none"
+          }}
+        >
+          <FiPlus size={18} /> Add Equipment
         </button>
       </div>
 
-      {/* Tabs */}
-      <ul className="nav nav-tabs mb-4">
-        <li className="nav-item">
-          <button className="nav-link active">Inventory</button>
-        </li>
-        {/* <li className="nav-item">
-          <button className="nav-link">Requests</button>
-        </li> */}
-      </ul>
-
-      {/* Stats */}
-      <div className="row g-4 mb-4">
-        <StatCard
-          title="Total Equipment"
-          value={totalItems}
-          icon={<PackageIcon size={22} />}
-          iconBg="#eef2ff"
-          iconColor="#2563eb"
-        />
-
-        <StatCard
-          title="Available"
-          value={available}
-          icon={<CheckCircleIcon size={22} />}
-          iconBg="#ecfdf5"
-          iconColor="#16a34a"
-        />
-
-        <StatCard
-          title="In Use"
-          value={inUse}
-          icon={<SyncIcon size={22} />}
-          iconBg="#eff6ff"
-          iconColor="#2563eb"
-        />
-
-        <StatCard
-          title="Damaged"
-          value={damaged}
-          icon={<AlertIcon size={22} />}
-          iconBg="#fef2f2"
-          iconColor="#dc2626"
-        />
+      {/* STATS CARDS */}
+      <div className="row g-4 mb-5">
+        <StatCard title="Total Items" value={stats.total} icon={<FiBox size={24} />} iconBg="#eef2ff" iconColor="#4f46e5" />
+        <StatCard title="Available" value={stats.available} icon={<FiCheckCircle size={24} />} iconBg="#ecfdf5" iconColor="#10b981" />
+        <StatCard title="In Use" value={stats.inUse} icon={<FiRefreshCw size={24} />} iconBg="#eff6ff" iconColor="#3b82f6" />
+        <StatCard title="Damaged" value={stats.damaged} icon={<FiAlertTriangle size={24} />} iconBg="#fef2f2" iconColor="#ef4444" />
       </div>
 
-      {/* Table */}
-      <div className="card shadow-sm">
-        <div className="card-body p-0">
-          {loading ? (
-            <div className="text-center py-4">
-              <div className="spinner-border text-primary"></div>
+      {/* ===== INVENTORY SECTION ===== */}
+      <div className="mb-5">
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h5 className="fw-bold text-dark m-0">Inventory List</h5>
+          <div className="input-group w-auto">
+            <span className="input-group-text bg-white border-end-0 text-muted"><FiSearch /></span>
+            <input 
+              type="text" 
+              className="form-control border-start-0 ps-0" 
+              placeholder="Search items..." 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ maxWidth: "200px" }}
+            />
+          </div>
+        </div>
+
+        <div className="card border-0 shadow-sm rounded-4 overflow-hidden" style={{ minHeight: "300px" }}>
+          <div className="table-responsive">
+            <Table 
+              columns={inventoryColumns} 
+              data={filteredEquipment} 
+              loading={loading} 
+              customSkeleton={<SkeletonTableLoader rows={5} />}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ===== DAMAGE HISTORY SECTION ===== */}
+      <div>
+        <div className="d-flex align-items-center justify-content-between mb-3">
+          <h5 className="fw-bold text-dark m-0 d-flex align-items-center gap-2">
+            <FiTool className="text-danger" /> Damage Reports
+          </h5>
+          
+          {/* TABS */}
+          <div className="bg-light p-1 rounded-pill d-inline-flex border">
+            <button
+              className={`btn btn-sm rounded-pill px-4 fw-bold transition-all ${
+                damageTab === "reported" 
+                  ? "bg-white text-danger shadow-sm" 
+                  : "text-muted hover-dark"
+              }`}
+              onClick={() => setDamageTab("reported")}
+            >
+              Reported
+            </button>
+            <button
+              className={`btn btn-sm rounded-pill px-4 fw-bold transition-all ${
+                damageTab === "resolved" 
+                  ? "bg-white text-success shadow-sm" 
+                  : "text-muted hover-dark"
+              }`}
+              onClick={() => setDamageTab("resolved")}
+            >
+              Resolved
+            </button>
+          </div>
+        </div>
+
+        <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+          <div className="table-responsive">
+            <Table 
+              columns={damageColumns} 
+              data={filteredDamage} 
+              loading={false} // Assuming fetched on mount
+              customSkeleton={<SkeletonTableLoader rows={3} />}
+            />
+          </div>
+          {filteredDamage.length === 0 && (
+            <div className="text-center py-5 text-muted">
+              <FiCheckCircle size={40} className="mb-2 opacity-25 text-success" />
+              <p className="m-0">No {damageTab} issues found.</p>
             </div>
-          ) : (
-            <table className="table mb-0 align-middle">
-              <thead className="table-light">
-                <tr>
-                  <th>Equipment</th>
-                  <th>Category</th>
-                  <th>Total</th>
-                  <th>Available</th>
-                  <th>In Use</th>
-                  <th>Damaged</th>
-                  <th className="text-end">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {equipment.map((e) => {
-                  const inUse =
-                    e.quantityTotal -
-                    e.quantityAvailable -
-                    (e.quantityDamaged || 0);
-
-                  return (
-                    <tr key={e._id} className="equipment-row">
-                      <td>
-                        <div className="d-flex align-items-center gap-3">
-                          <div className="equipment-icon">
-                            <i className="bi bi-box-seam"></i>
-                          </div>
-                          <span className="fw-semibold">{e.name}</span>
-                        </div>
-                      </td>
-
-                      <td className="text-muted">{e.category || "—"}</td>
-                      <td>{e.quantityTotal}</td>
-                      <td className="text-success">{e.quantityAvailable}</td>
-                      <td className="text-primary">{inUse}</td>
-                      <td className="text-danger">{e.quantityDamaged || 0}</td>
-
-                      <td className="text-end">
-                        {e.quantityDamaged > 0 && (
-                          <button
-                            className="btn btn-outline-danger btn-sm"
-                            onClick={() => {
-                              setSelectedEquipment(e);
-                              setShowDamageModal(true);
-                            }}
-                          >
-                            View Damage
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
           )}
         </div>
       </div>
 
-      <div className="d-flex align-items-center my-5">
-        <div className="flex-grow-1 border-top"></div>
-        <div className="px-3">
-          <h4 className="mb-0 text-muted">Damage History</h4>
-        </div>
-        <div className="flex-grow-1 border-top"></div>
-      </div>
-      {/* ================= DAMAGE HISTORY ================= */}
-      {damageHistory.length > 0 && (
-        <div className="card shadow-sm mt-5">
-          <div className="card-body">
-            <h5 className="fw-semibold mb-4">Damage History</h5>
-
-            <div className="list-group list-group-flush">
-              {damageHistory.map((r) => (
-                <div
-                  key={r._id}
-                  className="list-group-item py-3 d-flex align-items-center justify-content-between"
-                >
-                  {/* LEFT */}
-                  <div className="d-flex align-items-center gap-3">
-                    <div
-                      className="rounded-circle d-flex align-items-center justify-content-center"
-                      style={{
-                        width: 44,
-                        height: 44,
-                        background: "#fee2e2",
-                        color: "#dc2626",
-                        fontWeight: 600,
-                      }}
-                    >
-                      <i className="bi bi-exclamation-triangle-fill"></i>
-                    </div>
-
-                    <div>
-                      <div className="fw-semibold">{r.equipmentId?.name}</div>
-                      <div className="small text-muted">
-                        {r.quantityDamaged} damaged · Reported by{" "}
-                        {r.reportedBy?.firstName} {r.reportedBy?.lastName}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* RIGHT */}
-                  <div className="text-end">
-                    <div className="small text-muted">
-                      {new Date(r.createdAt).toLocaleDateString()}
-                    </div>
-                    <span
-                      className={`badge ${
-                        r.status === "resolved"
-                          ? "bg-success"
-                          : "bg-warning text-white"
-                      }`}
-                    >
-                      {r.status?.charAt(0).toUpperCase() + r.status?.slice(1)}{" "}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add Equipment Modal */}
+      {/* MODALS */}
       {showAdd && (
         <EquipmentModal
           onClose={() => setShowAdd(false)}
@@ -269,6 +362,7 @@ export default function EquipmentManagement() {
             setShowDamageModal(false);
             setSelectedEquipment(null);
             fetchEquipment();
+            fetchDamageHistory(); // Refresh history
           }}
         />
       )}

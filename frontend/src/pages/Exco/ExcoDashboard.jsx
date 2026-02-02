@@ -25,11 +25,18 @@ export default function ExcoDashboard() {
   }, []);
 
   return (
-    <div>
-      <h2 className="mb-1">Exco Dashboard</h2>
-      <p className="text-muted mb-4">
-        Overview of students assigned to each sport.
-      </p>
+    <div className="px-4 py-4">
+       <div className="mb-4">
+        <h2
+          className="fw-bold mb-1 text-dark"
+          style={{ letterSpacing: "-0.5px" }}
+        >
+          Booking Management
+        </h2>
+        <p className="text-muted mb-0">
+          Review booking requests and view booking history
+        </p>
+      </div>
 
       <div className="container-fluid">
         <div className="row g-4">

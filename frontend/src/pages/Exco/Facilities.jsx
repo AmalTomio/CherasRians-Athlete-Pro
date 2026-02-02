@@ -43,7 +43,7 @@ export default function Facilities() {
 
   const handleStatusChanged = async (id, newStatus) => {
     setFacilities((prev) =>
-      prev.map((f) => (f._id === id ? { ...f, status: newStatus } : f))
+      prev.map((f) => (f._id === id ? { ...f, status: newStatus } : f)),
     );
 
     await fetchFacilities();
@@ -59,6 +59,17 @@ export default function Facilities() {
 
   return (
     <div className="container py-4">
+      <div className="mb-4">
+        <h2
+          className="fw-bold mb-1 text-dark"
+          style={{ letterSpacing: "-0.5px" }}
+        >
+          Facilities Management
+        </h2>
+        <p className="text-muted mb-0">
+            Manage and view all facilities in the system
+        </p>
+      </div>
       {/* ===== STATS ===== */}
       <div className="row g-4 mb-4">
         <StatCard

@@ -175,30 +175,74 @@ exports.getCoachesBySport = async (req, res) => {
 };
 
 // ================================
-// GET ALL COACHES (EXCO)
+// GET ALL COACHES (EXCO) - PAGINATED
 // ================================
 exports.getAllCoaches = async (req, res) => {
   try {
     res.set("Cache-Control", "no-store");
 
-    const coaches = await User.find(
-      { role: "coach" },
-      {
+    let {
+      page = 1,
+      limit = 10,
+      search = "",
+      sport,
+      isActive,
+    } = req.query;
+
+    page = Number(page);
+    limit = Number(limit);
+    const skip = (page - 1) * limit;
+
+    const filter = { role: "coach" };
+
+    // Search by name
+    if (search && search.trim() !== "") {
+      filter.$or = [
+        { firstName: { $regex: search, $options: "i" } },
+        { lastName: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    // Filter by sport
+    if (sport) {
+      filter.sport = sport;
+    }
+
+    // Filter by active status
+    if (isActive !== undefined) {
+      filter.isActive = isActive === "true";
+    }
+
+    const [coaches, total] = await Promise.all([
+      User.find(filter, {
         firstName: 1,
         lastName: 1,
         email: 1,
         sport: 1,
         isActive: 1,
         createdAt: 1,
-      }
-    ).sort({ createdAt: -1 });
+      })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
 
-    return res.json({ coaches });
+      User.countDocuments(filter),
+    ]);
+
+    return res.json({
+      coaches,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    });
   } catch (err) {
     console.error("GET COACHES ERROR:", err);
     return res.status(500).json({ message: "Server error" });
   }
 };
+
 
 // ================================
 // UPDATE COACH STATUS (ACTIVE / RETIRED)

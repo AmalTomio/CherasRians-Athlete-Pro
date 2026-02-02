@@ -12,7 +12,6 @@ function SkeletonTableLoader({ rows = 6 }) {
             <Skeleton width={20} />
           </td>
           
-          {/* Col 2: Avatar + Name (Matches your Players UI) */}
           <td className="py-3">
             <div className="d-flex align-items-center gap-3">
               <Skeleton circle width={40} height={40} />
@@ -23,7 +22,6 @@ function SkeletonTableLoader({ rows = 6 }) {
             </div>
           </td>
 
-          {/* Col 3: Class Info */}
           <td className="py-3">
              <div className="d-flex flex-column">
                 <Skeleton width={60} height={16} />
@@ -31,7 +29,6 @@ function SkeletonTableLoader({ rows = 6 }) {
              </div>
           </td>
 
-          {/* Col 4: Category */}
           <td className="py-3">
              <div className="d-flex flex-column">
                 <Skeleton width={50} height={20} borderRadius={4} />
@@ -39,12 +36,10 @@ function SkeletonTableLoader({ rows = 6 }) {
              </div>
           </td>
 
-          {/* Col 5: Status */}
           <td className="py-3">
              <Skeleton width={80} height={24} borderRadius={12} />
           </td>
 
-          {/* Col 6: Actions */}
           <td className="py-3 text-end px-4">
              <Skeleton width={36} height={36} borderRadius={8} />
           </td>
