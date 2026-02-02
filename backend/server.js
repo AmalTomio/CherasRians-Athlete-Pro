@@ -97,6 +97,8 @@ app.use("/api/attendance", attendanceRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/schedules", require("./routes/scheduleRoutes"));
 app.use("/api/team-lineup", require("./routes/teamLineupRoutes"));
+app.use("/api/notifications", require("./routes/notificationRoutes"));
+app.use("/api/announcements", require("./routes/announcementRoutes"));
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
