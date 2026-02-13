@@ -99,6 +99,7 @@ app.use("/api/schedules", require("./routes/scheduleRoutes"));
 app.use("/api/team-lineup", require("./routes/teamLineupRoutes"));
 app.use("/api/notifications", require("./routes/notificationRoutes"));
 app.use("/api/announcements", require("./routes/announcementRoutes"));
+app.use("/api/users", require("./routes/userRoutes"));
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 

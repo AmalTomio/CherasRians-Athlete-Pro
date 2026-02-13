@@ -17,7 +17,7 @@ import ExcoBooking from "./pages/Exco/Booking";
 import EquipmentManagement from "./pages/Exco/Equipment";
 import ExcoFacilities from "./pages/Exco/Facilities";
 import Coaches from "./pages/Exco/Coaches";
-
+import Announcement from "./pages/Exco/Announcement";
 // Coach Pages
 import Players from "./pages/Coach/Players";
 import CoachFacilities from "./pages/Coach/Facilities";
@@ -110,6 +110,16 @@ export default function App() {
           }
         />
 
+        <Route
+          path="/exco/announcements"
+          element={
+            <ProtectedRoute allowedRoles={["exco"]}>
+              <WithSidebar>
+                <Announcement />
+              </WithSidebar>
+            </ProtectedRoute>
+          }
+        />
         {/* Coach Routes */}
 
         <Route

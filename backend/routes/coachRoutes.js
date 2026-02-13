@@ -17,4 +17,11 @@ router.get(
 // UPDATE player
 router.put("/players/:id", verifyToken, requireCoach, coachController.updatePlayer);
 
+router.get(
+  "/users/search",
+  verifyToken,
+  requireCoach,
+  coachController.searchUsers
+);
+
 module.exports = router;

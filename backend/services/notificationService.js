@@ -6,6 +6,8 @@ exports.sendNotification = async ({
   toUser,
   title,
   message,
+  createdBy,
+  createdByName,
   meta = {},
 }) => {
   try {
@@ -13,18 +15,13 @@ exports.sendNotification = async ({
       toUser,
       title,
       message,
+      createdBy,
+      createdByName,
       meta,
     });
 
     if (io) {
-      io.to(`user_${toUser}`).emit("new_notification", {
-        _id: notification._id,
-        title,
-        message,
-        meta,
-        createdAt: notification.createdAt,
-        read: false,
-      });
+      io.to(`user_${toUser}`).emit("new_notification", notification);
     }
 
     return notification;

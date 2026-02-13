@@ -76,7 +76,7 @@ export default function Sidebar({ onToggle }) {
         ["Facilities", FaRegBuilding, "/exco/facilities"],
         ["Booking", FiCalendar, "/exco/booking"],
         ["Inventory", FiTool, "/exco/equipment"],
-        ["Announcement", FiBell, "/announcements"],
+        ["Announcement", FiBell, "/exco/announcements"],
       ],
     };
 

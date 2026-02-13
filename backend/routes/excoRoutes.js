@@ -52,4 +52,11 @@ router.delete(
   excoController.deleteStudent
 );
 
+router.get(
+  "/users/search",
+  verifyToken,
+  requireExco,
+  excoController.searchUsers
+);
+
 module.exports = router;

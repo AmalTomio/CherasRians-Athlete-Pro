@@ -272,3 +272,32 @@ exports.updateCoachStatus = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+
+// ================================
+// SEARCH USERS (FOR ANNOUNCEMENT)
+// ================================
+exports.searchUsers = async (req, res) => {
+  try {
+    const { q = "" } = req.query;
+
+    if (!q || q.trim().length < 2) {
+      return res.json({ users: [] });
+    }
+
+    const users = await User.find({
+      role: { $in: ["student", "coach"] }, // no exco
+      $or: [
+        { firstName: { $regex: q, $options: "i" } },
+        { lastName: { $regex: q, $options: "i" } },
+      ],
+    })
+      .select("_id firstName lastName role sport category")
+      .limit(10)
+      .lean();
+
+    res.json({ users });
+  } catch (err) {
+    console.error("EXCO SEARCH USERS ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};

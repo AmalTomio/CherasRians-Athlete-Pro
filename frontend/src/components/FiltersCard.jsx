@@ -3,7 +3,6 @@ import {
   getClassOptionsForYear,
   ALL_CLASS_GROUPS,
 } from "../config/classGroups";
-// Using React Icons for the reset icon (optional, but matches your Sidebar style)
 import { FiRefreshCw, FiSearch } from "react-icons/fi"; 
 
 export default function FiltersCard({
