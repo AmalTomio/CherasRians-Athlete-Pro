@@ -26,7 +26,7 @@ import Attendance from "./pages/Coach/Attendance";
 import Equipment from "./pages/Coach/Equipment";
 import Schedule from "./pages/Coach/Schedule";
 import Teams from "./pages/Coach/ManageTeams";
-import Announcements from "./pages/Coach/Announcement";
+import Announcements from "./pages/Coach/Announcements";
 // Student Pages
 import Medical from "./pages/Student/Medical";
 import PlayerSchedule from "./pages/Student/Schedule";

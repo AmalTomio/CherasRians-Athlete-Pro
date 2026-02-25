@@ -1,165 +1,203 @@
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import api from "../../api/axios";
 import { successAlert, errorAlert } from "../../utils/swal";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  FiSend,
+  FiUser,
+  FiUsers,
+  FiSearch,
+  FiX,
+  FiCalendar,
+  FiMessageSquare,
+  FiClock,
+  FiCheckCircle
+} from "react-icons/fi";
+
+import useDebouncedUserSearch from "../../hooks/useDebouncedUserSearch";
+import useAnnouncements from "../../hooks/useAnnouncements";
 
 export default function ExcoAnnouncements() {
+
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
 
-  const [targetRoles, setTargetRoles] = useState([]);
   const [search, setSearch] = useState("");
-  const [users, setUsers] = useState([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
 
-  /* ================= SEARCH USERS ================= */
-  const searchUsers = async (q) => {
-    setSearch(q);
+  const [broadcastMode, setBroadcastMode] = useState("none");
+  const [targetRoles, setTargetRoles] = useState([]);
 
-    if (!q.trim()) {
-      setUsers([]);
-      return;
-    }
+  const [loading, setLoading] = useState(false);
 
-    try {
-      const res = await api.get("/users/search", {
-        params: { search: q }
-      });
+  const { announcements, refresh } = useAnnouncements();
+  const searchResults = useDebouncedUserSearch(search, null); // Exco not sport scoped
 
-      setUsers(res.data.users || []);
-    } catch {
-      errorAlert("Failed to search users");
-    }
+  const formatForInput = (date) => {
+    if (!date) return "";
+    const d = new Date(date);
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 16);
   };
 
-  /* ================= TOGGLE USER ================= */
-  const toggleUser = (user) => {
-    const exists = selectedUsers.find(u => u._id === user._id);
+  /* ================= SAFE MODE SWITCH ================= */
+  const changeMode = useCallback((mode) => {
+    setBroadcastMode(mode);
+    setSelectedUsers([]);
+    setTargetRoles([]);
+  }, []);
 
-    if (exists) {
-      setSelectedUsers(selectedUsers.filter(u => u._id !== user._id));
-    } else {
-      setSelectedUsers([...selectedUsers, user]);
-    }
-  };
+  /* ================= USER MANAGEMENT ================= */
+  const addUser = useCallback((user) => {
+    setSelectedUsers(prev => {
+      if (prev.find(u => u._id === user._id)) return prev;
+      return [...prev, user];
+    });
+    setSearch("");
+  }, []);
 
-  /* ================= TOGGLE ROLE ================= */
-  const toggleRole = (role) => {
+  const removeUser = useCallback((id) => {
+    setSelectedUsers(prev => prev.filter(u => u._id !== id));
+  }, []);
+
+  const getInitials = (f, l) =>
+    `${f?.charAt(0) || ""}${l?.charAt(0) || ""}`.toUpperCase();
+
+  /* ================= ROLE MANAGEMENT ================= */
+  const toggleRole = useCallback((role) => {
     setTargetRoles(prev =>
       prev.includes(role)
         ? prev.filter(r => r !== role)
         : [...prev, role]
     );
-  };
+  }, []);
 
   /* ================= SUBMIT ================= */
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
     try {
-      await api.post("/announcements", {
+
+      const payload = {
         title,
         content,
-        expiryDate,
-        targetUsers: selectedUsers.map(u => u._id),
+        expiryDate: expiryDate ? new Date(expiryDate) : null,
+      };
 
-        // Role only used if no direct users
-        targetRoles: selectedUsers.length ? [] : targetRoles,
-      });
+      if (broadcastMode === "none") {
+        if (!selectedUsers.length)
+          throw new Error("Please select at least one user.");
+        payload.targetUsers = selectedUsers.map(u => u._id);
+      }
 
-      successAlert("Announcement sent");
+      if (broadcastMode === "roles") {
+        if (!targetRoles.length)
+          throw new Error("Please select at least one role.");
+        payload.targetRoles = targetRoles;
+      }
+
+      await api.post("/announcements", payload);
 
       setTitle("");
       setContent("");
       setExpiryDate("");
-      setTargetRoles([]);
       setSelectedUsers([]);
-      setUsers([]);
-      setSearch("");
+      setBroadcastMode("none");
+      setTargetRoles([]);
+
+      refresh();
+      successAlert("Announcement sent successfully!");
 
     } catch (err) {
-      errorAlert(err.response?.data?.message || "Failed to send announcement");
+      errorAlert(err.response?.data?.message || err.message || "Error sending announcement");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="px-4 py-4">
-      <h3 className="fw-bold mb-4">Create Announcement</h3>
 
-      <div className="card shadow-sm p-4">
+      <h2 className="fw-bold mb-1 text-dark">Broadcast Center</h2>
+      <p className="text-muted">Manage announcements for students and coaches.</p>
 
-        {/* TITLE */}
+      <form onSubmit={handleSubmit}>
+
         <input
+          type="text"
           className="form-control mb-3"
-          placeholder="Title"
+          placeholder="Headline"
           value={title}
-          onChange={e => setTitle(e.target.value)}
+          onChange={(e)=>setTitle(e.target.value)}
+          required
         />
 
-        {/* CONTENT */}
         <textarea
           className="form-control mb-3"
           placeholder="Message"
-          rows={4}
           value={content}
-          onChange={e => setContent(e.target.value)}
+          onChange={(e)=>setContent(e.target.value)}
+          required
         />
 
-        {/* EXPIRY */}
-        <input
-          type="datetime-local"
-          className="form-control mb-3"
-          value={expiryDate}
-          onChange={e => setExpiryDate(e.target.value)}
-        />
+        <div className="d-flex gap-2 mb-3">
+          <button type="button" onClick={()=>changeMode("none")} className="btn btn-light">
+            Specific
+          </button>
+          <button type="button" onClick={()=>changeMode("roles")} className="btn btn-light">
+            By Role
+          </button>
+        </div>
 
-        <hr />
-
-        {/* DIRECT USERS */}
-        <h6 className="fw-bold">Send to Specific Users</h6>
-        <input
-          className="form-control mb-2"
-          placeholder="Search by name..."
-          value={search}
-          onChange={e => searchUsers(e.target.value)}
-        />
-
-        {users.map(u => (
-          <div key={u._id}>
+        {broadcastMode === "none" && (
+          <>
             <input
-              type="checkbox"
-              checked={selectedUsers.some(s => s._id === u._id)}
-              onChange={() => toggleUser(u)}
-            /> {u.firstName} {u.lastName} ({u.role})
+              className="form-control mb-2"
+              placeholder="Search users..."
+              value={search}
+              onChange={(e)=>setSearch(e.target.value)}
+            />
+
+            {(Array.isArray(searchResults) ? searchResults : []).map(u => (
+              <div key={u._id} onClick={()=>addUser(u)}>
+                {u.firstName} {u.lastName}
+              </div>
+            ))}
+          </>
+        )}
+
+        {broadcastMode === "roles" && (
+          <div className="mb-3">
+            {["student","coach"].map(role => (
+              <button
+                key={role}
+                type="button"
+                onClick={()=>toggleRole(role)}
+                className="btn btn-outline-secondary me-2"
+              >
+                {role}s
+              </button>
+            ))}
           </div>
-        ))}
+        )}
 
-        <hr />
-
-        {/* ROLE TARGETING */}
-        <h6 className="fw-bold">Send by Role (if no specific user selected)</h6>
-
-        <label className="me-3">
-          <input
-            type="checkbox"
-            checked={targetRoles.includes("student")}
-            onChange={() => toggleRole("student")}
-          /> Students
-        </label>
-
-        <label>
-          <input
-            type="checkbox"
-            checked={targetRoles.includes("coach")}
-            onChange={() => toggleRole("coach")}
-          /> Coaches
-        </label>
-
-        <hr />
-
-        <button className="btn btn-primary mt-3" onClick={handleSubmit}>
-          Send Announcement
+        <button className="btn btn-primary w-100">
+          {loading ? "Sending..." : "Send Announcement"}
         </button>
 
-      </div>
+      </form>
+
+      <hr/>
+
+      {announcements.map(a => (
+        <div key={a._id}>
+          <b>{a.title}</b>
+          <p>{a.content}</p>
+        </div>
+      ))}
+
     </div>
   );
 }
