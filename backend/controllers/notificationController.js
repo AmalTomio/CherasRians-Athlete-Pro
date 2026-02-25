@@ -1,8 +1,6 @@
 const Notification = require("../models/Notification");
 
-/* =========================================
-   GET USER NOTIFICATIONS (PAGINATED)
-========================================= */
+
 exports.getNotifications = async (req, res) => {
   try {
     const userId = req.user.userId || req.user._id;

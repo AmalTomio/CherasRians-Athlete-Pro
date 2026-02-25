@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import api from "../api/axios";
+import { getSocket } from "../socket";
 
 export default function useAnnouncements() {
 
@@ -21,13 +22,26 @@ export default function useAnnouncements() {
     mounted.current = true;
     fetchAnnouncements();
 
+    const socket = getSocket();
+
+    if (!socket) return;
+
+    socket.on("announcement:new", ({ announcement }) => {
+      setAnnouncements(prev => {
+        if (prev.find(a => a._id === announcement._id)) return prev;
+        return [announcement, ...prev];
+      });
+    });
+
     return () => {
       mounted.current = false;
+      socket.off("announcement:new");
     };
+
   }, []);
 
   return {
-    announcements: Array.isArray(announcements) ? announcements : [],
+    announcements,
     refresh: fetchAnnouncements,
   };
 }

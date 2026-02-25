@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import api from "../api/axios";
 import { warningAlert, errorAlert, successAlert } from "../utils/swal";
 import Auth from "../layouts/Auth";
+import { initSocket } from "../socket";
 
 export default function Login() {
   const [role, setRole] = useState("student");
@@ -18,7 +19,7 @@ export default function Login() {
 
     if (!identifier.trim()) {
       return warningAlert(
-        role === "student" ? "Please enter NRIC" : "Please enter Staff ID"
+        role === "student" ? "Please enter NRIC" : "Please enter Staff ID",
       );
     }
 
@@ -27,6 +28,8 @@ export default function Login() {
 
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
+
+      initSocket(res.data.token);
 
       successAlert("Logging in...");
       navigate("/dashboard");

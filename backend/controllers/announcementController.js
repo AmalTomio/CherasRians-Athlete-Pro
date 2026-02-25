@@ -112,25 +112,38 @@ exports.createAnnouncement = async (req, res) => {
       ...new Map(users.map((u) => [u._id.toString(), u])).values(),
     ];
 
-    /* ===============================
-       SEND NOTIFICATIONS
-    =============================== */
+  /* ===============================
+   SEND NOTIFICATIONS + REALTIME ANNOUNCEMENT
+=============================== */
 
-    const io = req.app.get("io");
+const io = req.app.get("io");
 
-    for (const u of uniqueUsers) {
-      await sendNotification({
-        io,
-        toUser: u._id,
-        title: announcement.title,
-        message: announcement.content,
-        meta: {
-          announcementId: announcement._id,
-          createdBy: sender._id,
-          senderName: `${sender.firstName} ${sender.lastName}`,
-        },
-      });
-    }
+for (const u of uniqueUsers) {
+  await sendNotification({
+    io,
+    toUser: u._id,
+    title: announcement.title,
+    message: announcement.content,
+    createdBy: sender._id,
+    createdByName: `${sender.firstName} ${sender.lastName}`,
+    meta: {
+      announcementId: announcement._id,
+    },
+  });
+
+  // 🔴 REALTIME ANNOUNCEMENT (SAFE)
+  io.to(`user_${u._id}`).emit("announcement:new", {
+    announcement: {
+      ...announcement.toObject(),
+      createdBy: {
+        _id: sender._id,
+        firstName: sender.firstName,
+        lastName: sender.lastName,
+        role: sender.role,
+      },
+    },
+  });
+}
 
     return res.status(201).json({
       message: "Announcement created",
@@ -147,16 +160,49 @@ exports.createAnnouncement = async (req, res) => {
 exports.getAnnouncements = async (req, res) => {
   try {
     const now = new Date();
+    const user = req.user;
 
     const announcements = await Announcement.find({
       isActive: true,
-      $or: [{ expiryDate: null }, { expiryDate: { $gt: now } }],
+
+      $or: [
+        { expiryDate: null },
+        { expiryDate: { $gt: now } }
+      ],
+
+      $and: [
+        {
+          $or: [
+
+            // Direct Target
+            { targetUsers: user._id },
+
+            // Role Target
+            { targetRoles: user.role },
+
+            // Sport Target
+            user.sport
+              ? { targetSports: user.sport }
+              : null,
+
+            // Category Target
+            user.category
+              ? { targetCategories: user.category }
+              : null,
+
+            // Sender always sees their own
+            { createdBy: user._id }
+
+          ].filter(Boolean)
+        }
+      ]
     })
       .populate("createdBy", "firstName lastName role")
       .sort({ createdAt: -1 })
       .lean();
 
     res.json({ announcements });
+
   } catch (err) {
     console.error("GET ANNOUNCEMENT ERROR:", err);
     res.status(500).json({ message: "Server error" });

@@ -56,7 +56,7 @@ export default function Sidebar({ onToggle }) {
         ["Attendance", FiClipboard, "/attendance"],
         ["Medical", FiActivity, "/student/medical"],
         ["Performance", FiUsers, "/performance"],
-        ["Notices", FiBell, "/announcements"],
+        ["Notices", FiBell, "/student/announcements"],
       ],
       coach: [
         ["Dashboard", FiGrid, "/dashboard"],

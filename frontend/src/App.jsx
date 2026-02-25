@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import moment from "moment-timezone";
+import { initSocket } from "./socket";
 
 moment.tz.setDefault("Asia/Kuala_Lumpur");
 
@@ -18,6 +20,7 @@ import EquipmentManagement from "./pages/Exco/Equipment";
 import ExcoFacilities from "./pages/Exco/Facilities";
 import Coaches from "./pages/Exco/Coaches";
 import Announcement from "./pages/Exco/Announcement";
+
 // Coach Pages
 import Players from "./pages/Coach/Players";
 import CoachFacilities from "./pages/Coach/Facilities";
@@ -27,13 +30,26 @@ import Equipment from "./pages/Coach/Equipment";
 import Schedule from "./pages/Coach/Schedule";
 import Teams from "./pages/Coach/ManageTeams";
 import Announcements from "./pages/Coach/Announcements";
+
 // Student Pages
 import Medical from "./pages/Student/Medical";
 import PlayerSchedule from "./pages/Student/Schedule";
+import StudentAnnouncements from "./pages/Student/Announcement";
+
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
 import WithSidebar from "./layouts/WithSidebar";
+
 export default function App() {
+
+  // 🔴 AUTO RECONNECT SOCKET ON REFRESH
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      initSocket(token);
+    }
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>
@@ -120,8 +136,8 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        {/* Coach Routes */}
 
+        {/* Coach Routes */}
         <Route
           path="/coach/players"
           element={
@@ -154,6 +170,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/coach/teams"
           element={
@@ -164,6 +181,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/coach/schedule"
           element={
@@ -174,6 +192,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/coach/attendance"
           element={
@@ -195,6 +214,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/coach/announcements"
           element={
@@ -205,6 +225,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
         {/* Student Routes */}
         <Route
           path="/student/medical"
@@ -216,6 +237,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
           path="/student/schedule"
           element={
@@ -226,7 +248,19 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        {/* 404 Not Found */}
+
+        <Route
+          path="/student/announcements"
+          element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <WithSidebar>
+                <StudentAnnouncements />
+              </WithSidebar>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* 404 */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
