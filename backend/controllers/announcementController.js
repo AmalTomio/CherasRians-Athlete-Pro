@@ -20,11 +20,6 @@ exports.createAnnouncement = async (req, res) => {
       return res.status(400).json({ message: "Title and content required" });
     }
 
-    /* ===============================
-       PERMISSION VALIDATION
-    =============================== */
-
-    // Coach cannot send to Exco
     if (
       sender.role === "coach" &&
       targetRoles.includes("exco")
@@ -34,10 +29,7 @@ exports.createAnnouncement = async (req, res) => {
         .json({ message: "Coach cannot send announcement to Exco." });
     }
 
-    /* ===============================
-       PREVENT EMPTY TARGETING
-       (No broadcast by default)
-    =============================== */
+   
 
     const hasDirectUsers = targetUsers && targetUsers.length > 0;
     const hasFilters =
@@ -52,9 +44,7 @@ exports.createAnnouncement = async (req, res) => {
       });
     }
 
-    /* ===============================
-       CREATE ANNOUNCEMENT RECORD
-    =============================== */
+   
 
     const announcement = await Announcement.create({
       title,
@@ -68,13 +58,10 @@ exports.createAnnouncement = async (req, res) => {
       isActive: true,
     });
 
-    /* ===============================
-       RESOLVE TARGET USERS
-    =============================== */
+    
 
     let users = [];
 
-    // 1️⃣ DIRECT TARGET (OVERRIDES FILTERS)
     if (hasDirectUsers) {
       users = await User.find({
         _id: { $in: targetUsers },
@@ -84,7 +71,6 @@ exports.createAnnouncement = async (req, res) => {
         .lean();
     }
 
-    // 2️⃣ FILTER TARGET
     else {
       const filter = {
         role: { $in: ["student", "coach"] },
@@ -112,9 +98,7 @@ exports.createAnnouncement = async (req, res) => {
       ...new Map(users.map((u) => [u._id.toString(), u])).values(),
     ];
 
-  /* ===============================
-   SEND NOTIFICATIONS + REALTIME ANNOUNCEMENT
-=============================== */
+
 
 const io = req.app.get("io");
 
@@ -131,7 +115,6 @@ for (const u of uniqueUsers) {
     },
   });
 
-  // 🔴 REALTIME ANNOUNCEMENT (SAFE)
   io.to(`user_${u._id}`).emit("announcement:new", {
     announcement: {
       ...announcement.toObject(),

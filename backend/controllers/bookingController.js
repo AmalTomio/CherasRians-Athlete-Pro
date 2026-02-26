@@ -4,6 +4,7 @@ const Notification = require("../models/Notification");
 const User = require("../models/User");
 const Schedule = require("../models/Schedule");
 const Equipment = require("../models/Equipment");
+const EquipmentBorrow = require("../models/EquipmentBorrow");
 
 const moment = require("moment-timezone");
 const TZ = "Asia/Kuala_Lumpur";
@@ -204,16 +205,32 @@ exports.approveBooking = async (req, res) => {
       return res.status(404).json({ message: "Booking not found" });
     }
 
+    // ❌ REJECT
     if (!approve) {
       booking.status = "rejected";
       await booking.save();
       return res.json({ booking });
     }
 
+    // ✅ APPROVE
     booking.status = "approved";
     booking.approvedBy = exco._id;
     booking.approvedAt = new Date();
     await booking.save();
+
+    // ✅ CREATE BORROW RECORD HERE
+    if (booking.equipmentRequests?.length) {
+      await EquipmentBorrow.create({
+        bookingId: booking._id,
+        coachId: booking.coachId,
+        items: booking.equipmentRequests.map((r) => ({
+          equipmentId: r.equipmentId,
+          quantity: r.quantity,
+        })),
+        dueAt: booking.endAt,
+        status: "borrowed",
+      });
+    }
 
     const coach = await User.findById(booking.coachId).lean();
 

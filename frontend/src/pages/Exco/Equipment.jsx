@@ -6,33 +6,35 @@ import StatCard from "../../components/StatCard";
 import DamageReportDetailsModal from "../../components/exco/DamageReportDetailsModal";
 import Table from "../../components/Table";
 import SkeletonTableLoader from "../../components/SkeletonTableLoader";
-import { 
-  FiBox, 
-  FiCheckCircle, 
-  FiRefreshCw, 
-  FiAlertTriangle, 
-  FiPlus, 
+import {
+  FiBox,
+  FiCheckCircle,
+  FiRefreshCw,
+  FiAlertTriangle,
+  FiPlus,
   FiSearch,
   FiTool,
   FiCalendar,
-  FiUser
+  FiUser,
 } from "react-icons/fi";
 
 export default function EquipmentManagement() {
   const [equipment, setEquipment] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
-  
+
   // Damage Modal State
   const [selectedEquipment, setSelectedEquipment] = useState(null);
   const [showDamageModal, setShowDamageModal] = useState(false);
-  
+
   // Damage History State
   const [damageHistory, setDamageHistory] = useState([]);
-  const [damageTab, setDamageTab] = useState("reported"); 
+  const [damageTab, setDamageTab] = useState("reported");
 
   // Filters
   const [search, setSearch] = useState("");
+
+  const [pendingReturns, setPendingReturns] = useState([]);
 
   const fetchEquipment = async () => {
     try {
@@ -43,6 +45,26 @@ export default function EquipmentManagement() {
       errorAlert("Failed to load equipment inventory");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPendingReturns = async () => {
+    try {
+      const res = await api.get("/equipment-borrow/pending");
+      setPendingReturns(res.data.borrows || []);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const verifyReturn = async (borrowId) => {
+    try {
+      await api.post(`/equipment-borrow/verify/${borrowId}`);
+      successAlert("Return verified");
+      fetchPendingReturns();
+      fetchEquipment();
+    } catch (err) {
+      errorAlert("Failed to verify return");
     }
   };
 
@@ -58,6 +80,7 @@ export default function EquipmentManagement() {
   useEffect(() => {
     fetchEquipment();
     fetchDamageHistory();
+    fetchPendingReturns();
   }, []);
 
   // ===== STATS CALCULATION =====
@@ -70,12 +93,13 @@ export default function EquipmentManagement() {
   }, [equipment]);
 
   // ===== FILTER DATA =====
-  const filteredEquipment = equipment.filter(e => 
-    e.name.toLowerCase().includes(search.toLowerCase()) ||
-    e.category?.toLowerCase().includes(search.toLowerCase())
+  const filteredEquipment = equipment.filter(
+    (e) =>
+      e.name.toLowerCase().includes(search.toLowerCase()) ||
+      e.category?.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const filteredDamage = damageHistory.filter(r => {
+  const filteredDamage = damageHistory.filter((r) => {
     if (damageTab === "reported") return r.status !== "resolved";
     if (damageTab === "resolved") return r.status === "resolved";
     return true;
@@ -87,68 +111,76 @@ export default function EquipmentManagement() {
       label: "No",
       key: "no",
       className: "px-4 fw-semibold text-secondary",
-      accessor: (_, idx) => idx + 1
+      accessor: (_, idx) => idx + 1,
     },
     {
       label: "Equipment Info",
       key: "name",
       accessor: (row) => (
         <div className="d-flex align-items-center gap-3">
-          <div 
+          <div
             className="rounded-3 d-flex align-items-center justify-content-center text-white shadow-sm"
-            style={{ 
-              width: "40px", height: "40px", 
-              background: "linear-gradient(135deg, #6366f1 0%, #4338ca 100%)" // Indigo
+            style={{
+              width: "40px",
+              height: "40px",
+              background: "linear-gradient(135deg, #6366f1 0%, #4338ca 100%)", // Indigo
             }}
           >
             <FiBox size={18} />
           </div>
           <div>
             <div className="fw-bold text-dark">{row.name}</div>
-            <small className="text-muted text-uppercase" style={{ fontSize: "0.7rem", letterSpacing: "0.5px" }}>
+            <small
+              className="text-muted text-uppercase"
+              style={{ fontSize: "0.7rem", letterSpacing: "0.5px" }}
+            >
               {row.category || "General"}
             </small>
           </div>
         </div>
-      )
+      ),
     },
     {
       label: "Total",
       key: "total",
       accessor: "quantityTotal",
-      className: "fw-bold text-dark"
+      className: "fw-bold text-dark",
     },
     {
       label: "Available",
       key: "available",
-      accessor: (row) => <span className="text-success fw-bold">{row.quantityAvailable}</span>
+      accessor: (row) => (
+        <span className="text-success fw-bold">{row.quantityAvailable}</span>
+      ),
     },
     {
       label: "In Use",
       key: "inUse",
       accessor: (row) => {
-        const inUse = row.quantityTotal - row.quantityAvailable - (row.quantityDamaged || 0);
+        const inUse =
+          row.quantityTotal -
+          row.quantityAvailable -
+          (row.quantityDamaged || 0);
         return <span className="text-primary fw-bold">{inUse}</span>;
-      }
+      },
     },
     {
       label: "Damaged",
       key: "damaged",
-      accessor: (row) => (
+      accessor: (row) =>
         row.quantityDamaged > 0 ? (
           <span className="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 rounded-pill">
             {row.quantityDamaged} Units
           </span>
         ) : (
           <span className="text-muted">-</span>
-        )
-      )
+        ),
     },
     {
       label: "Action",
       key: "action",
       className: "text-end px-4",
-      accessor: (row) => (
+      accessor: (row) =>
         row.quantityDamaged > 0 && (
           <button
             className="btn btn-sm btn-outline-danger shadow-sm fw-bold d-inline-flex align-items-center gap-2"
@@ -160,9 +192,8 @@ export default function EquipmentManagement() {
           >
             <FiAlertTriangle /> View Reports
           </button>
-        )
-      )
-    }
+        ),
+    },
   ];
 
   // ===== DAMAGE HISTORY COLUMNS =====
@@ -171,7 +202,7 @@ export default function EquipmentManagement() {
       label: "No",
       key: "no",
       className: "px-4 fw-semibold text-secondary",
-      accessor: (_, idx) => idx + 1
+      accessor: (_, idx) => idx + 1,
     },
     {
       label: "Item Details",
@@ -180,7 +211,7 @@ export default function EquipmentManagement() {
         <div className="fw-bold text-dark">
           {row.equipmentId?.name || "Unknown Item"}
         </div>
-      )
+      ),
     },
     {
       label: "Qty",
@@ -189,7 +220,7 @@ export default function EquipmentManagement() {
         <span className="badge bg-light text-dark border fw-bold">
           {row.quantityDamaged}
         </span>
-      )
+      ),
     },
     {
       label: "Reported By",
@@ -198,7 +229,7 @@ export default function EquipmentManagement() {
         <div className="d-flex align-items-center gap-2 text-muted small fw-medium">
           <FiUser /> {row.reportedBy?.firstName} {row.reportedBy?.lastName}
         </div>
-      )
+      ),
     },
     {
       label: "Date",
@@ -207,7 +238,7 @@ export default function EquipmentManagement() {
         <div className="d-flex align-items-center gap-2 text-muted small">
           <FiCalendar /> {new Date(row.createdAt).toLocaleDateString()}
         </div>
-      )
+      ),
     },
     {
       label: "Status",
@@ -216,36 +247,70 @@ export default function EquipmentManagement() {
       accessor: (row) => {
         const isResolved = row.status === "resolved";
         return (
-          <span className={`badge rounded-pill px-3 py-2 border ${
-            isResolved 
-              ? "bg-success-subtle text-success border-success-subtle" 
-              : "bg-warning-subtle text-warning border-warning-subtle"
-          }`}>
+          <span
+            className={`badge rounded-pill px-3 py-2 border ${
+              isResolved
+                ? "bg-success-subtle text-success border-success-subtle"
+                : "bg-warning-subtle text-warning border-warning-subtle"
+            }`}
+          >
             {isResolved ? "Resolved" : "Reported"}
           </span>
         );
-      }
-    }
+      },
+    },
   ];
 
+  const pendingReturnColumns = [
+    {
+      label: "Action",
+      key: "action",
+      accessor: (row) =>
+        row.status === "return_submitted" && (
+          <div className="d-flex gap-2 justify-content-end">
+            {row.returnProof && (
+              <a
+                href={`http://localhost:5000/uploads/returns/${row.returnProof}`}
+                target="_blank"
+                rel="noreferrer"
+                className="btn btn-sm btn-outline-primary"
+              >
+                View Proof
+              </a>
+            )}
+            <button
+              className="btn btn-sm btn-success"
+              onClick={() => verifyReturn(row._id)}
+            >
+              Verify
+            </button>
+          </div>
+        ),
+    },
+  ];
   return (
     <div className="px-4 py-4">
       {/* HEADER */}
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
         <div>
-          <h2 className="fw-bold mb-1 text-dark" style={{ letterSpacing: "-0.5px" }}>
+          <h2
+            className="fw-bold mb-1 text-dark"
+            style={{ letterSpacing: "-0.5px" }}
+          >
             Equipment Management
           </h2>
-          <p className="text-muted mb-0">Manage inventory, track availability, and handle damage reports.</p>
+          <p className="text-muted mb-0">
+            Manage inventory, track availability, and handle damage reports.
+          </p>
         </div>
 
-        <button 
+        <button
           className="btn text-white shadow-sm fw-bold d-flex align-items-center gap-2 px-4 py-2"
           onClick={() => setShowAdd(true)}
           style={{
             background: "linear-gradient(135deg, #6366f1 0%, #4338ca 100%)", // Indigo
             borderRadius: "10px",
-            border: "none"
+            border: "none",
           }}
         >
           <FiPlus size={18} /> Add Equipment
@@ -254,10 +319,34 @@ export default function EquipmentManagement() {
 
       {/* STATS CARDS */}
       <div className="row g-4 mb-5">
-        <StatCard title="Total Items" value={stats.total} icon={<FiBox size={24} />} iconBg="#eef2ff" iconColor="#4f46e5" />
-        <StatCard title="Available" value={stats.available} icon={<FiCheckCircle size={24} />} iconBg="#ecfdf5" iconColor="#10b981" />
-        <StatCard title="In Use" value={stats.inUse} icon={<FiRefreshCw size={24} />} iconBg="#eff6ff" iconColor="#3b82f6" />
-        <StatCard title="Damaged" value={stats.damaged} icon={<FiAlertTriangle size={24} />} iconBg="#fef2f2" iconColor="#ef4444" />
+        <StatCard
+          title="Total Items"
+          value={stats.total}
+          icon={<FiBox size={24} />}
+          iconBg="#eef2ff"
+          iconColor="#4f46e5"
+        />
+        <StatCard
+          title="Available"
+          value={stats.available}
+          icon={<FiCheckCircle size={24} />}
+          iconBg="#ecfdf5"
+          iconColor="#10b981"
+        />
+        <StatCard
+          title="In Use"
+          value={stats.inUse}
+          icon={<FiRefreshCw size={24} />}
+          iconBg="#eff6ff"
+          iconColor="#3b82f6"
+        />
+        <StatCard
+          title="Damaged"
+          value={stats.damaged}
+          icon={<FiAlertTriangle size={24} />}
+          iconBg="#fef2f2"
+          iconColor="#ef4444"
+        />
       </div>
 
       {/* ===== INVENTORY SECTION ===== */}
@@ -265,11 +354,13 @@ export default function EquipmentManagement() {
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h5 className="fw-bold text-dark m-0">Inventory List</h5>
           <div className="input-group w-auto">
-            <span className="input-group-text bg-white border-end-0 text-muted"><FiSearch /></span>
-            <input 
-              type="text" 
-              className="form-control border-start-0 ps-0" 
-              placeholder="Search items..." 
+            <span className="input-group-text bg-white border-end-0 text-muted">
+              <FiSearch />
+            </span>
+            <input
+              type="text"
+              className="form-control border-start-0 ps-0"
+              placeholder="Search items..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               style={{ maxWidth: "200px" }}
@@ -277,12 +368,15 @@ export default function EquipmentManagement() {
           </div>
         </div>
 
-        <div className="card border-0 shadow-sm rounded-4 overflow-hidden" style={{ minHeight: "300px" }}>
+        <div
+          className="card border-0 shadow-sm rounded-4 overflow-hidden"
+          style={{ minHeight: "300px" }}
+        >
           <div className="table-responsive">
-            <Table 
-              columns={inventoryColumns} 
-              data={filteredEquipment} 
-              loading={loading} 
+            <Table
+              columns={inventoryColumns}
+              data={filteredEquipment}
+              loading={loading}
               customSkeleton={<SkeletonTableLoader rows={5} />}
             />
           </div>
@@ -293,15 +387,15 @@ export default function EquipmentManagement() {
       <div>
         <div className="d-flex align-items-center justify-content-between mb-3">
           <h5 className="fw-bold text-dark m-0 d-flex align-items-center gap-2">
-            <FiTool className="text-danger" /> Damage Reports
+            <h5 className="fw-bold text-dark mb-3">Damage History</h5>
           </h5>
-          
+
           {/* TABS */}
           <div className="bg-light p-1 rounded-pill d-inline-flex border">
             <button
               className={`btn btn-sm rounded-pill px-4 fw-bold transition-all ${
-                damageTab === "reported" 
-                  ? "bg-white text-danger shadow-sm" 
+                damageTab === "reported"
+                  ? "bg-white text-danger shadow-sm"
                   : "text-muted hover-dark"
               }`}
               onClick={() => setDamageTab("reported")}
@@ -310,8 +404,8 @@ export default function EquipmentManagement() {
             </button>
             <button
               className={`btn btn-sm rounded-pill px-4 fw-bold transition-all ${
-                damageTab === "resolved" 
-                  ? "bg-white text-success shadow-sm" 
+                damageTab === "resolved"
+                  ? "bg-white text-success shadow-sm"
                   : "text-muted hover-dark"
               }`}
               onClick={() => setDamageTab("resolved")}
@@ -323,17 +417,40 @@ export default function EquipmentManagement() {
 
         <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
           <div className="table-responsive">
-            <Table 
-              columns={damageColumns} 
-              data={filteredDamage} 
+            <Table
+              columns={damageColumns}
+              data={filteredDamage}
               loading={false} // Assuming fetched on mount
               customSkeleton={<SkeletonTableLoader rows={3} />}
             />
           </div>
           {filteredDamage.length === 0 && (
             <div className="text-center py-5 text-muted">
-              <FiCheckCircle size={40} className="mb-2 opacity-25 text-success" />
+              <FiCheckCircle
+                size={40}
+                className="mb-2 opacity-25 text-success"
+              />
               <p className="m-0">No {damageTab} issues found.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-5">
+        <h5 className="fw-bold text-dark mb-3">Pending Equipment Returns</h5>
+
+        <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+          <div className="table-responsive">
+            <Table
+              columns={pendingReturnColumns}
+              data={pendingReturns}
+              loading={false}
+            />
+          </div>
+
+          {pendingReturns.length === 0 && (
+            <div className="text-center py-4 text-muted">
+              No pending returns
             </div>
           )}
         </div>

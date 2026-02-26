@@ -72,6 +72,7 @@ io.on("connection", (socket) => {
 
 /* ================= MAKE IO AVAILABLE GLOBALLY ================= */
 app.set("io", io);
+global.io = io;
 
 /* ================= DATABASE INIT ================= */
 (async () => {
@@ -100,6 +101,7 @@ app.use("/api/team-lineup", require("./routes/teamLineupRoutes"));
 app.use("/api/notifications", require("./routes/notificationRoutes"));
 app.use("/api/announcements", require("./routes/announcementRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
+app.use("/api/equipment-borrow", require("./routes/equipmentBorrowRoutes"));
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -107,5 +109,5 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () =>
-  console.log(`Backend running with Socket.IO on port ${PORT}`)
+  console.log(`Backend running with Socket.IO on port ${PORT}`),
 );

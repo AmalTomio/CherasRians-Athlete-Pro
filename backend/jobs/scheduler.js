@@ -1,19 +1,17 @@
-// backend/jobs/scheduler.js
 const cron = require("node-cron");
 const Booking = require("../models/Booking");
 const Notification = require("../models/Notification");
 const User = require("../models/User");
 const Equipment = require("../models/Equipment");
 const moment = require("moment-timezone");
+const { runEquipmentOverdueCheck } = require("./equipmentOverdueJob");
 
-// Always use Malaysia timezone
 const TZ = "Asia/Kuala_Lumpur";
 
 function startWeeklyResetJobs() {
+
   /* =====================================================
-     WEEKLY RESET — Every Sunday 8:00 PM MYT
-     ✔ Only future bookings
-     ✖ Does NOT touch past bookings
+     WEEKLY RESET — Every Sunday 8PM MYT
   ====================================================== */
   cron.schedule(
     "0 20 * * 0",
@@ -23,13 +21,11 @@ function startWeeklyResetJobs() {
 
         const today = moment().tz(TZ).startOf("day").toDate();
 
-        // Cancel ONLY future bookings
         await Booking.updateMany(
           { startAt: { $gte: today } },
           { status: "cancelled" }
         );
 
-        // Notify all coaches
         const coaches = await User.find({ role: "coach" }).lean();
         await Promise.all(
           coaches.map((c) =>
@@ -51,8 +47,7 @@ function startWeeklyResetJobs() {
   );
 
   /* =====================================================
-     DAILY REMINDER — Every day at 8:00 AM MYT
-     ✔ Reminds coaches 2 days before reset
+     DAILY REMINDER — 8AM MYT
   ====================================================== */
   cron.schedule(
     "0 8 * * *",
@@ -107,13 +102,12 @@ function startWeeklyResetJobs() {
           equipmentRequests: { $exists: true, $ne: [] },
         }).lean();
 
-        if (expiredBookings.length === 0) return;
+        if (!expiredBookings.length) return;
 
         for (const booking of expiredBookings) {
           for (const req of booking.equipmentRequests) {
             if (!req.equipmentId || !req.quantity) continue;
 
-            // Release back to available stock
             await Equipment.findByIdAndUpdate(req.equipmentId, {
               $inc: { quantityAvailable: req.quantity },
             });
@@ -124,11 +118,27 @@ function startWeeklyResetJobs() {
           });
 
           console.log(
-            `[Scheduler] Equipment released for booking ${booking._id}`
+            `[Scheduler] Equipment auto-released for booking ${booking._id}`
           );
         }
       } catch (err) {
         console.error("[Scheduler] Equipment release error:", err);
+      }
+    },
+    { timezone: TZ }
+  );
+
+  /* =====================================================
+     EQUIPMENT OVERDUE CHECK — Every hour
+  ====================================================== */
+  cron.schedule(
+    "0 * * * *",
+    async () => {
+      try {
+        console.log("[Scheduler] Running overdue check...");
+        await runEquipmentOverdueCheck(global.io);
+      } catch (err) {
+        console.error("[Scheduler] Overdue check error:", err);
       }
     },
     { timezone: TZ }

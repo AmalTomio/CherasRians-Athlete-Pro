@@ -107,7 +107,6 @@ export default function StudentAnnouncements() {
         </div>
       </div>
       
-      {/* Local Styles for Hovers and Colors */}
       <style>
         {`
           .hover-bg-light { transition: background-color 0.2s ease-in-out; }
