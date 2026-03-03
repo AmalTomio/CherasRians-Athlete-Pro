@@ -3,7 +3,6 @@ import api from "../../api/axios";
 import { Card, Spinner, Row, Col, Form, Badge } from "react-bootstrap";
 import { Calendar, CheckCircle, People } from "react-bootstrap-icons";
 
-
 export default function Schedule() {
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -48,12 +47,16 @@ export default function Schedule() {
       {/* ================= Header ================= */}
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h1 className="mb-1">Schedule Management</h1>
+          <h2
+            className="fw-bold mb-1 text-dark"
+            style={{ letterSpacing: "-0.5px" }}
+          >
+            Schedule Management
+          </h2>
           <p className="text-muted mb-0">
             Plan and organize your team training sessions and events
           </p>
         </div>
-
       </div>
 
       {/* ================= Stats Cards ================= */}
@@ -188,8 +191,6 @@ export default function Schedule() {
           ))}
         </Row>
       )}
-
-      
     </div>
   );
 }
