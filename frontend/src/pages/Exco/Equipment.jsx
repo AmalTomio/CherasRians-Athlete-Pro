@@ -13,9 +13,10 @@ import {
   FiAlertTriangle,
   FiPlus,
   FiSearch,
-  FiTool,
   FiCalendar,
   FiUser,
+  FiEye,
+  FiCheck,
 } from "react-icons/fi";
 
 export default function EquipmentManagement() {
@@ -42,7 +43,7 @@ export default function EquipmentManagement() {
       const res = await api.get("/equipment");
       setEquipment(res.data.equipment || []);
     } catch (err) {
-      errorAlert("Failed to load equipment inventory");
+      errorAlert("Failed to load equipment inventory", err);
     } finally {
       setLoading(false);
     }
@@ -59,12 +60,15 @@ export default function EquipmentManagement() {
 
   const verifyReturn = async (borrowId) => {
     try {
-      await api.post(`/equipment-borrow/verify/${borrowId}`);
+      await api.post(`/equipment-borrow/verify/${borrowId}`, {
+        approve: true,
+      });
+
       successAlert("Return verified");
       fetchPendingReturns();
       fetchEquipment();
     } catch (err) {
-      errorAlert("Failed to verify return");
+      errorAlert("Failed to verify return", err);
     }
   };
 
@@ -261,10 +265,68 @@ export default function EquipmentManagement() {
     },
   ];
 
+  // ===== PENDING RETURN COLUMNS =====
   const pendingReturnColumns = [
+    {
+      label: "No",
+      key: "no",
+      className: "px-4 fw-semibold text-secondary",
+      accessor: (_, idx) => idx + 1,
+    },
+    {
+      label: "Session",
+      key: "session",
+      accessor: (row) => (
+        <span className="fw-bold text-dark">
+          {row.bookingId?.sessionTitle || "General Session"}
+        </span>
+      ),
+    },
+    {
+      label: "Borrower",
+      key: "borrower",
+      accessor: (row) => (
+        <div className="d-flex align-items-center gap-2 text-muted fw-medium small">
+          <FiUser /> {row.borrowedBy?.firstName || "Unknown"}{" "}
+          {row.borrowedBy?.lastName || ""}
+        </div>
+      ),
+    },
+    {
+      label: "Due Date",
+      key: "due",
+      accessor: (row) => (
+        <div className="d-flex align-items-center gap-2 text-secondary small">
+          <FiCalendar size={14} />
+          <span>
+            {new Date(row.dueAt).toLocaleString(undefined, {
+              dateStyle: "medium",
+              timeStyle: "short",
+            })}
+          </span>
+        </div>
+      ),
+    },
+    {
+      label: "Status",
+      key: "status",
+      accessor: (row) => (
+        <span
+          className={`badge px-3 py-1 rounded-pill text-capitalize border ${
+            row.status === "return_submitted"
+              ? "bg-warning-subtle text-warning border-warning-subtle"
+              : "bg-light text-secondary border-secondary-subtle"
+          }`}
+          style={{ fontSize: "0.75rem" }}
+        >
+          {row.status.replace("_", " ")}
+        </span>
+      ),
+    },
     {
       label: "Action",
       key: "action",
+      className: "text-end px-4",
       accessor: (row) =>
         row.status === "return_submitted" && (
           <div className="d-flex gap-2 justify-content-end">
@@ -273,21 +335,24 @@ export default function EquipmentManagement() {
                 href={`http://localhost:5000/uploads/returns/${row.returnProof}`}
                 target="_blank"
                 rel="noreferrer"
-                className="btn btn-sm btn-outline-primary"
+                className="btn btn-sm btn-outline-primary shadow-sm fw-bold d-inline-flex align-items-center gap-2"
+                style={{ borderRadius: "8px" }}
               >
-                View Proof
+                <FiEye /> View Proof
               </a>
             )}
             <button
-              className="btn btn-sm btn-success"
+              className="btn btn-sm btn-success shadow-sm fw-bold d-inline-flex align-items-center gap-2"
               onClick={() => verifyReturn(row._id)}
+              style={{ borderRadius: "8px" }}
             >
-              Verify
+              <FiCheck /> Verify
             </button>
           </div>
         ),
     },
   ];
+
   return (
     <div className="px-4 py-4">
       {/* HEADER */}
@@ -387,7 +452,7 @@ export default function EquipmentManagement() {
       <div>
         <div className="d-flex align-items-center justify-content-between mb-3">
           <h5 className="fw-bold text-dark m-0 d-flex align-items-center gap-2">
-            <h5 className="fw-bold text-dark mb-3">Damage History</h5>
+            Damage History
           </h5>
 
           {/* TABS */}
@@ -436,21 +501,41 @@ export default function EquipmentManagement() {
         </div>
       </div>
 
+      {/* ===== PENDING RETURNS SECTION ===== */}
       <div className="mt-5">
-        <h5 className="fw-bold text-dark mb-3">Pending Equipment Returns</h5>
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h5 className="fw-bold text-dark m-0 d-flex align-items-center gap-2">
+            Pending Equipment Returns
+          </h5>
+          {pendingReturns.length > 0 && (
+            <span className="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill">
+              {pendingReturns.length} Pending
+            </span>
+          )}
+        </div>
 
-        <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
-          <div className="table-responsive">
-            <Table
-              columns={pendingReturnColumns}
-              data={pendingReturns}
-              loading={false}
-            />
-          </div>
-
-          {pendingReturns.length === 0 && (
-            <div className="text-center py-4 text-muted">
-              No pending returns
+        <div
+          className="card border-0 shadow-sm rounded-4 overflow-hidden"
+          style={{ minHeight: "200px" }}
+        >
+          {pendingReturns.length === 0 ? (
+            <div className="text-center py-5 text-muted bg-white h-100 d-flex flex-column justify-content-center align-items-center">
+              <FiCheckCircle
+                size={48}
+                className="mb-3 text-success opacity-50"
+              />
+              <h5 className="fw-bold text-dark">All clear!</h5>
+              <p className="m-0 text-secondary">
+                No pending equipment returns to verify at the moment.
+              </p>
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <Table
+                columns={pendingReturnColumns}
+                data={pendingReturns}
+                loading={false}
+              />
             </div>
           )}
         </div>

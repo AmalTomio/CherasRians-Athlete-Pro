@@ -1,10 +1,17 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import api from "../../api/axios";
 import StatCard from "../../components/StatCard";
 import DamageReportModal from "../../components/coach/DamageReportModal";
 import Table from "../../components/Table";
 import SkeletonTableLoader from "../../components/SkeletonTableLoader";
-import { FiTool, FiCheckCircle, FiAlertTriangle, FiBox } from "react-icons/fi";
+import { 
+  FiTool, 
+  FiCheckCircle, 
+  FiAlertTriangle, 
+  FiBox,
+  FiCalendar,
+  FiUpload
+} from "react-icons/fi";
 
 export default function CoachEquipment() {
   const [equipment, setEquipment] = useState([]);
@@ -25,7 +32,16 @@ export default function CoachEquipment() {
     }
   };
 
-  const submitReturn = async (borrowId) => {
+  const fetchReturnsRequired = useCallback(async () => {
+    try {
+      const res = await api.get("/equipment-borrow/my-returns");
+      setReturnsRequired(res.data.borrows || []);
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
+  const submitReturn = useCallback(async (borrowId) => {
     try {
       const input = document.createElement("input");
       input.type = "file";
@@ -49,32 +65,23 @@ export default function CoachEquipment() {
     } catch (err) {
       console.error(err);
     }
-  };
-
-  const fetchReturnsRequired = async () => {
-    try {
-      const res = await api.get("/equipment-borrow/my-returns");
-      setReturnsRequired(res.data.borrows || []);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  }, [fetchReturnsRequired]);
 
   useEffect(() => {
     fetchEquipment();
     fetchReturnsRequired();
-  }, []);
+  }, [fetchReturnsRequired]);
 
   const stats = useMemo(
     () => ({
-      total: equipment.reduce((a, e) => a + e.quantityTotal, 0), // Sum of total items, or just equipment.length depending on need. Using total quantity here.
+      total: equipment.reduce((a, e) => a + e.quantityTotal, 0),
       available: equipment.reduce((a, e) => a + e.quantityAvailable, 0),
       damaged: equipment.reduce((a, e) => a + (e.quantityDamaged || 0), 0),
     }),
-    [equipment],
+    [equipment]
   );
 
-  // Table Columns Configuration
+  // Table Columns Configuration - Equipment Inventory
   const columns = useMemo(
     () => [
       {
@@ -147,48 +154,78 @@ export default function CoachEquipment() {
         ),
       },
     ],
-    [],
+    []
   );
 
-  const returnColumns = [
-    {
-      label: "Session",
-      key: "session",
-      accessor: (row) => row.bookingId?.sessionTitle,
-    },
-    {
-      label: "Due",
-      key: "due",
-      accessor: (row) => new Date(row.dueAt).toLocaleString(),
-    },
-    {
-      label: "Status",
-      key: "status",
-      accessor: (row) => (
-        <span
-          className={`badge ${
-            row.status === "overdue"
-              ? "bg-danger-subtle text-danger"
-              : "bg-primary-subtle text-primary"
-          }`}
-        >
-          {row.status}
-        </span>
-      ),
-    },
-    {
-      label: "Action",
-      key: "action",
-      accessor: (row) => (
-        <button
-          className="btn btn-sm btn-warning"
-          onClick={() => submitReturn(row._id)}
-        >
-          Submit Return
-        </button>
-      ),
-    },
-  ];
+  // Table Columns Configuration - Return Required
+  const returnColumns = useMemo(
+    () => [
+      {
+        label: "No",
+        key: "no",
+        className: "px-4 fw-semibold text-secondary",
+        accessor: (_, index) => index + 1,
+      },
+      {
+        label: "Session",
+        key: "session",
+        accessor: (row) => (
+          <span className="fw-bold text-dark">
+            {row.bookingId?.sessionTitle || "General Session"}
+          </span>
+        ),
+      },
+      {
+        label: "Due Date",
+        key: "due",
+        accessor: (row) => (
+          <div className="d-flex align-items-center gap-2 text-secondary">
+            <FiCalendar size={14} />
+            <span>
+              {new Date(row.dueAt).toLocaleString(undefined, {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })}
+            </span>
+          </div>
+        ),
+      },
+      {
+        label: "Status",
+        key: "status",
+        accessor: (row) => {
+          const isOverdue = row.status === "overdue" || new Date(row.dueAt) < new Date();
+          return (
+            <span
+              className={`badge px-3 py-1 rounded-pill text-capitalize border ${
+                isOverdue
+                  ? "bg-danger-subtle text-danger border-danger-subtle"
+                  : "bg-warning-subtle text-warning border-warning-subtle"
+              }`}
+              style={{ fontSize: "0.75rem" }}
+            >
+              {isOverdue ? "Overdue" : row.status}
+            </span>
+          );
+        },
+      },
+      {
+        label: "Action",
+        key: "action",
+        className: "text-end px-4",
+        accessor: (row) => (
+          <button
+            className="btn btn-sm btn-outline-primary shadow-sm fw-bold d-inline-flex align-items-center gap-2"
+            onClick={() => submitReturn(row._id)}
+            style={{ borderRadius: "8px" }}
+          >
+            <FiUpload /> Upload Proof
+          </button>
+        ),
+      },
+    ],
+    [submitReturn]
+  );
 
   return (
     <div className="px-4 py-4">
@@ -228,7 +265,7 @@ export default function CoachEquipment() {
         />
       </div>
 
-      {/* DATA TABLE */}
+      {/* DATA TABLE: EQUIPMENT */}
       <div
         className="card border-0 shadow-sm rounded-4 overflow-hidden"
         style={{ minHeight: "300px" }}
@@ -243,25 +280,38 @@ export default function CoachEquipment() {
         </div>
       </div>
 
+      {/* DATA TABLE: RETURNS REQUIRED */}
       <div className="mt-5">
-        <h5 className="fw-bold text-dark mb-3">Return Required</h5>
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h4 className="fw-bold text-dark m-0 d-flex align-items-center gap-2">
+            Returns Required
+          </h4>
+          {returnsRequired.length > 0 && (
+            <span className="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill">
+              {returnsRequired.length} Pending
+            </span>
+          )}
+        </div>
 
-        <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
-          <div className="table-responsive">
-            <Table
-              columns={returnColumns}
-              data={returnsRequired}
-              loading={false}
-            />
-          </div>
-
-          {returnsRequired.length === 0 && (
-            <div className="text-center py-4 text-muted">
-              No returns required
+        <div className="card border-0 shadow-sm rounded-4 overflow-hidden" style={{ minHeight: "200px" }}>
+          {returnsRequired.length === 0 ? (
+            <div className="text-center py-5 text-muted bg-white h-100 d-flex flex-column justify-content-center align-items-center">
+              <FiCheckCircle size={48} className="mb-3 text-success opacity-50" />
+              <h5 className="fw-bold text-dark">All caught up!</h5>
+              <p className="m-0 text-secondary">No equipment returns are currently required.</p>
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <Table
+                columns={returnColumns}
+                data={returnsRequired}
+                loading={false}
+              />
             </div>
           )}
         </div>
       </div>
+
       {/* DAMAGE MODAL */}
       <DamageReportModal
         show={showDamageModal}

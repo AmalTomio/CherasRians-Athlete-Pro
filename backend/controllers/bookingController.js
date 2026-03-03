@@ -151,24 +151,6 @@ exports.createBooking = async (req, res) => {
         createdBy: user._id,
       });
 
-      // Reserve equipment
-      for (const er of denormEquipment) {
-        const equipment = await Equipment.findById(er.equipmentId);
-        if (!equipment) {
-          return res.status(400).json({ message: "Invalid equipment" });
-        }
-
-        if (er.quantity > equipment.quantityAvailable) {
-          return res.status(400).json({
-            message: `${equipment.name} has insufficient stock`,
-          });
-        }
-
-        await Equipment.findByIdAndUpdate(equipment._id, {
-          $inc: { quantityAvailable: -er.quantity },
-        });
-      }
-
       await booking.save();
       createdBookings.push(booking);
 
@@ -212,14 +194,18 @@ exports.approveBooking = async (req, res) => {
       return res.json({ booking });
     }
 
-    // ✅ APPROVE
     booking.status = "approved";
     booking.approvedBy = exco._id;
     booking.approvedAt = new Date();
     await booking.save();
 
-    // ✅ CREATE BORROW RECORD HERE
     if (booking.equipmentRequests?.length) {
+      for (const item of booking.equipmentRequests) {
+        await Equipment.findByIdAndUpdate(item.equipmentId, {
+          $inc: { quantityAvailable: -item.quantity },
+        });
+      }
+
       await EquipmentBorrow.create({
         bookingId: booking._id,
         coachId: booking.coachId,

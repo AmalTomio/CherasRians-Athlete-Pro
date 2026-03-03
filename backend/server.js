@@ -70,11 +70,9 @@ io.on("connection", (socket) => {
   });
 });
 
-/* ================= MAKE IO AVAILABLE GLOBALLY ================= */
 app.set("io", io);
 global.io = io;
 
-/* ================= DATABASE INIT ================= */
 (async () => {
   try {
     await connectDB();

@@ -1,51 +1,45 @@
 const mongoose = require("mongoose");
 
 const equipmentBorrowSchema = new mongoose.Schema(
-{
-  bookingId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Booking",
-    required: true,
-  },
-
-  coachId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-  },
-
-  items: [
-    {
-      equipmentId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Equipment",
-      },
-      quantity: Number,
+  {
+    bookingId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Booking",
+      required: true,
     },
-  ],
 
-  status: {
-    type: String,
-    enum: [
-      "borrowed",
-      "return_submitted",
-      "returned",
-      "overdue"
+    coachId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    items: [
+      {
+        equipmentId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Equipment",
+        },
+        quantity: Number,
+      },
     ],
-    default: "borrowed",
+
+    status: {
+      type: String,
+      enum: ["borrowed", "return_submitted", "verified", "rejected", "overdue"],
+      default: "borrowed",
+    },
+
+    dueAt: Date,
+    returnedAt: Date,
+    verifiedAt: Date,
+
+    returnProof: {
+      type: String,
+      default: null,
+    },
   },
-
-  dueAt: Date,
-  returnedAt: Date,
-  verifiedAt: Date,
-
-  returnProof: {
-    type: String,
-    default: null,
-  },
-
-},
-{ timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("EquipmentBorrow", equipmentBorrowSchema);

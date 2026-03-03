@@ -1,7 +1,7 @@
 const Booking = require("../models/Booking");
 const EquipmentBorrow = require("../models/EquipmentBorrow");
 const Equipment = require("../models/Equipment");
-
+const User = require("../models/User");
 const { sendNotification } = require("../services/notificationService");
 
 exports.releaseEquipment = async (req, res) => {
@@ -91,18 +91,22 @@ exports.verifyReturn = async (req, res) => {
     if (borrow.status !== "return_submitted")
       return res.status(400).json({ message: "Return not submitted yet" });
 
+    // ❌ Reject
     if (!approve) {
       borrow.status = "rejected";
       borrow.notes = notes || "";
       await borrow.save();
-
       return res.json({ message: "Return rejected", borrow });
     }
 
-    // Restore inventory
-    await Equipment.findByIdAndUpdate(borrow.equipmentId, {
-      $inc: { quantityAvailable: borrow.quantity },
-    });
+    // ✅ Restore inventory for ALL items
+    if (borrow.items?.length) {
+      for (const item of borrow.items) {
+        await Equipment.findByIdAndUpdate(item.equipmentId, {
+          $inc: { quantityAvailable: item.quantity },
+        });
+      }
+    }
 
     borrow.status = "verified";
     borrow.verifiedBy = exco._id;
@@ -110,8 +114,6 @@ exports.verifyReturn = async (req, res) => {
     borrow.notes = notes || "";
 
     await borrow.save();
-
-    const { sendNotification } = require("../services/notificationService");
 
     await sendNotification({
       io: req.app.get("io"),
@@ -134,16 +136,22 @@ exports.verifyReturn = async (req, res) => {
 exports.getPendingReturns = async (req, res) => {
   try {
     const borrows = await EquipmentBorrow.find({
-      status: { $in: ["return_submitted", "overdue"] },
+      status: "return_submitted",
     })
       .populate("coachId", "firstName lastName")
-      .populate("bookingId", "sessionTitle startAt endAt")
-      .sort({ dueAt: 1 })
+      .populate("bookingId", "sessionTitle")
+      .sort({ updatedAt: -1 })
       .lean();
 
-    res.json({ borrows });
+    // Map coachId -> borrowedBy (for frontend compatibility)
+    const formatted = borrows.map((b) => ({
+      ...b,
+      borrowedBy: b.coachId,
+    }));
+
+    res.json({ borrows: formatted });
   } catch (err) {
-    console.error("Get Pending Returns Error:", err);
+    console.error("GET PENDING RETURNS ERROR:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
