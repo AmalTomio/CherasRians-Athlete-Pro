@@ -22,7 +22,6 @@ export default function CoachDashboard() {
 
   const navigate = useNavigate();
 
-  /* ================= FETCH ================= */
 
   const fetchData = async (isRefresh = false) => {
     try {
@@ -44,7 +43,6 @@ export default function CoachDashboard() {
     fetchData();
   }, []);
 
-  /* ================= REALTIME ================= */
 
   useEffect(() => {
     const socket = getSocket();
