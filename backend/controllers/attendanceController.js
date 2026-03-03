@@ -15,7 +15,7 @@ exports.getCoachSessions = async (req, res) => {
     const sessions = await Booking.find({
       coachId,
       status: "approved",
-      sessionType: { $in: ATTENDANCE_SESSION_TYPES }, // ✅ FIX
+      sessionType: { $in: ATTENDANCE_SESSION_TYPES },
     })
       .populate("facilityId", "name")
       .sort({ startAt: -1 });

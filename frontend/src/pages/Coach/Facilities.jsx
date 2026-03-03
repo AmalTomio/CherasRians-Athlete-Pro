@@ -139,11 +139,21 @@ export default function FacilityList() {
   };
 
   return (
-    <div>
-      <h2 className="mb-3">Book Facilities</h2>
-      <p className="text-muted mb-4">
+    <div className="px-4 py-4">
+       <div className="d-flex justify-content-between align-items-center mb-4">
+              <div>
+                <h2
+                  className="fw-bold mb-1 text-dark"
+                  style={{ letterSpacing: "-0.5px" }}
+                >
+Booking Facilities                </h2>
+                <p className="text-muted mb-0">
         Select a facility to create a booking request.
-      </p>
+                </p>
+              </div>
+      
+             
+            </div>
 
       {/* Facilities Section */}
       <div className="mb-5">

@@ -3,7 +3,7 @@ import api from "../../api/axios";
 import { SPORT_META } from "../../config/sportMeta";
 import FiltersCard from "../../components/FiltersCard";
 import { successAlert, errorAlert } from "../../utils/swal";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   FiSave,
   FiUsers,

@@ -3,6 +3,7 @@ import api from "../../api/axios";
 import { Card, Button, Table, Spinner, Row, Col, Form } from "react-bootstrap";
 import { errorAlert } from "../../utils/swal";
 import MarkAttendanceModal from "../../components/MarkAttendanceModal";
+import FiltersCard from "../../components/FiltersCard";
 
 export default function Attendance() {
   const [sessions, setSessions] = useState([]);
@@ -11,6 +12,9 @@ export default function Attendance() {
   const [loadingSessions, setLoadingSessions] = useState(true);
   const [loadingAttendance, setLoadingAttendance] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  // Filter states
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("");
 
   useEffect(() => {
     fetchSessions();
@@ -19,7 +23,9 @@ export default function Attendance() {
   const fetchSessions = async () => {
     try {
       const res = await api.get("/attendance/sessions/coach");
-      setSessions(res.data.sessions || []);
+      // Filter out past sessions (where endAt is before now)
+      const upcoming = (res.data.sessions || []).filter(s => new Date(s.endAt) >= new Date());
+      setSessions(upcoming);
     } catch {
       errorAlert("Failed to load sessions");
     } finally {
@@ -52,6 +58,17 @@ export default function Attendance() {
       <p className="text-muted mb-4">
         Mark attendance for approved training & tryout sessions
       </p>
+      {/* Filters Card */}
+      <FiltersCard
+        search={search}
+        setSearch={setSearch}
+        status={status}
+        setStatus={setStatus}
+        showStatus={true}
+        showDate={false}
+        onReset={() => { setSearch(""); setStatus(""); }}
+        searchPlaceholder="Search player..."
+      />
 
       <Card className="p-4 mb-4">
         <Row className="g-3 align-items-end">
@@ -112,16 +129,21 @@ export default function Attendance() {
                 </tr>
               </thead>
               <tbody>
-                {attendance.map((a, i) => (
-                  <tr key={a._id}>
-                    <td>{i + 1}</td>
-                    <td>
-                      {a.playerId?.firstName} {a.playerId?.lastName}
-                    </td>
-                    <td>{a.status}</td>
-                    <td>{a.remarks || "-"}</td>
-                  </tr>
-                ))}
+                {attendance
+                  .filter(a => {
+                    const name = `${a.playerId?.firstName || ''} ${a.playerId?.lastName || ''}`.toLowerCase();
+                    const matchesSearch = search ? name.includes(search.toLowerCase()) : true;
+                    const matchesStatus = status ? a.status === status : true;
+                    return matchesSearch && matchesStatus;
+                  })
+                  .map((a, i) => (
+                    <tr key={a._id}>
+                      <td>{i + 1}</td>
+                      <td>{a.playerId?.firstName} {a.playerId?.lastName}</td>
+                      <td>{a.status}</td>
+                      <td>{a.remarks || '-'}</td>
+                    </tr>
+                  ))}
               </tbody>
             </Table>
           )}
@@ -132,7 +154,7 @@ export default function Attendance() {
         show={showModal}
         onHide={() => setShowModal(false)}
         bookingId={selectedSession}
-        onSaved={() => fetchAttendance(selectedSession)}
+        onSaved={() => { const id = selectedSession; fetchAttendance(id); fetchSessions(); setSelectedSession(''); setSessions(prev => prev.filter(s => s._id !== id)); }}
       />
     </div>
   );
