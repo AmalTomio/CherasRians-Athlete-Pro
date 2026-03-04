@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const Booking = require("../models/Booking");
 const { decrypt } = require("../utils/crypto");
 
 exports.getStudents = async (req, res) => {
@@ -146,6 +147,50 @@ exports.getSportStats = async (req, res) => {
     return res.json({ stats: results });
   } catch (err) {
     console.error("getSportStats error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+// New endpoint: booking stats by status
+exports.getBookingStats = async (req, res) => {
+  try {
+    const statuses = ["pending", "approved", "rejected", "cancelled"];
+    const results = await Promise.all(
+      statuses.map(async (status) => ({
+        status,
+        count: await Booking.countDocuments({ status })
+      }))
+    );
+    return res.json({ stats: results });
+  } catch (err) {
+    console.error("getBookingStats error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+// New endpoint: simple trend stats (bookings per month for last 6 months)
+exports.getTrendStats = async (req, res) => {
+  try {
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    const pipeline = [
+      { $match: { createdAt: { $gte: sixMonthsAgo } } },
+      {
+        $group: {
+          _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } }
+    ];
+    const agg = await Booking.aggregate(pipeline);
+    const stats = agg.map((item) => ({
+      period: `${item._id.year}-${String(item._id.month).padStart(2, "0")}`,
+      count: item.count
+    }));
+    return res.json({ stats });
+  } catch (err) {
+    console.error("getTrendStats error:", err);
     return res.status(500).json({ message: "Server error" });
   }
 };

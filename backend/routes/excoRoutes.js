@@ -18,6 +18,8 @@ router.put(
   excoController.assignSport
 );
 router.get("/stats/sports", excoController.getSportStats);
+router.get("/stats/bookings", verifyToken, requireExco, excoController.getBookingStats);
+router.get("/stats/trends", verifyToken, requireExco, excoController.getTrendStats);
 router.get("/bookings", verifyToken, requireExco, getAllBookings);
 
 router.get("/bookings/pending", verifyToken, requireExco, getPendingBookings);

@@ -274,7 +274,11 @@ export default function Bookings() {
         </h5>
 
         {loadingPending ? (
-          <SkeletonTableLoader rows={2} />
+          <div className="d-flex justify-content-center align-items-center py-5">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
         ) : displayedPending.length === 0 ? (
           <div className="alert alert-light border shadow-sm text-muted d-flex align-items-center gap-3">
             <FiCheckCircle className="text-success" size={20} />
