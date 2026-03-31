@@ -9,7 +9,7 @@ const equipmentSchema = new mongoose.Schema(
     quantityDamaged: { type: Number, default: 0, min: 0 }, 
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     isActive: { type: Boolean, default: true },
-  },
+  },  
   { timestamps: true }
 );
 

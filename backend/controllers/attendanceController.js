@@ -65,9 +65,7 @@ exports.getSessionPlayers = async (req, res) => {
   }
 };
 
-/**
- * POST /api/attendance/mark
- */
+
 exports.markAttendance = async (req, res) => {
   try {
     const coachId = req.user.userId || req.user._id;
@@ -110,6 +108,20 @@ exports.markAttendance = async (req, res) => {
 
     await Attendance.bulkWrite(ops);
 
+    const Disciplinary = require("../models/DisciplinaryRecord");
+
+// AUTO DISCIPLINE
+for (const r of records) {
+  if (r.status === "Absent" || r.status === "Late") {
+    await Disciplinary.create({
+      playerId: r.playerId,
+      coachId,
+      bookingId,
+      violationType: r.status,
+      points: r.status === "Absent" ? 2 : 1,
+    });
+  }
+}
     res.json({ message: "Attendance saved successfully" });
   } catch (err) {
     console.error("Mark Attendance Error:", err);

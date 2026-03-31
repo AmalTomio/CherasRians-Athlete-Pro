@@ -12,6 +12,7 @@ import Register from "./pages/Register";
 
 // Shared Pages
 import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
 
 // Exco Pages
 import ManageStudents from "./pages/Exco/ManageStudents";
@@ -20,6 +21,9 @@ import EquipmentManagement from "./pages/Exco/Equipment";
 import ExcoFacilities from "./pages/Exco/Facilities";
 import Coaches from "./pages/Exco/Coaches";
 import Announcement from "./pages/Exco/Announcement";
+import ExcoMatches from "./pages/Exco/Matches";
+import ExcoDisciplinary from "./pages/Exco/Disciplinary";
+import ExcoReports from "./pages/Exco/Reports";
 
 // Coach Pages
 import Players from "./pages/Coach/Players";
@@ -30,11 +34,15 @@ import Equipment from "./pages/Coach/Equipment";
 import Schedule from "./pages/Coach/Schedule";
 import Teams from "./pages/Coach/ManageTeams";
 import Announcements from "./pages/Coach/Announcements";
+import CoachMatches from "./pages/Coach/Matches";
+import CoachDisciplinary from "./pages/Coach/Disciplinary";
+import CoachPerformance from "./pages/Coach/Performance";
 
 // Student Pages
 import Medical from "./pages/Student/Medical";
 import PlayerSchedule from "./pages/Student/Schedule";
 import StudentAnnouncements from "./pages/Student/Announcement";
+import StudentPerformance from "./pages/Student/Performance";
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -69,8 +77,48 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <WithSidebar>
+                <Profile />
+              </WithSidebar>
+            </ProtectedRoute>
+          }
+        />
 
         {/* Exco Routes */}
+        <Route
+          path="/exco/matches"
+          element={
+            <ProtectedRoute allowedRoles={["exco"]}>
+              <WithSidebar>
+                <ExcoMatches />
+              </WithSidebar>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/exco/disciplinary"
+          element={
+            <ProtectedRoute allowedRoles={["exco"]}>
+              <WithSidebar>
+                <ExcoDisciplinary />
+              </WithSidebar>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/exco/reports"
+          element={
+            <ProtectedRoute allowedRoles={["exco"]}>
+              <WithSidebar>
+                <ExcoReports />
+              </WithSidebar>
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/exco/manageStudents"
           element={
@@ -138,6 +186,37 @@ export default function App() {
         />
 
         {/* Coach Routes */}
+        <Route
+          path="/coach/matches"
+          element={
+            <ProtectedRoute allowedRoles={["coach"]}>
+              <WithSidebar>
+                <CoachMatches />
+              </WithSidebar>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/coach/disciplinary"
+          element={
+            <ProtectedRoute allowedRoles={["coach"]}>
+              <WithSidebar>
+                <CoachDisciplinary />
+              </WithSidebar>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/coach/performance"
+          element={
+            <ProtectedRoute allowedRoles={["coach"]}>
+              <WithSidebar>
+                <CoachPerformance />
+              </WithSidebar>
+            </ProtectedRoute>
+          }
+        />
+       
         <Route
           path="/coach/players"
           element={
@@ -227,6 +306,16 @@ export default function App() {
         />
 
         {/* Student Routes */}
+        <Route
+          path="/student/performance"
+          element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <WithSidebar>
+                <StudentPerformance />
+              </WithSidebar>
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/student/medical"
           element={

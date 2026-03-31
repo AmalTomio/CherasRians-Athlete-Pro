@@ -1,3 +1,5 @@
+// backend/models/Attendance.js
+
 const mongoose = require("mongoose");
 
 const attendanceSchema = new mongoose.Schema({

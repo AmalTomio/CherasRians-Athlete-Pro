@@ -1,3 +1,5 @@
+// backend/models/Schedule.js
+
 const mongoose = require("mongoose");
 
 const scheduleSchema = new mongoose.Schema(
@@ -9,7 +11,6 @@ const scheduleSchema = new mongoose.Schema(
       index: true,
     },
 
-    // Coach sport snapshot (football, badminton, etc.)
     sport: {
       type: String,
       required: true,
@@ -22,7 +23,6 @@ const scheduleSchema = new mongoose.Schema(
       required: true,
     },
 
-    // ⭐ Category this session is for
     playerCategory: {
       type: String,
       enum: ["U-15", "U-18"],

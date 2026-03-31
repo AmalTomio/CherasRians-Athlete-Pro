@@ -63,3 +63,11 @@ export const SPORT_META = {
     ],
   },
 };
+
+export const SPORT_STATS = {
+  football: ["goals", "assists", "tackles"],
+  volleyball: ["kills", "blocks", "aces"],
+  badminton: ["points", "errors"],
+  netball: ["goals", "interceptions"],
+  sepak_takraw: ["spikes", "serves", "blocks"],
+};

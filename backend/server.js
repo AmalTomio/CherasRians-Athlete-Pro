@@ -25,18 +25,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-/* ================= CREATE HTTP SERVER ================= */
 const server = http.createServer(app);
 
-/* ================= SOCKET.IO SETUP ================= */
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // Vite frontend
+    origin: "http://localhost:5173",
     methods: ["GET", "POST"],
   },
 });
-
-/* ================= SOCKET AUTH ================= */
 io.use((socket, next) => {
   try {
     const token = socket.handshake.auth?.token;
@@ -58,11 +54,9 @@ io.use((socket, next) => {
   }
 });
 
-/* ================= SOCKET CONNECTION ================= */
 io.on("connection", (socket) => {
   console.log("Socket connected:", socket.user._id);
 
-  // Each user joins their own private room
   socket.join(`user_${socket.user._id}`);
 
   socket.on("disconnect", () => {
@@ -83,7 +77,6 @@ global.io = io;
   }
 })();
 
-/* ================= ROUTES ================= */
 app.use("/api/auth", authRoutes);
 app.use("/api/exco", excoRoutes);
 app.use("/api/coach", coachRoutes);
@@ -100,10 +93,12 @@ app.use("/api/notifications", require("./routes/notificationRoutes"));
 app.use("/api/announcements", require("./routes/announcementRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/equipment-borrow", require("./routes/equipmentBorrowRoutes"));
+app.use("/api/matches", require("./routes/matchRoutes"));
+app.use("/api/performance", require("./routes/performanceRoutes"));
+app.use("/api/reports", require("./routes/reportRoutes"));
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-/* ================= START SERVER ================= */
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () =>

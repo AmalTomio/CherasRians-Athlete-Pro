@@ -1,9 +1,22 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
+
 const { verifyToken } = require("../middleware/authMiddleware");
 
-// SEARCH USERS (for announcement direct targeting)
+router.get("/me", verifyToken, async (req, res) => {
+  res.json(req.user);
+});
+
+router.put("/me", verifyToken, async (req, res) => {
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    req.body,
+    { new: true }
+  );
+  res.json(user);
+});
+
 router.get("/search", verifyToken, async (req, res) => {
   try {
     const { search = "" } = req.query;

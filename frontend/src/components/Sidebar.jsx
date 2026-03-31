@@ -15,6 +15,7 @@ import {
   FiFileText,
   FiActivity,
   FiGrid,
+  FiStar,
 } from "react-icons/fi";
 
 import "./Sidebar.css";
@@ -55,28 +56,37 @@ export default function Sidebar({ onToggle }) {
         ["Training", FiCalendar, "/schedule"],
         ["Attendance", FiClipboard, "/attendance"],
         ["Medical", FiActivity, "/student/medical"],
-        ["Performance", FiUsers, "/performance"],
+        ["Performance", FiStar, "/student/performance"],
         ["Notices", FiBell, "/student/announcements"],
+        ["Profile", FiUser, "/profile"],
       ],
       coach: [
         ["Dashboard", FiGrid, "/dashboard"],
         ["My Teams", FiUsers, "/coach/teams"],
         ["Players", FiUser, "/coach/players"],
+        ["Matches", FiActivity, "/coach/matches"],
+        ["Performance", FiStar, "/coach/performance"],
+        ["Disciplinary", FiClipboard, "/coach/disciplinary"],
         ["Schedules", FiCalendar, "/coach/schedule"],
         ["Facilities", FaRegBuilding, "/coach/facilities"],
         ["Med-Reviews", FiActivity, "/coach/medical"],
         ["Attendance", FiClipboard, "/coach/attendance"],
         ["Equipment", FiTool, "/coach/equipment"],
         ["Announcement", FiBell, "/coach/announcements"],
+        ["Profile", FiUser, "/profile"],
       ],
       exco: [
         ["Overview", FiHome, "/dashboard"],
         ["Students", FiUsers, "/exco/manageStudents"],
         ["Coaches", FiUser, "/exco/manageCoaches"],
+        ["Matches", FiActivity, "/exco/matches"],
+        ["Disciplinary", FiClipboard, "/exco/disciplinary"],
+        ["Reports", FiFileText, "/exco/reports"],
         ["Facilities", FaRegBuilding, "/exco/facilities"],
         ["Booking", FiCalendar, "/exco/booking"],
         ["Inventory", FiTool, "/exco/equipment"],
         ["Announcement", FiBell, "/exco/announcements"],
+        ["Profile", FiUser, "/profile"],
       ],
     };
 

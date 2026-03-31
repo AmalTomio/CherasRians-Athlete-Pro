@@ -52,6 +52,37 @@ export default function Attendance() {
     else setAttendance([]);
   };
 
+  const handleExport = async () => {
+  if (!selectedSession) {
+    return errorAlert("Please select a session first");
+  }
+
+  try {
+    const res = await api.get("/reports/attendance", {
+      params: {
+        bookingId: selectedSession,
+        playerName: search,
+      },
+      responseType: "blob",
+    });
+
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement("a");
+    link.href = url;
+
+    const filename = `attendance_${new Date().toISOString().split("T")[0]}.xlsx`;
+    link.setAttribute("download", filename);
+
+    document.body.appendChild(link);
+    link.click();
+
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    errorAlert("Failed to export attendance report");
+  }
+};  
+
   return (
     <div className="px-4 py-4 w-100">
       <h1 className="mb-2">Attendance</h1>
@@ -98,15 +129,23 @@ export default function Attendance() {
             )}
           </Col>
 
-          <Col md={6} className="text-end">
-            <Button
-              variant="primary"
-              disabled={!selectedSession}
-              onClick={() => setShowModal(true)}
-            >
-              Mark Attendance
-            </Button>
-          </Col>
+          <Col md={6} className="text-end d-flex justify-content-end gap-2">
+  <Button
+    variant="success"
+    disabled={!selectedSession}
+    onClick={handleExport}
+  >
+    Export
+  </Button>
+
+  <Button
+    variant="primary"
+    disabled={!selectedSession}
+    onClick={() => setShowModal(true)}
+  >
+    Mark Attendance
+  </Button>
+</Col>
         </Row>
       </Card>
 

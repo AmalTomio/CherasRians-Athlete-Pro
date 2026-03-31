@@ -28,6 +28,7 @@ export default function MarkAttendanceModal({
       const initial = res.data.players.map((p) => ({
         playerId: p._id,
         name: `${p.firstName} ${p.lastName}`,
+        classGroup: p.classGroup,
         status: "Present",
         remarks: "",
       }));
@@ -61,8 +62,8 @@ export default function MarkAttendanceModal({
       });
 
       successAlert("Attendance saved");
-      onHide(); // ✅ CLOSE MODAL
-      onSaved(); // refresh table
+      onHide();
+      onSaved();
     } catch {
       errorAlert("Failed to save attendance");
     } finally {
@@ -104,7 +105,7 @@ export default function MarkAttendanceModal({
                 <tr key={r.playerId}>
                   <td>{i + 1}</td>
                   <td>{r.name}</td>
-                  <td>{r.classGroup || "-"}</td>{" "}
+                  <td>{r.classGroup || "-"}</td>
                   <td>
                     <Form.Select
                       value={r.status}
