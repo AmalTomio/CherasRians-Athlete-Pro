@@ -19,6 +19,14 @@ const userSchema = new mongoose.Schema(
 
     isActive: { type: Boolean, default: true, index: true },
 
+    // Profile fields
+    bod: { type: Date },                          // Date of birth
+    profileUrl: { type: String, default: "" },     // Profile picture URL
+    gender: { type: String, default: "" },         // Gender
+    age: { type: Number },                         // Coach age
+    height: { type: Number },                      // Student height (cm)
+    weight: { type: Number },                      // Student weight (kg)
+
     // Coach assignment fields
     category: { type: String, default: "", index: true },
     position: { type: String, default: "" },
