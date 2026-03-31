@@ -71,3 +71,63 @@ export const SPORT_STATS = {
   netball: ["goals", "interceptions"],
   sepak_takraw: ["spikes", "serves", "blocks"],
 };
+
+export const SPORT_DRILLS = {
+  football: [
+    "Cone Dribbling",
+    "Close Control Dribbling",
+    "1v1 Dribbling",
+    "Short Passing",
+    "One-Touch Passing",
+    "Triangle Passing",
+    "Wall Pass",
+    "Shooting Practice",
+    "Finishing",
+    "Volley Shooting",
+    "1v1 Defending",
+    "Shuttle Run",
+  ],
+
+  volleyball: [
+    "Forearm Passing",
+    "Wall Passing",
+    "Setting Practice",
+    "Partner Setting",
+    "Spiking Approach",
+    "Hit & Recover",
+    "Serving Practice",
+    "Target Serving",
+    "Blocking Footwork",
+    "Defense Digging",
+    "Reaction Drill",
+  ],
+
+  sepak_takraw: [
+    "Ball Control",
+    "Inside Passing",
+    "Outside Passing",
+    "Head Passing",
+    "Serve Practice",
+    "Target Serving",
+    "Feeding Drill",
+    "Spike Drill",
+    "Blocking Drill",
+    "Receiving Drill",
+    "Reaction Drill",
+  ],
+
+  netball: [
+    "Chest Pass",
+    "Bounce Pass",
+    "Overhead Pass",
+    "Wall Passing",
+    "Shooting Close",
+    "Long Shot",
+    "Footwork",
+    "Dodging",
+    "Marking",
+    "Interception",
+    "3-Pass Game",
+    "Shuttle Run",
+  ],
+};

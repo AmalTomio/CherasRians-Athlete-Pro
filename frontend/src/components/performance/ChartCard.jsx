@@ -25,6 +25,8 @@ export default function ChartCard({
       <div className="card-body">
         <h5 className="card-title fw-semibold text-dark mb-4">{title}</h5>
         <div className="chart-wrapper" style={{ height: height, width: "100%" }}>
+<div style={{ width: "100%", height: 350, minHeight: 300 }}>
+
           <ResponsiveContainer width="100%" height="100%">
             {type === "bar" ? (
               <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -44,6 +46,7 @@ export default function ChartCard({
               </LineChart>
             )}
           </ResponsiveContainer>
+          </div>
         </div>
       </div>
     </div>

@@ -1,9 +1,12 @@
+const mongoose = require("mongoose");
+
 const TeamLineup = require("../models/TeamLineup");
 
 exports.saveLineup = async (req, res) => {
   try {
-    const coachId = req.user.userId || req.user._id;
-    const { sport, category, starters, substitutes } = req.body;
+const coachId = new mongoose.Types.ObjectId(
+  req.user.userId || req.user._id
+);    const { sport, category, starters, substitutes } = req.body;
 
     if (!sport || !category) {
       return res.status(400).json({ message: "Sport and category required" });
@@ -32,7 +35,12 @@ exports.saveLineup = async (req, res) => {
 
 exports.getLineup = async (req, res) => {
   try {
-    const coachId = req.user.userId || req.user._id;
+    const mongoose = require("mongoose");
+
+    const coachId = new mongoose.Types.ObjectId(
+      req.user.userId || req.user._id
+    );
+
     const { sport, category } = req.query;
 
     const lineup = await TeamLineup.findOne({
@@ -43,6 +51,7 @@ exports.getLineup = async (req, res) => {
 
     res.json({ lineup });
   } catch (err) {
+    console.error("Get Lineup Error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };

@@ -1,27 +1,46 @@
 const mongoose = require("mongoose");
 
 const performanceSchema = new mongoose.Schema({
-  playerId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: "User", 
-    required: true 
+  playerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
   },
 
-  sport: String,
-  category: String,
+  sport: {
+    type: String,
+    required: true,
+    index: true,
+  },
 
-  attendanceRate: Number,
-  matchesPlayed: Number,
-  goals: Number,
-  assists: Number,
+  category: {
+    type: String,
+    enum: ["U-15", "U-18"],
+    required: true,
+    index: true,
+  },
 
-  disciplinePoints: Number,
-  rating: Number,
+  drills: {
+    type: Object,
+    default: {},
+  },
+
+  rating: {
+    type: Number, 
+    default: 0,
+  },
+
+  score: {
+    type: Number, 
+    default: 0,
+  },
 
   updatedAt: {
     type: Date,
     default: Date.now,
   },
 });
+
+performanceSchema.index({ playerId: 1 }, { unique: true });
 
 module.exports = mongoose.model("PlayerPerformance", performanceSchema);

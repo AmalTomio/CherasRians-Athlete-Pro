@@ -1,3 +1,6 @@
+
+const mongoose = require("mongoose");
+
 const User = require("../models/User");
 const Booking = require("../models/Booking");
 const Schedule = require("../models/Schedule");
@@ -116,7 +119,7 @@ exports.updatePlayer = async (req, res) => {
 
 exports.getCoachDashboard = async (req, res) => {
   try {
-    const coachId = req.user._id;
+const coachId = new mongoose.Types.ObjectId(req.user._id);
     const now = moment().tz(TZ);
 
     const todayStart = now.clone().startOf("day").toDate();
@@ -165,21 +168,22 @@ exports.getCoachDashboard = async (req, res) => {
       .populate("facilityId", "name")
       .lean();
 
-    /* ================= CATEGORY (SESSION BASED) ================= */
-    const categoryAgg = await Schedule.aggregate([
-      {
-        $match: {
-          coachId,
-          status: "approved",
-        },
-      },
-      {
-        $group: {
-          _id: "$playerCategory",
-          count: { $sum: 1 },
-        },
-      },
-    ]);
+   const categoryAgg = await Schedule.aggregate([
+  {
+    $match: {
+      coachId,
+      status: "approved",
+      playerCategory: { $exists: true, $ne: null }, // ✅ IMPORTANT
+      sessionType: { $in: ["training", "practice", "tryout"] }, // ✅ FILTER
+    },
+  },
+  {
+    $group: {
+      _id: "$playerCategory",
+      count: { $sum: 1 },
+    },
+  },
+]);
 
     const categories = {
       U15: categoryAgg.find((c) => c._id === "U-15")?.count || 0,
