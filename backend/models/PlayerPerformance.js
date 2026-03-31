@@ -1,6 +1,12 @@
-// models/PlayerPerformance.js
+const mongoose = require("mongoose");
+
 const performanceSchema = new mongoose.Schema({
-  playerId: { type: ObjectId, ref: "User", required: true },
+  playerId: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: "User", 
+    required: true 
+  },
+
   sport: String,
   category: String,
 
@@ -10,8 +16,12 @@ const performanceSchema = new mongoose.Schema({
   assists: Number,
 
   disciplinePoints: Number,
-
   rating: Number,
 
-  updatedAt: Date,
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
+
+module.exports = mongoose.model("PlayerPerformance", performanceSchema);

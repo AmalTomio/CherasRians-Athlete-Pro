@@ -3,7 +3,12 @@
 const mongoose = require("mongoose");
 
 const scheduleSchema = new mongoose.Schema(
+  
   {
+    bookingId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "Booking",
+},
     coachId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -23,14 +28,13 @@ const scheduleSchema = new mongoose.Schema(
       required: true,
     },
 
-    playerCategory: {
-      type: String,
-      enum: ["U-15", "U-18"],
-      required: true,
-      index: true,
-    },
-
-    // Session details (booking form)
+playerCategory: {
+  type: String,
+  enum: ["U-15", "U-18"],
+  required: function () {
+    return this.sessionType === "training" || this.sessionType === "tryout";
+  },
+},
     title: {
       type: String,
       required: true,

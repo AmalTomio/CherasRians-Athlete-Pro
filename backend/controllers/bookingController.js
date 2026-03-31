@@ -222,18 +222,27 @@ exports.approveBooking = async (req, res) => {
 
     const sessionDate = moment(booking.startAt).tz(TZ).startOf("day").toDate();
 
-    const schedule = await Schedule.create({
-      coachId: booking.coachId,
-      sport: coach.sport,
-      facilityId: booking.facilityId,
-      playerCategory: booking.playerCategory,
-      title: booking.sessionTitle,
-      sessionType: booking.sessionType,
-      sessionDate,
-      startTime: moment(booking.startAt).tz(TZ).format("HH:mm"),
-      endTime: moment(booking.endAt).tz(TZ).format("HH:mm"),
-      status: "approved",
-    });
+   const scheduleData = {
+  coachId: booking.coachId,
+  sport: coach.sport,
+  facilityId: booking.facilityId,
+  title: booking.sessionTitle,
+  sessionType: booking.sessionType,
+  sessionDate,
+  startTime: moment(booking.startAt).tz(TZ).format("HH:mm"),
+  endTime: moment(booking.endAt).tz(TZ).format("HH:mm"),
+  status: "approved",
+};
+
+// attach ONLY when required
+if (
+  booking.sessionType === "training" ||
+  booking.sessionType === "tryout"
+) {
+  scheduleData.playerCategory = booking.playerCategory;
+}
+
+const schedule = await Schedule.create(scheduleData);
 
     const { sendNotification } = require("../services/notificationService");
 

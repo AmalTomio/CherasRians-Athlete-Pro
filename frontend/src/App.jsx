@@ -40,7 +40,7 @@ import CoachPerformance from "./pages/Coach/Performance";
 
 // Student Pages
 import Medical from "./pages/Student/Medical";
-import PlayerSchedule from "./pages/Student/Schedule";
+import Training from "./pages/Student/Training";
 import StudentAnnouncements from "./pages/Student/Announcement";
 import StudentPerformance from "./pages/Student/Performance";
 
@@ -50,7 +50,6 @@ import WithSidebar from "./layouts/WithSidebar";
 
 export default function App() {
 
-  // 🔴 AUTO RECONNECT SOCKET ON REFRESH
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -328,11 +327,11 @@ export default function App() {
         />
 
         <Route
-          path="/student/schedule"
+          path="/student/training"
           element={
             <ProtectedRoute allowedRoles={["student"]}>
               <WithSidebar>
-                <PlayerSchedule />
+                <Training />
               </WithSidebar>
             </ProtectedRoute>
           }

@@ -3,16 +3,15 @@ const Booking = require("../models/Booking");
 const Schedule = require("../models/Schedule");
 const Attendance = require("../models/Attendance");
 const MedicalLeave = require("../models/MedicalLeave");
-
 const Announcement = require("../models/Announcement");
 const EquipmentBorrow = require("../models/EquipmentBorrow");
+const PlayerPerformance = require("../models/PlayerPerformance");
 
 const moment = require("moment-timezone");
 
 const TZ = "Asia/Kuala_Lumpur";
 
 /* ================= UTIL ================= */
-
 const formatStatus = (status) => {
   switch (status) {
     case "active":
@@ -26,8 +25,7 @@ const formatStatus = (status) => {
   }
 };
 
-/* ================= GET PLAYERS ================= */
-
+/* ================= PLAYERS ================= */
 exports.getPlayers = async (req, res) => {
   try {
     const coachSport = req.user.sport;
@@ -73,11 +71,9 @@ exports.getPlayers = async (req, res) => {
       year: s.year,
       classGroup: s.classGroup,
       sport: s.sport,
-
       category: s.category || "",
       position: s.position || "",
       badmintonCategory: s.badmintonCategory || "",
-
       status: formatStatus(s.status),
     }));
 
@@ -92,8 +88,6 @@ exports.getPlayers = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
-
-/* ================= UPDATE PLAYER ================= */
 
 exports.updatePlayer = async (req, res) => {
   try {
@@ -120,26 +114,21 @@ exports.updatePlayer = async (req, res) => {
   }
 };
 
-
 exports.getCoachDashboard = async (req, res) => {
   try {
     const coachId = req.user._id;
     const now = moment().tz(TZ);
+
     const todayStart = now.clone().startOf("day").toDate();
     const todayEnd = now.clone().endOf("day").toDate();
-    const fromDate30 = now.clone().subtract(30, "days").toDate();
 
-    /* ===== COACH ===== */
-    const coach = await User.findById(coachId)
-      .select("sport")
-      .lean();
+    // 🔥 7-DAY WINDOWS
+    const fromDate7 = now.clone().subtract(6, "days").startOf("day").toDate();
 
+    const coach = await User.findById(coachId).select("sport").lean();
     const coachSport = coach?.sport;
 
-    /* ======================================================
-       KPI
-    ====================================================== */
-
+    /* ================= KPI ================= */
     const [
       upcomingSessions,
       totalPlayers,
@@ -167,10 +156,7 @@ exports.getCoachDashboard = async (req, res) => {
       }),
     ]);
 
-    /* ======================================================
-       TODAY SESSION
-    ====================================================== */
-
+    /* ================= TODAY SESSION ================= */
     const todaySession = await Schedule.findOne({
       coachId,
       sessionDate: { $gte: todayStart, $lte: todayEnd },
@@ -179,39 +165,36 @@ exports.getCoachDashboard = async (req, res) => {
       .populate("facilityId", "name")
       .lean();
 
-    /* ======================================================
-       CATEGORY DISTRIBUTION (PLAYERS, NOT SCHEDULES)
-    ====================================================== */
-
-    const categoryAgg = await User.aggregate([
+    /* ================= CATEGORY (SESSION BASED) ================= */
+    const categoryAgg = await Schedule.aggregate([
       {
         $match: {
-          role: "student",
-          sport: coachSport,
+          coachId,
+          status: "approved",
         },
       },
       {
         $group: {
-          _id: "$category",
+          _id: "$playerCategory",
           count: { $sum: 1 },
         },
       },
     ]);
 
     const categories = {
-      U15: categoryAgg.find(c => c._id === "U-15")?.count || 0,
-      U18: categoryAgg.find(c => c._id === "U-18")?.count || 0,
+      U15: categoryAgg.find((c) => c._id === "U-15")?.count || 0,
+      U18: categoryAgg.find((c) => c._id === "U-18")?.count || 0,
     };
 
-    /* ======================================================
-       ATTENDANCE TREND (30 DAYS)
-    ====================================================== */
-
-    const attendanceTrend = await Attendance.aggregate([
+    /* ================= ATTENDANCE (7 DAYS) ================= */
+    const attendanceTrendRaw = await Attendance.aggregate([
       {
         $match: {
           recordedBy: coachId,
-          recordedAt: { $gte: fromDate30 },
+          recordedAt: {
+            $gte: fromDate7,
+            $lte: now.clone().endOf("day").toDate(),
+          },
         },
       },
       {
@@ -231,81 +214,135 @@ exports.getCoachDashboard = async (req, res) => {
           total: { $sum: 1 },
         },
       },
-      {
-        $project: {
-          date: "$_id",
-          rate: {
-            $round: [
-              {
-                $multiply: [
-                  { $divide: ["$present", "$total"] },
-                  100,
-                ],
-              },
-              0,
-            ],
-          },
-        },
-      },
-      { $sort: { date: 1 } },
+      { $sort: { _id: 1 } },
     ]);
 
-    /* ======================================================
-       ATTENDANCE RATE KPI
-    ====================================================== */
+    const attendanceTrend = attendanceTrendRaw.map((a) => ({
+      date: a._id,
+      present: a.present,
+      total: a.total,
+      rate: a.total === 0 ? 0 : Math.round((a.present / a.total) * 100),
+    }));
 
-    const totalAttendance = attendanceTrend.reduce(
-      (sum, a) => sum + a.rate,
+    const totalPresent = attendanceTrendRaw.reduce(
+      (sum, a) => sum + a.present,
+      0
+    );
+
+    const totalRecords = attendanceTrendRaw.reduce(
+      (sum, a) => sum + a.total,
       0
     );
 
     const attendanceRate =
-      attendanceTrend.length === 0
+      totalRecords === 0
         ? 0
-        : Math.round(totalAttendance / attendanceTrend.length);
+        : Math.round((totalPresent / totalRecords) * 100);
 
-/* ======================================================
-   RECENT ANNOUNCEMENTS (CORRECT TARGETING)
-====================================================== */
+    /* ================= WEEKLY SESSIONS ================= */
+    const weeklyAgg = await Schedule.aggregate([
+      {
+        $match: {
+          coachId,
+          status: "approved",
+          sessionDate: {
+            $gte: fromDate7,
+            $lte: now.clone().endOf("day").toDate(),
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: "$sessionDate",
+              timezone: TZ,
+            },
+          },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
 
-const nowDate = new Date();
+    const weeklySessions = [];
+    for (let i = 0; i < 7; i++) {
+      const date = now.clone().subtract(i, "days").format("YYYY-MM-DD");
+      const found = weeklyAgg.find((w) => w._id === date);
 
-const recentAnnouncements = await Announcement.find({
-  isActive: true,
-  $and: [
-    {
-      $or: [
-        { expiryDate: null },
-        { expiryDate: { $gte: nowDate } },
+      weeklySessions.push({
+        date,
+        count: found ? found.count : 0,
+      });
+    }
+
+    weeklySessions.reverse();
+
+    /* ================= PERFORMANCE ================= */
+    const topPlayers = await PlayerPerformance.find({
+      sport: coachSport,
+    })
+      .sort({ rating: -1 })
+      .limit(5)
+      .populate("playerId", "firstName lastName")
+      .lean();
+
+    const avgRatingAgg = await PlayerPerformance.aggregate([
+      { $match: { sport: coachSport } },
+      {
+        $group: {
+          _id: null,
+          avgRating: { $avg: "$rating" },
+        },
+      },
+    ]);
+
+    const avgRating = avgRatingAgg[0]?.avgRating
+      ? Number(avgRatingAgg[0].avgRating.toFixed(1))
+      : 0;
+
+    /* ================= ANNOUNCEMENTS ================= */
+    const nowDate = new Date();
+
+    const recentAnnouncements = await Announcement.find({
+      isActive: true,
+      $and: [
+        {
+          $or: [
+            { expiryDate: null },
+            { expiryDate: { $gte: nowDate } },
+          ],
+        },
+        {
+          $or: [
+            { targetUsers: coachId },
+            { targetRoles: "coach" },
+            { targetSports: coachSport },
+          ],
+        },
       ],
-    },
-    {
-      $or: [
-        { targetUsers: coachId },
-        { targetRoles: "coach" },
-        { targetSports: coachSport },
-      ],
-    },
-  ],
-})
-  .sort({ createdAt: -1 })
-  .limit(5)
-  .lean();
-    /* ======================================================
-       RESPONSE
-    ====================================================== */
+    })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean();
 
+    /* ================= RESPONSE ================= */
     res.json({
       kpi: {
         upcomingSessions,
         totalPlayers,
-        attendanceRate,
+        attendanceRate, // ✅ now 7-day average
         pendingBookings,
         injuryCount,
       },
       categories,
       todaySession,
       attendanceTrend,
+      weeklySessions,
+      performance: {
+        topPlayers,
+        avgRating,
+      },
       recentAnnouncements,
     });
   } catch (err) {
@@ -314,6 +351,7 @@ const recentAnnouncements = await Announcement.find({
   }
 };
 
+/* ================= SEARCH ================= */
 exports.searchUsers = async (req, res) => {
   try {
     const { q = "" } = req.query;
@@ -323,7 +361,7 @@ exports.searchUsers = async (req, res) => {
     }
 
     const users = await User.find({
-      role: { $in: ["student", "coach"] }, // coach cannot search exco
+      role: { $in: ["student", "coach"] },
       $or: [
         { firstName: { $regex: q, $options: "i" } },
         { lastName: { $regex: q, $options: "i" } },

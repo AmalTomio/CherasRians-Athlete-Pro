@@ -57,25 +57,6 @@ body {
   height: 100%;
 }
 
-/* IMPORTANT: constrain ApexCharts */
-.chart-inner {
-  width: 100%;
-  max-width: 100%;
-  overflow: hidden; /* 🔥 prevents legend overflow */
-}
 
-/* ApexCharts legend fixes */
-.apexcharts-legend {
-  max-width: 100% !important;
-  display: flex !important;
-  flex-wrap: wrap !important;
-  justify-content: center !important;
-  padding: 0 8px;
-}
-
-.apexcharts-legend-series {
-  margin: 4px 10px !important;
-  white-space: nowrap;
-}
 
 
