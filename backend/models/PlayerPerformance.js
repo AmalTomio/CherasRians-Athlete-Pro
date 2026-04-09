@@ -35,6 +35,14 @@ const performanceSchema = new mongoose.Schema({
     default: 0,
   },
 
+  history: [
+  {
+    date: { type: Date, default: Date.now },
+    rating: Number,
+    score: Number,
+  },
+],
+
   updatedAt: {
     type: Date,
     default: Date.now,

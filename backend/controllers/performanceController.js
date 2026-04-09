@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 const PlayerPerformance = require("../models/PlayerPerformance");
 const Match = require("../models/Match");
 
-/* ================= SAVE / UPDATE PERFORMANCE ================= */
 exports.updatePerformance = async (req, res) => {
   try {
     const { playerId, sport, category, drills } = req.body;
@@ -11,28 +10,34 @@ exports.updatePerformance = async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
-    // 🔥 calculate rating (0–10 scale)
     const values = Object.values(drills);
-    const avg =
-      values.length > 0
-        ? values.reduce((a, b) => a + b, 0) / values.length
-        : 0;
+const avg =
+  values.length > 0
+    ? values.reduce((a, b) => a + b, 0) / values.length
+    : 0;
 
-    const score = Math.round(avg * 10);
+const score = Math.round(avg * 10);
 
-    const updated = await PlayerPerformance.findOneAndUpdate(
-      { playerId },
-      {
-        playerId,
-        sport,
-        category,
-        drills,
+const updated = await PlayerPerformance.findOneAndUpdate(
+  { playerId },
+  {
+    playerId,
+    sport,
+    category,
+    drills,
+    rating: avg,
+    score,
+    updatedAt: new Date(),
+    $push: {
+      history: {
         rating: avg,
         score,
-        updatedAt: new Date(),
+        date: new Date(),
       },
-      { upsert: true, new: true }
-    );
+    },
+  },
+  { upsert: true, new: true }
+);
 
     res.json({
       message: "Performance updated",
@@ -44,7 +49,6 @@ exports.updatePerformance = async (req, res) => {
   }
 };
 
-/* ================= PLAYER PERFORMANCE ================= */
 exports.getPlayerPerformance = async (req, res) => {
   try {
     const { playerId } = req.params;
@@ -52,15 +56,16 @@ exports.getPlayerPerformance = async (req, res) => {
     const perf = await PlayerPerformance.findOne({ playerId });
 
     if (!perf) {
-      return res.json({
-        data: {
-          metrics: {
-            averageRating: 0,
-            score: 0,
-            drills: {},
-          },
-        },
-      });
+      res.json({
+  data: {
+    metrics: {
+      averageRating: perf.rating || 0,
+      score: perf.score || 0,
+      drills: perf.drills || {},
+      history: perf.history || [],
+    },
+  },
+});
     }
 
     res.json({
@@ -78,7 +83,6 @@ exports.getPlayerPerformance = async (req, res) => {
   }
 };
 
-/* ================= TEAM PERFORMANCE ================= */
 exports.getTeamPerformance = async (req, res) => {
   try {
     const coachId = new mongoose.Types.ObjectId(req.user._id);

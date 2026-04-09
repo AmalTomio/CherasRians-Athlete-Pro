@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Form, Spinner, Alert, Button } from "react-bootstrap";
-import { FiActivity } from "react-icons/fi";
 import { successAlert, errorAlert } from "../../utils/swal";
 
 import KPICard from "../../components/performance/KPICard";
@@ -23,7 +22,6 @@ export default function CoachPerformance() {
 
   const [drillData, setDrillData] = useState({});
 
-  /* ================= FETCH PLAYERS ================= */
   useEffect(() => {
     fetchPlayers();
   }, [category]);
@@ -51,7 +49,13 @@ export default function CoachPerformance() {
     }
   };
 
-  /* ================= INIT DRILLS ================= */
+  const history = data?.metrics?.history || [];
+
+const historyData = history.map((h) => ({
+  name: new Date(h.date).toLocaleDateString(),
+  value: h.rating,
+}));
+
   useEffect(() => {
     const drills = SPORT_DRILLS[sport] || [];
     const initial = {};
@@ -59,7 +63,6 @@ export default function CoachPerformance() {
     setDrillData(initial);
   }, [sport, selectedPlayer]);
 
-  /* ================= LOAD PLAYER ================= */
   useEffect(() => {
     if (selectedPlayer) loadPlayer();
   }, [selectedPlayer, category]);
@@ -76,7 +79,6 @@ export default function CoachPerformance() {
     }
   };
 
-  /* ================= SOCKET ================= */
   useEffect(() => {
     const socket = getSocket();
     if (!socket) return;
@@ -85,7 +87,6 @@ export default function CoachPerformance() {
     return () => socket.off("dashboard_update", loadPlayer);
   }, [selectedPlayer]);
 
-  /* ================= SUBMIT ================= */
   const handleSubmit = async () => {
     try {
       console.log("Submitting drills:", drillData);
@@ -105,7 +106,6 @@ export default function CoachPerformance() {
     }
   };
 
-  /* ================= CALCULATE PREVIEW ================= */
   const avgRating =
     Object.values(drillData).length > 0
       ? (
@@ -114,7 +114,6 @@ export default function CoachPerformance() {
         ).toFixed(1)
       : 0;
 
-  /* ================= PREPARE CHART DATA ================= */
   const drillMetrics = data?.metrics?.drills || {};
 
   const chartData = Object.entries(drillMetrics).map(([name, value]) => ({
@@ -209,6 +208,11 @@ export default function CoachPerformance() {
             type="bar"
             data={chartData}
           />
+          <ChartCard
+  title="Performance Progress (Rating Over Time)"
+  type="line"
+  data={historyData}
+/>
         </>
       )}
     </div>
