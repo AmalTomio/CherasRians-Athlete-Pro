@@ -14,19 +14,15 @@ export default function CoachMatches() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Filters
   const [filterSport, setFilterSport] = useState("football");
   const [filterCategory, setFilterCategory] = useState("");
   
-  // Modals
   const [showCreate, setShowCreate] = useState(false);
   const [showResult, setShowResult] = useState(false);
   const [showStats, setShowStats] = useState(false);
   
-  // Selected
   const [selectedMatch, setSelectedMatch] = useState(null);
   
-  // Create Form State
   const [creating, setCreating] = useState(false);
   const [formData, setFormData] = useState({
     opponent: "",
@@ -42,7 +38,6 @@ export default function CoachMatches() {
       const res = await api.get("/matches/coach");
       let data = res.data.matches || [];
       
-      // Local filter applied since backend might return all coach matches
       if (filterSport) {
         data = data.filter(m => m.sport === filterSport);
       }
@@ -59,7 +54,6 @@ export default function CoachMatches() {
 
   useEffect(() => {
     fetchMatches();
-    // eslint-disable-next-line
   }, [filterSport, filterCategory]);
 
   useEffect(() => {

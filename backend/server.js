@@ -16,6 +16,7 @@ const medicalLeaveRoutes = require("./routes/medicalLeaveRoutes");
 const attendanceRoutes = require("./routes/attendanceRoutes");
 const studentRoutes = require("./routes/studentRoutes");
 const scheduleRoutes = require("./routes/scheduleRoutes");
+const disciplinaryRoutes = require("./routes/disciplinaryRoutes");
 
 const { startWeeklyResetJobs } = require("./jobs/scheduler");
 
@@ -96,6 +97,7 @@ app.use("/api/equipment-borrow", require("./routes/equipmentBorrowRoutes"));
 app.use("/api/matches", require("./routes/matchRoutes"));
 app.use("/api/performance", require("./routes/performanceRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
+app.use("/api/disciplinary", disciplinaryRoutes);
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 

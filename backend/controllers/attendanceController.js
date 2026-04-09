@@ -1,16 +1,18 @@
+const mongoose = require("mongoose");
+
 const Booking = require("../models/Booking");
 const Attendance = require("../models/Attendance");
 const User = require("../models/User");
+const DisciplinaryCase = require("../models/DisciplinaryRecord");
 
-// Only these session types allow attendance
 const ATTENDANCE_SESSION_TYPES = ["training", "tryout"];
 
-/**
- * GET /api/attendance/sessions/coach
- */
+/* ================= GET COACH SESSIONS ================= */
 exports.getCoachSessions = async (req, res) => {
   try {
-    const coachId = req.user.userId || req.user._id;
+    const coachId = new mongoose.Types.ObjectId(
+      req.user.userId || req.user._id
+    );
 
     const sessions = await Booking.find({
       coachId,
@@ -27,19 +29,20 @@ exports.getCoachSessions = async (req, res) => {
   }
 };
 
-/**
- * GET /api/attendance/session/:bookingId/players
- */
+/* ================= GET SESSION PLAYERS ================= */
 exports.getSessionPlayers = async (req, res) => {
   try {
-    const coachId = req.user.userId || req.user._id;
+    const coachId = new mongoose.Types.ObjectId(
+      req.user.userId || req.user._id
+    );
+
     const { bookingId } = req.params;
 
     const booking = await Booking.findOne({
       _id: bookingId,
       coachId,
       status: "approved",
-      sessionType: { $in: ATTENDANCE_SESSION_TYPES }, // ✅ FIX
+      sessionType: { $in: ATTENDANCE_SESSION_TYPES },
     });
 
     if (!booking) {
@@ -55,7 +58,7 @@ exports.getSessionPlayers = async (req, res) => {
     const players = await User.find({
       role: "student",
       sport: coach.sport,
-      category: booking.playerCategory, // ✅ IMPORTANT
+      category: booking.playerCategory,
     }).select("firstName lastName classGroup category");
 
     res.json({ players });
@@ -65,10 +68,13 @@ exports.getSessionPlayers = async (req, res) => {
   }
 };
 
-
+/* ================= MARK ATTENDANCE ================= */
 exports.markAttendance = async (req, res) => {
   try {
-    const coachId = req.user.userId || req.user._id;
+    const coachId = new mongoose.Types.ObjectId(
+      req.user.userId || req.user._id
+    );
+
     const { bookingId, records } = req.body;
 
     if (!Array.isArray(records) || records.length === 0) {
@@ -79,13 +85,16 @@ exports.markAttendance = async (req, res) => {
       _id: bookingId,
       coachId,
       status: "approved",
-      sessionType: { $in: ATTENDANCE_SESSION_TYPES }, // ✅ FIX
+      sessionType: { $in: ATTENDANCE_SESSION_TYPES },
     });
 
     if (!booking) {
       return res.status(403).json({ message: "Unauthorized booking" });
     }
 
+    const coach = await User.findById(coachId).select("sport");
+
+    /* ================= SAVE ATTENDANCE ================= */
     const ops = records.map((r) => ({
       updateOne: {
         filter: {
@@ -108,20 +117,37 @@ exports.markAttendance = async (req, res) => {
 
     await Attendance.bulkWrite(ops);
 
-    const Disciplinary = require("../models/DisciplinaryRecord");
+    /* ================= AUTO DISCIPLINARY ================= */
+    for (const r of records) {
+      if (["Absent", "Late", "Injured"].includes(r.status)) {
+        const attendance = await Attendance.findOne({
+          bookingId,
+          playerId: r.playerId,
+        });
 
-// AUTO DISCIPLINE
-for (const r of records) {
-  if (r.status === "Absent" || r.status === "Late") {
-    await Disciplinary.create({
-      playerId: r.playerId,
-      coachId,
-      bookingId,
-      violationType: r.status,
-      points: r.status === "Absent" ? 2 : 1,
-    });
-  }
-}
+        // 🔥 Prevent duplicate AUTO case
+        const exists = await DisciplinaryCase.findOne({
+          playerId: r.playerId,
+          attendanceId: attendance?._id,
+          type: "AUTO",
+        });
+
+        if (!exists) {
+          await DisciplinaryCase.create({
+            playerId: r.playerId,
+            coachId,
+            sport: coach?.sport,
+            category: booking.playerCategory,
+            type: "AUTO",
+            reason: r.status,
+            description: `Auto-generated due to ${r.status}`,
+            severity: r.status === "Absent" ? "high" : "medium",
+            attendanceId: attendance?._id,
+          });
+        }
+      }
+    }
+
     res.json({ message: "Attendance saved successfully" });
   } catch (err) {
     console.error("Mark Attendance Error:", err);
@@ -129,12 +155,13 @@ for (const r of records) {
   }
 };
 
-/**
- * GET /api/attendance/session/:bookingId
- */
+/* ================= GET SESSION ATTENDANCE ================= */
 exports.getSessionAttendance = async (req, res) => {
   try {
-    const coachId = req.user.userId || req.user._id;
+    const coachId = new mongoose.Types.ObjectId(
+      req.user.userId || req.user._id
+    );
+
     const { bookingId } = req.params;
 
     const booking = await Booking.findOne({

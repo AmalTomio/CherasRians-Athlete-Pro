@@ -1,16 +1,8 @@
-// src/components/performance/ChartCard.jsx
 import React from "react";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
 
-/**
- * Recharts Wrapper for Performance Charts
- * * @param {Array} data - e.g. [{ name: "Jan", value: 10 }]
- * @param {String} type - "bar" or "line"
- * @param {String} xAxisKey - Key in your data object for X Axis
- * @param {String} yAxisKey - Key in your data object for the Bar/Line 
- */
 export default function ChartCard({ 
   title, 
   data = [], 
@@ -21,15 +13,15 @@ export default function ChartCard({
   color = "#3b82f6" 
 }) {
   return (
-    <div className="card shadow-sm border-0 rounded-4" style={{ background: "#ffffff" }}>
+    <div className="card shadow-sm border-0 rounded-4" style={{ background: "#ffffff", overflow: "hidden" }}>
       <div className="card-body">
         <h5 className="card-title fw-semibold text-dark mb-4">{title}</h5>
-        <div className="chart-wrapper" style={{ height: height, width: "100%" }}>
-<div style={{ width: "100%", height: 350, minHeight: 300 }}>
-
-          <ResponsiveContainer width="100%" height="100%">
+        
+        <div className="chart-wrapper" style={{ height: height, width: "100%", position: "relative", minWidth: 0 }}>
+          
+          <ResponsiveContainer width="99%" height="100%">
             {type === "bar" ? (
-              <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={data} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.4} />
                 <XAxis dataKey={xAxisKey} tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} />
@@ -37,7 +29,7 @@ export default function ChartCard({
                 <Bar dataKey={yAxisKey} fill={color} radius={[4, 4, 0, 0]} maxBarSize={40} />
               </BarChart>
             ) : (
-              <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <LineChart data={data} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.4} />
                 <XAxis dataKey={xAxisKey} tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} />
@@ -46,7 +38,6 @@ export default function ChartCard({
               </LineChart>
             )}
           </ResponsiveContainer>
-          </div>
         </div>
       </div>
     </div>
