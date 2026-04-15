@@ -205,7 +205,7 @@ export default function Disciplinary() {
   ];
 
   return (
-    <div className="container-fluid py-4" style={{ maxWidth: '1400px' }}>
+    <div className="px-4 py-4">
       
       {/* ================= HERO BANNER ================= */}
       <div className="card border-0 rounded-4 mb-4 overflow-hidden shadow-sm position-relative" style={{ background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)" }}>
@@ -213,7 +213,7 @@ export default function Disciplinary() {
         <div className="card-body p-4 position-relative z-1 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
           <div className="text-white">
             <h3 className="fw-bolder mb-1 d-flex align-items-center gap-2">
-              <FiShield className="text-warning" /> Disciplinary Board
+            Disciplinary Board
             </h3>
             <p className="mb-0 opacity-75 small">Monitor and manage player conduct and attendance infractions.</p>
           </div>
