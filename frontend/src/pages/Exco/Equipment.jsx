@@ -5,6 +5,7 @@ import EquipmentModal from "../../components/EquipmentModal";
 import StatCard from "../../components/StatCard";
 import DamageReportDetailsModal from "../../components/exco/DamageReportDetailsModal";
 import Table from "../../components/Table";
+import HeroBanner from "../../components/HeroBanner";
 import SkeletonTableLoader from "../../components/SkeletonTableLoader";
 import {
   FiBox,
@@ -147,7 +148,7 @@ export default function EquipmentManagement() {
     {
       label: "Total",
       key: "total",
-      accessor: "quantityTotal",
+      accessor: (row) => row.quantityTotal,
       className: "fw-bold text-dark",
     },
     {
@@ -200,7 +201,7 @@ export default function EquipmentManagement() {
     },
   ];
 
-  // ===== DAMAGE HISTORY COLUMNS =====
+// ===== DAMAGE HISTORY COLUMNS =====
   const damageColumns = [
     {
       label: "No",
@@ -212,8 +213,26 @@ export default function EquipmentManagement() {
       label: "Item Details",
       key: "item",
       accessor: (row) => (
-        <div className="fw-bold text-dark">
-          {row.equipmentId?.name || "Unknown Item"}
+        <div className="d-flex align-items-center gap-3 py-1">
+          <div
+            className="rounded-3 d-flex align-items-center justify-content-center text-white shadow-sm"
+            style={{
+              width: "40px",
+              height: "40px",
+              background: "linear-gradient(135deg, #6366f1 0%, #4338ca 100%)", // Matches Inventory style
+            }}
+          >
+            <FiBox size={18} />
+          </div>
+          <div className="d-flex flex-column">
+            <span className="fw-bold text-dark">{row.equipmentId?.name || "Unknown Item"}</span>
+            <span
+              className="text-muted text-uppercase fw-medium"
+              style={{ fontSize: "0.7rem", letterSpacing: "0.5px" }}
+            >
+              {row.equipmentId?.category || "Reported Item"}
+            </span>
+          </div>
         </div>
       ),
     },
@@ -221,8 +240,8 @@ export default function EquipmentManagement() {
       label: "Qty",
       key: "qty",
       accessor: (row) => (
-        <span className="badge bg-light text-dark border fw-bold">
-          {row.quantityDamaged}
+        <span className="badge bg-danger text-white shadow-sm fw-bold px-3 py-2 rounded-pill">
+          {row.quantityDamaged} Damaged
         </span>
       ),
     },
@@ -231,7 +250,7 @@ export default function EquipmentManagement() {
       key: "reporter",
       accessor: (row) => (
         <div className="d-flex align-items-center gap-2 text-muted small fw-medium">
-          <FiUser /> {row.reportedBy?.firstName} {row.reportedBy?.lastName}
+          <FiUser className="text-secondary" /> {row.reportedBy?.firstName} {row.reportedBy?.lastName}
         </div>
       ),
     },
@@ -239,8 +258,8 @@ export default function EquipmentManagement() {
       label: "Date",
       key: "date",
       accessor: (row) => (
-        <div className="d-flex align-items-center gap-2 text-muted small">
-          <FiCalendar /> {new Date(row.createdAt).toLocaleDateString()}
+        <div className="d-flex align-items-center gap-2 text-muted small fw-medium">
+          <FiCalendar className="text-secondary" /> {new Date(row.createdAt).toLocaleDateString("en-GB", { day: 'numeric', month: 'short', year: 'numeric' })}
         </div>
       ),
     },
@@ -252,13 +271,13 @@ export default function EquipmentManagement() {
         const isResolved = row.status === "resolved";
         return (
           <span
-            className={`badge rounded-pill px-3 py-2 border ${
+            className={`badge rounded-pill px-3 py-2 shadow-sm border ${
               isResolved
                 ? "bg-success-subtle text-success border-success-subtle"
                 : "bg-warning-subtle text-warning border-warning-subtle"
             }`}
           >
-            {isResolved ? "Resolved" : "Reported"}
+            {isResolved ? "Resolved" : "Pending Action"}
           </span>
         );
       },
@@ -355,34 +374,14 @@ export default function EquipmentManagement() {
 
   return (
     <div className="px-4 py-4">
-      {/* HEADER */}
-      <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
-        <div>
-          <h2
-            className="fw-bold mb-1 text-dark"
-            style={{ letterSpacing: "-0.5px" }}
-          >
-            Equipment Management
-          </h2>
-          <p className="text-muted mb-0">
-            Manage inventory, track availability, and handle damage reports.
-          </p>
-        </div>
+      <HeroBanner 
+        title="Equipment Management"
+        subtitle="Manage inventory, track availability, and handle damage reports."
+        buttonText="Add Equipment"
+        buttonIcon={FiPlus}
+        onButtonClick={() => setShowAdd(true)}
+      />
 
-        <button
-          className="btn text-white shadow-sm fw-bold d-flex align-items-center gap-2 px-4 py-2"
-          onClick={() => setShowAdd(true)}
-          style={{
-            background: "linear-gradient(135deg, #6366f1 0%, #4338ca 100%)", // Indigo
-            borderRadius: "10px",
-            border: "none",
-          }}
-        >
-          <FiPlus size={18} /> Add Equipment
-        </button>
-      </div>
-
-      {/* STATS CARDS */}
       <div className="row g-4 mb-5">
         <StatCard
           title="Total Items"

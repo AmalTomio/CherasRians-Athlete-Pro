@@ -5,6 +5,7 @@ import api from "../../api/axios";
 import Chart from "../../components/Chart";
 import "./ExcoDashboard.css";
 import moment from "moment";
+import HeroBanner from "../../components/HeroBanner";
 
 export default function ExcoDashboard() {
   const [stats, setStats] = useState([]);
@@ -15,6 +16,10 @@ export default function ExcoDashboard() {
   
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("sports");
+
+
+  const user = JSON.parse(localStorage.getItem("user")) || {};
+  const firstName = user.firstName || "Executive";
 
   const fetchDashboardData = async () => {
     try {
@@ -47,7 +52,6 @@ export default function ExcoDashboard() {
     fetchDashboardData();
   }, []);
 
-  // Calculate some aggregate stats for KPI cards
   const totalAthletes = stats.reduce((sum, s) => sum + s.count, 0);
   const pendingBookings = bookingStats.find((s) => s.status === "pending")?.count || 0;
   const approvedBookings = bookingStats.find((s) => s.status === "approved")?.count || 0;
@@ -62,18 +66,10 @@ export default function ExcoDashboard() {
   return (
     <div className="dashboard-container">
       {/* Hero Banner */}
-      <div className="hero-banner mb-4">
-        <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
-          <div>
-            <h2 className="fw-bold mb-1 text-white" style={{ letterSpacing: "-0.5px" }}>
-              {getGreeting()}, Exco Member! 👋
-            </h2>
-            <p className="text-white-50 mb-0">
-              Here is what's happening today, {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-            </p>
-          </div>
-        </div>
-      </div>
+      <HeroBanner 
+        title={`Welcome back, ${firstName}!`}
+        subtitle="Here is your executive overview and academy performance summary for today."
+      />
 
       <div className="container-fluid px-0">
         {/* KPI Cards */}

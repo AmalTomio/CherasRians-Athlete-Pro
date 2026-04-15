@@ -2,7 +2,9 @@ import { useEffect, useState, useMemo } from "react";
 import api from "../../api/axios";
 import FiltersCard from "../../components/FiltersCard";
 import SkeletonTableLoader from "../../components/SkeletonTableLoader"; 
-import CoachPlayersModal from "../../components/exco/CoachPlayersModal"; // Import the modal
+import CoachPlayersModal from "../../components/exco/CoachPlayersModal"; 
+import HeroBanner from "../../components/HeroBanner";
+
 import { confirmAlert, successAlert, errorAlert } from "../../utils/swal";
 import { 
   FiCalendar, 
@@ -111,12 +113,10 @@ export default function Coaches() {
   return (
     <div className="px-4 py-4">
       {/* HEADER */}
-      <div className="mb-4">
-        <h2 className="fw-bold mb-1 text-dark" style={{ letterSpacing: "-0.5px" }}>
-          Coaches Management
-        </h2>
-        <p className="text-muted mb-0">Overview and manage team coaches.</p>
-      </div>
+      <HeroBanner 
+            title="Coaches Management"
+            subtitle="Overview and manage team coaches."
+          />
 
       {/* FILTERS */}
       <FiltersCard
@@ -140,11 +140,8 @@ export default function Coaches() {
       />
 
       {/* DATA TABLE WRAPPER */}
-      <div 
-        className="card border-0 shadow-sm rounded-4 overflow-hidden" 
-        style={{ minHeight: "400px" }}
-      >
-        <div className="table-responsive">
+      <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div className="table-responsive">
           <table className="table table-hover align-middle mb-0">
             <thead className="bg-light">
               <tr>

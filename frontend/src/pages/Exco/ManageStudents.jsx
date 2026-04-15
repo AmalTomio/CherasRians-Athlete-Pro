@@ -3,11 +3,12 @@ import api from "../../api/axios";
 import { successAlert, errorAlert } from "../../utils/swal";
 import FiltersCard from "../../components/FiltersCard";
 import SkeletonTableLoader from "../../components/SkeletonTableLoader";
+import HeroBanner from "../../components/HeroBanner";
+
 import {
   getClassOptionsForYear,
   ALL_CLASS_GROUPS,
 } from "../../config/classGroups";
-// Modern Icons
 import { 
   FiEdit2, 
   FiTrash2, 
@@ -23,12 +24,10 @@ export default function ManageStudents() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Editing state
   const [editingId, setEditingId] = useState(null);
   const [editYear, setEditYear] = useState("");
   const [editClass, setEditClass] = useState("");
 
-  // Filters
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [year, setYear] = useState("");
@@ -38,17 +37,12 @@ export default function ManageStudents() {
   const [isLoading, setIsLoading] = useState(false);
   const limit = 10;
 
-  /* ===========================
-     Debounce Search
-  =========================== */
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 500);
     return () => clearTimeout(timer);
   }, [search]);
 
-  /* ===========================
-     Fetch Students
-  =========================== */
+
   const fetchStudents = async () => {
     setIsLoading(true);
     try {
@@ -142,10 +136,10 @@ export default function ManageStudents() {
   return (
     <div className="px-4 py-4">
       {/* HEADER */}
-      <div className="mb-4">
-        <h2 className="fw-bold mb-1 text-dark" style={{ letterSpacing: "-0.5px" }}>Manage Students</h2>
-        <p className="text-muted">Oversee academic placement and sport assignments.</p>
-      </div>
+      <HeroBanner 
+            title="Manage Students"
+            subtitle="Oversee academic placement and sport assignments."
+          />
 
       <FiltersCard
         search={search}

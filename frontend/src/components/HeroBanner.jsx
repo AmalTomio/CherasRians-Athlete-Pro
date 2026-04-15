@@ -14,7 +14,6 @@ export default function HeroBanner({
       className="card border-0 rounded-4 mb-4 overflow-hidden shadow-sm position-relative" 
       style={{ background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)" }}
     >
-      {/* Decorative Background Circle */}
       <div 
         className="position-absolute rounded-circle" 
         style={{ width: '300px', height: '300px', background: 'rgba(255,255,255,0.02)', top: '-100px', right: '-50px' }}
@@ -30,7 +29,6 @@ export default function HeroBanner({
           )}
         </div>
 
-        {/* Conditionally render the button ONLY if buttonText and an onClick handler are provided */}
         {buttonText && onButtonClick && (
           <Button 
             variant={buttonVariant} 

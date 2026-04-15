@@ -19,25 +19,21 @@ import {
 } from "react-icons/fi";
 
 export default function Bookings() {
-  // Pending State
   const [pendingBookings, setPendingBookings] = useState([]);
   const [loadingPending, setLoadingPending] = useState(true);
 
-  // History State
   const [historyBookings, setHistoryBookings] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
-  const [historyTab, setHistoryTab] = useState("approved"); // 'approved' | 'rejected'
+  const [historyTab, setHistoryTab] = useState("approved"); 
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const limit = 10;
 
-  // Filters
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // --- 1. Debounce Search ---
   useEffect(() => {
     const timer = setTimeout(() => {
       setPage(1);
@@ -46,9 +42,7 @@ export default function Bookings() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // --- 2. Fetch Data ---
 
-  // A. Fetch Pending (All at once for cards)
   const fetchPending = async () => {
     try {
       setLoadingPending(true);
@@ -61,11 +55,9 @@ export default function Bookings() {
     }
   };
 
-  // B. Fetch History (Paginated)
   const fetchHistory = async () => {
     try {
       setLoadingHistory(true);
-      // Determine status string based on tab
       const statusParam =
         historyTab === "approved" ? "approved" : "rejected,cancelled";
 
@@ -87,23 +79,18 @@ export default function Bookings() {
     }
   };
 
-  // Initial Load
   useEffect(() => {
     fetchPending();
   }, []);
 
-  // History Effects
   useEffect(() => {
     fetchHistory();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, debouncedSearch, historyTab]);
 
-  // Reset page when tab changes
   useEffect(() => {
     setPage(1);
   }, [historyTab]);
 
-  // --- ACTIONS ---
   const handleDecision = async (id, approve) => {
     const result = await Swal.fire({
       title: `${approve ? "Approve" : "Reject"} Booking?`,
@@ -119,7 +106,6 @@ export default function Bookings() {
     try {
       await api.put(`/exco/bookings/${id}/approve`, { approve });
       successAlert(`Booking ${approve ? "approved" : "rejected"}`);
-      // Refresh both lists as items move from Pending -> History
       fetchPending();
       fetchHistory();
     } catch {
@@ -127,8 +113,7 @@ export default function Bookings() {
     }
   };
 
-  // --- CLIENT-SIDE FILTER FOR PENDING ---
-  // (Optional: filter pending cards by search term too)
+ 
   const displayedPending = useMemo(() => {
     if (!debouncedSearch) return pendingBookings;
     const q = debouncedSearch.toLowerCase();
@@ -139,7 +124,6 @@ export default function Bookings() {
     );
   }, [pendingBookings, debouncedSearch]);
 
-  // ===== TABLE COLUMNS =====
   const columns = [
     {
       label: "Facility Info",
@@ -153,8 +137,8 @@ export default function Bookings() {
               height: "40px",
               background:
                 historyTab === "approved"
-                  ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" // Green
-                  : "linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)", // Red
+                  ? "linear-gradient(135deg, #10b981 0%, #059669 100%)" 
+                  : "linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)",
               fontSize: "18px",
             }}
           >
@@ -239,7 +223,6 @@ export default function Bookings() {
 
   return (
     <div className="px-4 py-4">
-      {/* HEADER */}
       <div className="mb-4">
         <h2
           className="fw-bold mb-1 text-dark"
@@ -252,7 +235,6 @@ export default function Bookings() {
         </p>
       </div>
 
-      {/* FILTERS */}
       <FiltersCard
         search={search}
         setSearch={setSearch}
@@ -263,7 +245,6 @@ export default function Bookings() {
         onReset={() => setSearch("")}
       />
 
-      {/* ===== PENDING BOOKINGS (Cards) ===== */}
       <div className="mb-5">
         <h5 className="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
           <div
@@ -354,11 +335,9 @@ export default function Bookings() {
         )}
       </div>
 
-      {/* ===== HISTORY SECTION (Tabs + Table) ===== */}
       <div className="d-flex align-items-center justify-content-between mb-3">
         <h5 className="fw-bold text-dark m-0">Booking History</h5>
 
-        {/* CUSTOM TABS */}
         <div className="bg-light p-1 rounded-pill d-inline-flex border">
           <button
             className={`btn btn-sm rounded-pill px-4 fw-bold transition-all ${
@@ -383,7 +362,6 @@ export default function Bookings() {
         </div>
       </div>
 
-      {/* REUSABLE TABLE COMPONENT */}
       <div
         className="card border-0 shadow-sm rounded-4 overflow-hidden"
         style={{ minHeight: "300px" }}
@@ -397,7 +375,6 @@ export default function Bookings() {
           />
         </div>
 
-        {/* PAGINATION */}
         {!loadingHistory && historyBookings.length > 0 && (
           <div className="card-footer bg-white border-top py-3 px-4 d-flex justify-content-between align-items-center">
             <small className="text-muted">

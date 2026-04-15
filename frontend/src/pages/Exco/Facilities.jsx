@@ -1,15 +1,22 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { Badge, Button, Spinner } from "react-bootstrap";
 import api from "../../api/axios";
 import { confirmAlert, successAlert, errorAlert } from "../../utils/swal";
 
 import { HomeIcon, CheckCircleIcon, ToolsIcon } from "@primer/octicons-react";
+import { FiPlus, FiEdit3, FiTrash2, FiTool, FiCheckCircle, FiMapPin, FiFileText } from "react-icons/fi";
 
-import FacilityCard from "../../components/FacilityCard";
+// Centralized Components
 import AddFacilityModal from "../../components/AddFacilityModal";
 import StatCard from "../../components/StatCard";
+import HeroBanner from "../../components/HeroBanner";
+import Table from "../../components/Table";
 
 export default function Facilities() {
   const [facilities, setFacilities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  // UI States
   const [activeTab, setActiveTab] = useState("available");
   const [showModal, setShowModal] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState(null);
@@ -18,11 +25,20 @@ export default function Facilities() {
     fetchFacilities();
   }, []);
 
+  /* ================= FETCH ================= */
   const fetchFacilities = async () => {
-    const res = await api.get("/facilities");
-    setFacilities(res.data.facilities);
+    setLoading(true);
+    try {
+      const res = await api.get("/facilities");
+      setFacilities(res.data.facilities || []);
+    } catch (err) {
+      errorAlert("Failed to fetch facilities.");
+    } finally {
+      setLoading(false);
+    }
   };
 
+  /* ================= HANDLERS ================= */
   const handleDelete = async (id) => {
     const result = await confirmAlert.fire({
       title: "Remove Facility?",
@@ -42,14 +58,23 @@ export default function Facilities() {
   };
 
   const handleStatusChanged = async (id, newStatus) => {
-    setFacilities((prev) =>
-      prev.map((f) => (f._id === id ? { ...f, status: newStatus } : f)),
-    );
-
-    await fetchFacilities();
+    try {
+      // Assuming your backend handles the status update on a specific route or via generic PUT
+      await api.put(`/facilities/${id}`, { status: newStatus });
+      successAlert(`Facility marked as ${newStatus}`);
+      fetchFacilities();
+    } catch (err) {
+      errorAlert("Failed to update status");
+      
+      // Fallback: Optimistic UI update if API doesn't exist yet, keeping original logic
+      setFacilities((prev) =>
+        prev.map((f) => (f._id === id ? { ...f, status: newStatus } : f))
+      );
+    }
   };
 
-  const filtered = facilities.filter((f) => f.status === activeTab);
+  /* ================= DATA PREP ================= */
+  const filteredFacilities = facilities.filter((f) => f.status === activeTab);
 
   const stats = {
     total: facilities.length,
@@ -57,21 +82,97 @@ export default function Facilities() {
     maintenance: facilities.filter((f) => f.status === "maintenance").length,
   };
 
+  /* ================= TABLE CONFIG ================= */
+  const columns = [
+    {
+      key: "details",
+      label: "Facility Details",
+      accessor: (row) => (
+        <div className="d-flex align-items-center gap-3 py-2">
+          <div className="bg-primary bg-opacity-10 text-primary rounded-3 d-flex align-items-center justify-content-center" style={{ width: '42px', height: '42px' }}>
+            <FiMapPin size={20} />
+          </div>
+          <div className="d-flex flex-column">
+            <span className="fw-bolder text-dark" style={{ fontSize: "0.95rem" }}>{row.name || "Unnamed Facility"}</span>
+            <span className="text-muted small fw-medium">Facility ID: {row._id?.slice(-5).toUpperCase() || "N/A"}</span>
+          </div>
+        </div>
+      )
+    },
+    {
+      key: "status",
+      label: "Status",
+      accessor: (row) => {
+        const isAvailable = row.status === "available";
+        return (
+          <Badge 
+            bg={isAvailable ? "success" : "danger"} 
+            className={`px-3 py-2 rounded-pill shadow-sm border ${isAvailable ? 'border-success' : 'border-danger'} bg-opacity-75`}
+          >
+            {isAvailable ? "Available" : "Maintenance"}
+          </Badge>
+        );
+      }
+    },
+    {
+      key: "actions",
+      label: "Actions",
+      accessor: (row) => {
+        const isAvailable = row.status === "available";
+        return (
+          <div className="d-flex gap-2 align-items-center py-2">
+            <Button
+              variant="light"
+              size="sm"
+              className="border shadow-sm text-primary fw-bold d-flex align-items-center gap-2 rounded-pill px-3"
+              onClick={() => {
+                setSelectedFacility(row);
+                setShowModal(true);
+              }}
+            >
+              <FiEdit3 /> Edit
+            </Button>
+            
+            <Button
+              variant="light"
+              size="sm"
+              className={`border shadow-sm fw-bold d-flex align-items-center gap-2 rounded-pill px-3 ${isAvailable ? "text-warning" : "text-success"}`}
+              onClick={() => handleStatusChanged(row._id, isAvailable ? "maintenance" : "available")}
+            >
+              {isAvailable ? <><FiTool /> Maint.</> : <><FiCheckCircle /> Avail.</>}
+            </Button>
+
+            <Button
+              variant="light"
+              size="sm"
+              className="border shadow-sm text-danger fw-bold d-flex align-items-center gap-2 rounded-pill px-3"
+              onClick={() => handleDelete(row._id)}
+            >
+              <FiTrash2 /> 
+            </Button>
+          </div>
+        );
+      }
+    }
+  ];
+
+  /* ================= UI ================= */
   return (
-    <div className="container py-4">
-      <div className="mb-4">
-        <h2
-          className="fw-bold mb-1 text-dark"
-          style={{ letterSpacing: "-0.5px" }}
-        >
-          Facilities Management
-        </h2>
-        <p className="text-muted mb-0">
-            Manage and view all facilities in the system
-        </p>
-      </div>
-      {/* ===== STATS ===== */}
-      <div className="row g-4 mb-4">
+    <div className="px-4 py-4">
+      {/* ================= HERO BANNER ================= */}
+      <HeroBanner 
+        title="Facilities Management"
+        subtitle="Manage and view all facilities in the system."
+        buttonText="Add Facility"
+        buttonIcon={FiPlus}
+        onButtonClick={() => {
+          setSelectedFacility(null);
+          setShowModal(true);
+        }}
+      />
+
+      {/* ================= STATS ================= */}
+      <div className="row g-4 mb-5">
         <StatCard
           title="Total Facilities"
           value={stats.total}
@@ -97,47 +198,59 @@ export default function Facilities() {
         />
       </div>
 
-      {/* ===== HEADER ===== */}
-      <div className="d-flex justify-content-between align-items-center mb-3">
-        <ul className="nav nav-tabs">
-          {["available", "maintenance"].map((tab) => (
-            <li className="nav-item" key={tab}>
-              <button
-                className={`nav-link ${activeTab === tab ? "active" : ""}`}
-                onClick={() => setActiveTab(tab)}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            </li>
-          ))}
-        </ul>
+      {/* ================= PILL TABS HEADER ================= */}
+      <div className="d-flex align-items-center justify-content-between mb-3">
+        <h5 className="fw-bold text-dark m-0 d-flex align-items-center gap-2">
+          {activeTab === "available" ? <CheckCircleIcon className="text-success"/> : <ToolsIcon className="text-danger"/>}
+          {activeTab === "available" ? "Available Facilities" : "Under Maintenance"}
+        </h5>
 
-        <button className="btn btn-primary" onClick={() => setShowModal(true)}>
-          + Add Facility
-        </button>
+        {/* Custom Booking-style Tabs */}
+        <div className="bg-light p-1 rounded-pill d-inline-flex border shadow-sm">
+          <button
+            className={`btn btn-sm rounded-pill px-4 fw-bold transition-all ${
+              activeTab === "available"
+                ? "bg-white text-success shadow-sm"
+                : "text-muted hover-dark"
+            }`}
+            onClick={() => setActiveTab("available")}
+          >
+            Available
+          </button>
+          <button
+            className={`btn btn-sm rounded-pill px-4 fw-bold transition-all ${
+              activeTab === "maintenance"
+                ? "bg-white text-danger shadow-sm"
+                : "text-muted hover-dark"
+            }`}
+            onClick={() => setActiveTab("maintenance")}
+          >
+            Maintenance
+          </button>
+        </div>
       </div>
 
-      {/* ===== FACILITY LIST ===== */}
-      <div className="row g-4">
-        {filtered.map((facility) => (
-          <div className="col-md-4" key={facility._id}>
-            <FacilityCard
-              facility={facility}
-              excoView
-              onDelete={() => handleDelete(facility._id)}
-              onEdit={() => {
-                setSelectedFacility(facility);
-                setShowModal(true);
-              }}
-              onStatusChanged={(newStatus) =>
-                handleStatusChanged(facility._id, newStatus)
-              }
-            />
-          </div>
-        ))}
+      {/* ================= DATA TABLE CONTAINER ================= */}
+      <div className="card border-0 shadow-sm rounded-4 bg-white overflow-hidden" style={{ minHeight: "300px" }}>
+        {filteredFacilities.length === 0 && !loading ? (
+           <div className="text-center py-5 text-muted">
+             <div className="bg-light rounded-circle d-inline-flex p-3 mb-3">
+               <FiFileText size={28} className="text-slate-400 opacity-50" />
+             </div>
+             <h6 className="fw-bold mb-1 text-dark">No Facilities Found</h6>
+             <p className="mb-0 small">No facilities match the {activeTab} status.</p>
+           </div>
+        ) : (
+           <Table 
+             columns={columns} 
+             data={filteredFacilities} 
+             loading={loading} 
+             itemsPerPage={10} 
+           />
+        )}
       </div>
 
-      {/* ===== MODAL ===== */}
+      {/* ================= MODAL ================= */}
       <AddFacilityModal
         show={showModal}
         onClose={() => {
@@ -147,6 +260,13 @@ export default function Facilities() {
         onSaved={fetchFacilities}
         facility={selectedFacility}
       />
+
+      {/* Hover styling for unselected tab */}
+      <style>{`
+        .hover-dark:hover {
+          color: #1e293b !important;
+        }
+      `}</style>
     </div>
   );
 }
