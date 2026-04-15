@@ -1,5 +1,7 @@
+const mongoose = require("mongoose");
 const Match = require("../models/Match");
 const MatchPlayerStats = require("../models/MatchPlayerStats");
+const User = require("../models/User");
 
 exports.createMatch = async (req, res) => {
   try {
@@ -16,6 +18,8 @@ exports.createMatch = async (req, res) => {
       lineupId,
     });
 
+    req.app.get("io").emit("dashboard_update");
+
     res.json({ match });
   } catch (err) {
     console.error("Create Match Error:", err);
@@ -23,7 +27,72 @@ exports.createMatch = async (req, res) => {
   }
 };
 
-/* ================= SAVE RESULT ================= */
+exports.getCoachMatches = async (req, res) => {
+  try {
+    const coachId = req.user._id;
+
+    const matches = await Match.find({ coachId })
+      .populate("lineupId")
+      .sort({ matchDate: -1 })
+      .lean();
+
+    res.json({ matches });
+  } catch (err) {
+    console.error("Get Coach Matches Error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getPlayerMatches = async (req, res) => {
+  try {
+    const playerId = req.user._id;
+
+    const player = await User.findById(playerId)
+      .select("sport category")
+      .lean();
+
+    if (!player?.sport || !player?.category) {
+      return res.status(400).json({
+        message: "Player sport or category not assigned",
+      });
+    }
+
+    const matches = await Match.find({
+      sport: player.sport,
+      category: player.category,
+      status: "scheduled",
+    })
+      .sort({ matchDate: 1 })
+      .lean();
+
+    res.json({ matches });
+  } catch (err) {
+    console.error("Get Player Matches Error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getAllMatches = async (req, res) => {
+  try {
+    const { sport, category, result } = req.query;
+
+    let filter = {};
+    if (sport) filter.sport = sport;
+    if (category) filter.category = category;
+    if (result) filter.result = result;
+
+    const matches = await Match.find(filter)
+      .populate("coachId", "firstName lastName")
+      .sort({ matchDate: -1 })
+      .lean();
+
+    res.json({ matches });
+  } catch (err) {
+    console.error("Get All Matches Error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 exports.saveResult = async (req, res) => {
   try {
     const { matchId } = req.params;
@@ -46,7 +115,7 @@ exports.saveResult = async (req, res) => {
 
     res.json({ match });
   } catch (err) {
-    console.error(err);
+    console.error("Save Result Error:", err);
     res.status(500).json({ message: "Error saving result" });
   }
 };

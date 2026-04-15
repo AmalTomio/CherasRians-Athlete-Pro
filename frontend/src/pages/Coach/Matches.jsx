@@ -1,269 +1,267 @@
-import React, { useState, useEffect } from "react";
-import { Modal, Button, Form, Spinner, Alert } from "react-bootstrap";
-import moment from "moment-timezone";
+import React, { useEffect, useState } from "react";
+import { Form, Button, Table, Modal, Row, Col } from "react-bootstrap";
 import api from "../../api/axios";
-import { SPORT_META } from "../../config/sportMeta";
-import MatchTable from "../../components/match/MatchTable";
-import ResultModal from "../../components/match/ResultModal";
-import StatsForm from "../../components/match/StatsForm";
-import { getSocket } from "../../socket";
-import Swal from "sweetalert2";
+import { successAlert, errorAlert } from "../../utils/swal";
 
-export default function CoachMatches() {
+export default function Matches() {
+  const user = JSON.parse(localStorage.getItem("user"));
+
   const [matches, setMatches] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [lineups, setLineups] = useState([]);
 
-  const [filterSport, setFilterSport] = useState("football");
-  const [filterCategory, setFilterCategory] = useState("");
-  
-  const [showCreate, setShowCreate] = useState(false);
-  const [showResult, setShowResult] = useState(false);
-  const [showStats, setShowStats] = useState(false);
-  
-  const [selectedMatch, setSelectedMatch] = useState(null);
-  
-  const [creating, setCreating] = useState(false);
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     opponent: "",
-    matchDate: "",
     venue: "",
-    category: "",
-    sport: filterSport
+    matchDate: "",
+    category: "U-15",
+    lineupId: "",
   });
 
-  const fetchMatches = async (silent = false) => {
-    if (!silent) setLoading(true);
-    try {
-      const res = await api.get("/matches/coach");
-      let data = res.data.matches || [];
-      
-      if (filterSport) {
-        data = data.filter(m => m.sport === filterSport);
-      }
-      if (filterCategory) {
-        data = data.filter(m => m.category === filterCategory);
-      }
-      setMatches(data);
-    } catch (err) {
-      if (!silent) setError("Failed to fetch matches. Please try again later.");
-    } finally {
-      if (!silent) setLoading(false);
-    }
-  };
+  const [selected, setSelected] = useState(null);
+  const [score, setScore] = useState({ our: "", opponent: "" });
 
+  /* ================= FETCH ================= */
   useEffect(() => {
     fetchMatches();
-  }, [filterSport, filterCategory]);
-
-  useEffect(() => {
-    const socket = getSocket();
-    if (!socket) return;
-    const handler = () => fetchMatches(true);
-    socket.on("dashboard_update", handler);
-    return () => {
-      socket.off("dashboard_update", handler);
-    };
+    fetchLineups();
   }, []);
 
-  const handleCreateSubmit = async (e) => {
-    e.preventDefault();
-    setCreating(true);
-
+  const fetchMatches = async () => {
     try {
-      // 1. Fetch Lineup
-      const lineupRes = await api.get("/team-lineup", {
-        params: { sport: formData.sport, category: formData.category }
-      });
-
-      const lineup = lineupRes.data.lineups?.[0] || lineupRes.data.lineup;
-
-      if (!lineup) {
-        throw new Error("No lineup found for this sport and category. Please create a lineup first.");
-      }
-
-      // 2. Create Match
-      await api.post("/matches", {
-        opponent: formData.opponent,
-        matchDate: formData.matchDate,
-        venue: formData.venue,
-        sport: formData.sport,
-        category: formData.category,
-        lineupId: lineup._id 
-      });
-
-      Swal.fire("Success", "Match created successfully", "success");
-      setShowCreate(false);
-      setFormData({ ...formData, opponent: "", matchDate: "", venue: "", category: "" });
-      fetchMatches();
-    } catch (err) {
-      Swal.fire("Error", err.response?.data?.message || err.message || "Failed to create match", "error");
-    } finally {
-      setCreating(false);
+      const res = await api.get("/matches/coach");
+      setMatches(res.data.matches || []);
+    } catch {
+      errorAlert("Failed to load matches");
     }
   };
 
-  const handleResultSubmit = async (matchId, resultData) => {
-    await api.post(`/matches/${matchId}/result`, resultData);
-    fetchMatches(true);
+  /* 🔥 FIXED LINEUP FETCH */
+  const fetchLineups = async () => {
+    try {
+      const res = await api.get("/team-lineup/all", {
+        params: { sport: user.sport },
+      });
+
+      setLineups(res.data.lineups || []);
+    } catch (err) {
+      console.error("Lineup fetch error:", err);
+      setLineups([]);
+    }
   };
 
-  const openResultModal = (match) => {
-    setSelectedMatch(match);
-    setShowResult(true);
+  /* 🔥 FILTER LINEUPS BY CATEGORY */
+  const filteredLineups = lineups.filter(
+    (l) => l.category === form.category
+  );
+
+  /* ================= CREATE ================= */
+  const handleCreate = async () => {
+    if (!form.lineupId) {
+      return errorAlert("Please select lineup");
+    }
+
+    try {
+      await api.post("/matches", form);
+
+      successAlert("Match created");
+
+      setForm({
+        opponent: "",
+        venue: "",
+        matchDate: "",
+        category: "U-15",
+        lineupId: "",
+      });
+
+      fetchMatches();
+    } catch {
+      errorAlert("Failed to create match");
+    }
   };
 
-  const openStatsModal = (match) => {
-    setSelectedMatch(match);
-    setShowStats(true);
+  /* ================= SAVE RESULT ================= */
+  const handleSaveResult = async () => {
+    try {
+      await api.post(`/matches/result/${selected._id}`, {
+        ourScore: Number(score.our),
+        opponentScore: Number(score.opponent),
+      });
+
+      successAlert("Result updated");
+
+      setSelected(null);
+      setScore({ our: "", opponent: "" });
+
+      fetchMatches();
+    } catch {
+      errorAlert("Failed to update result");
+    }
   };
+
+  /* ================= UI ================= */
 
   return (
-    <div className="container-fluid py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h2 className="mb-1 text-dark fw-bold">Match Management</h2>
-          <p className="text-muted mb-0">Manage your team's matches, results, and player stats.</p>
-        </div>
-        <Button variant="primary" onClick={() => setShowCreate(true)}>
-          + Create Match
+    <div className="container py-4">
+      <h2 className="mb-4">Match Management</h2>
+
+      {/* CREATE FORM */}
+      <div className="card p-4 mb-4 shadow-sm">
+        <h5>Create Match</h5>
+
+        <Row>
+          <Col>
+            <Form.Control
+              placeholder="Opponent"
+              value={form.opponent}
+              onChange={(e) =>
+                setForm({ ...form, opponent: e.target.value })
+              }
+            />
+          </Col>
+
+          <Col>
+            <Form.Control
+              placeholder="Venue"
+              value={form.venue}
+              onChange={(e) =>
+                setForm({ ...form, venue: e.target.value })
+              }
+            />
+          </Col>
+        </Row>
+
+        <Row className="mt-2">
+          <Col>
+            <Form.Control
+              type="date"
+              value={form.matchDate}
+              onChange={(e) =>
+                setForm({ ...form, matchDate: e.target.value })
+              }
+            />
+          </Col>
+
+          <Col>
+            <Form.Select
+              value={form.category}
+              onChange={(e) =>
+                setForm({
+                  ...form,
+                  category: e.target.value,
+                  lineupId: "", // 🔥 reset lineup when category changes
+                })
+              }
+            >
+              <option value="U-15">U-15</option>
+              <option value="U-18">U-18</option>
+            </Form.Select>
+          </Col>
+        </Row>
+
+        {/* 🔥 FIXED DROPDOWN */}
+        <Form.Select
+          className="mt-2"
+          value={form.lineupId}
+          onChange={(e) =>
+            setForm({ ...form, lineupId: e.target.value })
+          }
+        >
+          <option value="">Select Lineup</option>
+
+          {filteredLineups.length === 0 ? (
+            <option disabled>No lineup available</option>
+          ) : (
+            filteredLineups.map((l) => (
+              <option key={l._id} value={l._id}>
+                {l.category} - {l.sport}
+              </option>
+            ))
+          )}
+        </Form.Select>
+
+        <Button className="mt-3" onClick={handleCreate}>
+          Create Match
         </Button>
       </div>
 
-      {/* Filters */}
-      <div className="card shadow-sm border-0 mb-4 rounded-4 bg-white">
-        <div className="card-body">
-          <div className="row g-3">
-            <div className="col-md-4">
-              <Form.Label className="fw-medium text-muted">Sport</Form.Label>
-              <Form.Select 
-                value={filterSport} 
-                onChange={(e) => {
-                  setFilterSport(e.target.value);
-                  setFilterCategory(""); // Reset category when sport changes
-                  setFormData(prev => ({ ...prev, sport: e.target.value }));
-                }}
-              >
-                {Object.keys(SPORT_META).map(sport => (
-                  <option key={sport} value={sport}>{sport.replace("_", " ").toUpperCase()}</option>
-                ))}
-              </Form.Select>
-            </div>
-            <div className="col-md-4">
-              <Form.Label className="fw-medium text-muted">Category</Form.Label>
-              <Form.Select 
-                value={filterCategory} 
-                onChange={(e) => setFilterCategory(e.target.value)}
-              >
-                <option value="">All Categories</option>
-                {(SPORT_META[filterSport]?.categories || []).map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </Form.Select>
-            </div>
-          </div>
-        </div>
+      {/* MATCH TABLE */}
+      <div className="card p-3 shadow-sm">
+        <h5>Matches</h5>
+
+        <Table striped hover>
+          <thead>
+            <tr>
+              <th>Opponent</th>
+              <th>Date</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th>Score</th>
+              <th>Result</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {matches.map((m) => (
+              <tr key={m._id}>
+                <td>{m.opponent}</td>
+                <td>{new Date(m.matchDate).toLocaleDateString()}</td>
+                <td>{m.category}</td>
+                <td>{m.status}</td>
+                <td>
+                  {m.score
+                    ? `${m.score.our} - ${m.score.opponent}`
+                    : "-"}
+                </td>
+                <td>{m.result || "-"}</td>
+                <td>
+                  {m.status !== "completed" && (
+                    <Button
+                      size="sm"
+                      onClick={() => setSelected(m)}
+                    >
+                      Update Result
+                    </Button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
       </div>
 
-      {/* Matches Content */}
-      {loading ? (
-        <div className="text-center py-5">
-           <Spinner animation="border" variant="primary" />
-        </div>
-      ) : error ? (
-        <Alert variant="danger">{error}</Alert>
-      ) : (
-        <MatchTable 
-          matches={matches} 
-          role="coach" 
-          onAddResult={openResultModal} 
-          onAddStats={openStatsModal} 
-        />
-      )}
+      {/* RESULT MODAL */}
+      <Modal show={!!selected} onHide={() => setSelected(null)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Update Result</Modal.Title>
+        </Modal.Header>
 
-      {/* Create Match Modal */}
-      <Modal show={showCreate} onHide={() => !creating && setShowCreate(false)} centered>
-        <Form onSubmit={handleCreateSubmit}>
-          <Modal.Header closeButton>
-            <Modal.Title>Create New Match</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <Form.Group className="mb-3">
-              <Form.Label>Opponent</Form.Label>
-              <Form.Control 
-                type="text" 
-                required 
-                placeholder="e.g. SMK Cheras"
-                value={formData.opponent}
-                onChange={e => setFormData({...formData, opponent: e.target.value})}
-              />
-            </Form.Group>
-            
-            <Form.Group className="mb-3">
-              <Form.Label>Date & Time</Form.Label>
-              <Form.Control 
-                type="datetime-local" 
-                required 
-                value={formData.matchDate}
-                onChange={e => setFormData({...formData, matchDate: e.target.value})}
-              />
-            </Form.Group>
+        <Modal.Body>
+          <Form.Control
+            className="mb-2"
+            placeholder="Our Score"
+            value={score.our}
+            onChange={(e) =>
+              setScore({ ...score, our: e.target.value })
+            }
+          />
 
-            <Form.Group className="mb-3">
-              <Form.Label>Venue</Form.Label>
-              <Form.Control 
-                type="text" 
-                required 
-                placeholder="e.g. Stadium Badminton KL"
-                value={formData.venue}
-                onChange={e => setFormData({...formData, venue: e.target.value})}
-              />
-            </Form.Group>
+          <Form.Control
+            placeholder="Opponent Score"
+            value={score.opponent}
+            onChange={(e) =>
+              setScore({ ...score, opponent: e.target.value })
+            }
+          />
+        </Modal.Body>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Category</Form.Label>
-              <Form.Select 
-                required
-                value={formData.category}
-                onChange={e => setFormData({...formData, category: e.target.value})}
-              >
-                <option value="">Select Category</option>
-                {(SPORT_META[formData.sport]?.categories || []).map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </Form.Select>
-              <Form.Text className="text-muted">
-                Lineup will be automatically fetched for the selected category.
-              </Form.Text>
-            </Form.Group>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowCreate(false)} disabled={creating}>Cancel</Button>
-            <Button variant="primary" type="submit" disabled={creating}>
-              {creating ? "Creating..." : "Create Match"}
-            </Button>
-          </Modal.Footer>
-        </Form>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setSelected(null)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSaveResult}>Save</Button>
+        </Modal.Footer>
       </Modal>
-
-      {/* Result Modal */}
-      <ResultModal 
-        show={showResult}
-        onHide={() => setShowResult(false)}
-        match={selectedMatch}
-        onSubmit={handleResultSubmit}
-      />
-
-      {/* Stats Form */}
-      <StatsForm 
-        show={showStats}
-        onHide={() => {
-          setShowStats(false);
-          fetchMatches(true);
-        }}
-        matchId={selectedMatch?._id}
-        sport={selectedMatch?.sport || filterSport}
-      />
     </div>
   );
 }

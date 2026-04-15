@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { Form, Spinner, Alert } from "react-bootstrap";
+import React, { useEffect, useState } from "react";
+import { Spinner, Alert, Table, Badge } from "react-bootstrap";
+import moment from "moment";
 import api from "../../api/axios";
-import { SPORT_META } from "../../config/sportMeta";
-import MatchTable from "../../components/match/MatchTable";
 import { getSocket } from "../../socket";
 
 export default function ExcoMatches() {
@@ -10,20 +9,16 @@ export default function ExcoMatches() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Filters
-  const [filterSport, setFilterSport] = useState("all");
-
+  /* ================= FETCH ================= */
   const fetchMatches = async (silent = false) => {
     if (!silent) setLoading(true);
+
     try {
-      const res = await api.get("/matches/exco");
-      let data = res.data.matches || [];
-      if (filterSport !== "all") {
-        data = data.filter(m => m.sport === filterSport);
-      }
-      setMatches(data);
+      const res = await api.get("/matches/all");
+      setMatches(res.data.matches || []);
     } catch (err) {
-      if (!silent) setError("Failed to fetch matches. Please try again later.");
+      console.error("Fetch matches error:", err);
+      if (!silent) setError("Failed to fetch matches.");
     } finally {
       if (!silent) setLoading(false);
     }
@@ -31,59 +26,111 @@ export default function ExcoMatches() {
 
   useEffect(() => {
     fetchMatches();
-    // eslint-disable-next-line
-  }, [filterSport]);
+  }, []);
 
+  /* ================= REALTIME ================= */
   useEffect(() => {
     const socket = getSocket();
     if (!socket) return;
+
     const handler = () => fetchMatches(true);
+
     socket.on("dashboard_update", handler);
+
     return () => {
       socket.off("dashboard_update", handler);
     };
   }, []);
 
+  /* ================= UI ================= */
+
   return (
     <div className="container-fluid py-4">
-      <div className="mb-4">
-        <h2 className="mb-1 text-dark fw-bold">All Matches Overview</h2>
-        <p className="text-muted mb-0">View all matches across different sports categories.</p>
-      </div>
+      <h2 className="fw-bold mb-3">Matches Overview</h2>
 
-      <div className="card shadow-sm border-0 mb-4 rounded-4 bg-white">
-        <div className="card-body">
-          <div className="row g-3">
-            <div className="col-md-4">
-              <Form.Label className="fw-medium text-muted">Filter by Sport</Form.Label>
-              <Form.Select 
-                value={filterSport} 
-                onChange={(e) => setFilterSport(e.target.value)}
-              >
-                <option value="all">All Sports</option>
-                {Object.keys(SPORT_META).map(sport => (
-                  <option key={sport} value={sport}>{sport.replace("_", " ").toUpperCase()}</option>
-                ))}
-              </Form.Select>
+      <div className="card shadow-sm border-0 rounded-4 bg-white">
+        <div className="card-body p-0">
+          {loading ? (
+            <div className="text-center py-5">
+              <Spinner />
             </div>
-          </div>
+          ) : error ? (
+            <div className="p-4">
+              <Alert variant="danger">{error}</Alert>
+            </div>
+          ) : matches.length === 0 ? (
+            <div className="p-5 text-center text-muted">
+              No matches found.
+            </div>
+          ) : (
+            <div className="table-responsive">
+              <Table hover className="align-middle mb-0">
+                <thead className="table-light">
+                  <tr>
+                    <th>Opponent</th>
+                    <th>Sport</th>
+                    <th>Category</th>
+                    <th>Date</th>
+                    <th>Coach</th>
+                    <th>Score</th>
+                    <th>Result</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {matches.map((m) => (
+                    <tr key={m._id}>
+                      <td className="fw-medium">{m.opponent}</td>
+
+                      <td>{m.sport}</td>
+
+                      <td>{m.category}</td>
+
+                      <td>
+                        {moment(m.matchDate).format("DD MMM YYYY")}
+                      </td>
+
+                      <td>
+                        {m.coachId?.firstName}{" "}
+                        {m.coachId?.lastName}
+                      </td>
+
+                      <td>
+                        {m.score
+                          ? `${m.score.our} - ${m.score.opponent}`
+                          : "-"}
+                      </td>
+
+                      <td>
+                        <ResultBadge result={m.result} status={m.status} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          )}
         </div>
       </div>
-
-      {loading ? (
-        <div className="text-center py-5">
-           <Spinner animation="border" variant="primary" />
-        </div>
-      ) : error ? (
-        <Alert variant="danger">{error}</Alert>
-      ) : (
-        <MatchTable 
-          matches={matches} 
-          role="exco"
-          onAddResult={() => {}} // Disabled for exco
-          onAddStats={() => {}} // Disabled for exco
-        />
-      )}
     </div>
   );
+}
+
+/* ================= RESULT BADGE ================= */
+
+function ResultBadge({ result, status }) {
+  if (status !== "completed") {
+    return <Badge bg="secondary">Upcoming</Badge>;
+  }
+
+  switch (result) {
+    case "win":
+      return <Badge bg="success">Win</Badge>;
+    case "loss":
+      return <Badge bg="danger">Loss</Badge>;
+    case "draw":
+      return <Badge bg="warning" text="dark">Draw</Badge>;
+    default:
+      return <Badge bg="secondary">-</Badge>;
+  }
 }

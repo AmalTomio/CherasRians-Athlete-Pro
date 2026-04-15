@@ -40,7 +40,7 @@ import CoachPerformance from "./pages/Coach/Performance";
 
 // Student Pages
 import Medical from "./pages/Student/Medical";
-import Training from "./pages/Student/Training";
+import ScheduleStud from "./pages/Student/Schedule";
 import StudentAnnouncements from "./pages/Student/Announcement";
 import StudentPerformance from "./pages/Student/Performance";
 
@@ -327,11 +327,11 @@ export default function App() {
         />
 
         <Route
-          path="/student/training"
+          path="/student/schedule"
           element={
             <ProtectedRoute allowedRoles={["student"]}>
               <WithSidebar>
-                <Training />
+                <ScheduleStud />
               </WithSidebar>
             </ProtectedRoute>
           }

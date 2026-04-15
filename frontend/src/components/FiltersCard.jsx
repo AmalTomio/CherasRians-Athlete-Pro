@@ -3,7 +3,7 @@ import {
   getClassOptionsForYear,
   ALL_CLASS_GROUPS,
 } from "../config/classGroups";
-import { FiRefreshCw, FiSearch } from "react-icons/fi"; 
+import { FiRefreshCw, FiSearch } from "react-icons/fi";
 
 export default function FiltersCard({
   // SEARCH
@@ -20,6 +20,10 @@ export default function FiltersCard({
   sport,
   setSport,
 
+  // CATEGORY (Added for Exco/Coach)
+  category = "",
+  setCategory = () => {},
+
   // STATUS
   status,
   setStatus,
@@ -34,6 +38,7 @@ export default function FiltersCard({
   showYear = true,
   showClass = true,
   showSport = true,
+  showCategory = false, // New flag
   showStatus = false,
   showDate = false,
 
@@ -46,94 +51,53 @@ export default function FiltersCard({
   const safeYear = year || "";
   const safeClassGroup = classGroup || "";
   const safeSport = sport || "";
+  const safeCategory = category || "";
   const safeStatus = status || "";
 
   const classOptions = getClassOptionsForYear(safeYear) || ALL_CLASS_GROUPS;
 
-  // Theme Constants
-  const THEME = {
-    indigo: "#6366f1",
-    lightBlue: "#e0f2fe", // Very pale blue for backgrounds
-    indigoText: "#4338ca",
-    borderColor: "#e2e8f0"
-  };
-
-  const inputStyle = {
-    borderColor: THEME.borderColor,
-    fontSize: "0.9rem",
-    padding: "10px 12px",
-    borderRadius: "8px",
-    backgroundColor: "#fff",
-    transition: "all 0.2s ease"
-  };
-
-  const labelStyle = {
-    fontSize: "0.75rem",
-    fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: "0.5px",
-    color: THEME.indigoText, // Indigo Text
-    marginBottom: "6px"
-  };
-
   return (
-    <div 
-      className="card border-0 shadow-sm mb-4"
-      style={{ 
-        borderTop: `4px solid ${THEME.indigo}`, // Top accent
-        borderRadius: "12px",
-        overflow: "hidden" 
-      }}
-    >
+    <div className="card border-0 shadow-sm mb-4 filter-card-wrapper">
       <div className="card-body p-4">
         <form onSubmit={(e) => e.preventDefault()}>
           <div className="row g-3 align-items-end">
             
             {/* === SEARCH FIELD === */}
             <div className="col-lg-3 col-md-6">
-              <label className="form-label" style={labelStyle}>
-                Search
-              </label>
+              <label className="filter-label text-primary">Search</label>
               <div className="input-group">
-                <span 
-                  className="input-group-text bg-white border-end-0 text-muted"
-                  style={{ borderRadius: "8px 0 0 8px", borderColor: THEME.borderColor }}
-                >
+                <span className="input-group-text bg-white border-end-0 text-muted filter-input-radius-left">
                   <FiSearch />
                 </span>
                 <input
                   type="text"
-                  className="form-control border-start-0 ps-0"
+                  className="form-control border-start-0 ps-0 filter-input filter-input-radius-right shadow-none"
                   placeholder={searchPlaceholder}
                   value={safeSearch}
                   onChange={(e) => setSearch(e.target.value)}
-                  style={{ ...inputStyle, borderRadius: "0 8px 8px 0" }}
                 />
               </div>
             </div>
 
-            {/* === DATE RANGE (OPTIONAL) === */}
+            {/* === DATE RANGE === */}
             {showDate && (
               <>
                 <div className="col-lg-2 col-md-6">
-                  <label className="form-label" style={labelStyle}>From</label>
+                  <label className="filter-label text-primary">From</label>
                   <input
                     type="date"
-                    className="form-control text-secondary"
+                    className="form-control filter-input text-secondary shadow-none"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    style={inputStyle}
                   />
                 </div>
-
                 <div className="col-lg-2 col-md-6">
-                  <label className="form-label" style={labelStyle}>To</label>
+                  <label className="filter-label text-primary">To</label>
                   <input
                     type="date"
-                    className="form-control text-secondary"
+                    className="form-control filter-input text-secondary shadow-none"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    style={inputStyle}
                   />
                 </div>
               </>
@@ -142,12 +106,11 @@ export default function FiltersCard({
             {/* === YEAR === */}
             {showYear && (
               <div className="col-lg-2 col-md-6">
-                <label className="form-label" style={labelStyle}>Form</label>
+                <label className="filter-label text-primary">Form</label>
                 <select
-                  className="form-select text-secondary"
+                  className="form-select filter-input text-secondary shadow-none"
                   value={safeYear}
                   onChange={(e) => setYear(e.target.value)}
-                  style={inputStyle}
                 >
                   <option value="">All Forms</option>
                   {[1, 2, 3, 4, 5].map((y) => (
@@ -160,16 +123,12 @@ export default function FiltersCard({
             {/* === CLASS === */}
             {showClass && (
               <div className="col-lg-2 col-md-6">
-                <label className="form-label" style={labelStyle}>Class</label>
+                <label className="filter-label text-primary">Class</label>
                 <select
-                  className="form-select text-secondary"
+                  className="form-select filter-input text-secondary shadow-none"
                   value={safeClassGroup}
                   onChange={(e) => setClassGroup(e.target.value)}
                   disabled={!safeYear && classOptions.length > 1}
-                  style={{ 
-                    ...inputStyle, 
-                    backgroundColor: (!safeYear && classOptions.length > 1) ? "#f1f5f9" : "#fff" 
-                  }}
                 >
                   <option value="">All Classes</option>
                   {classOptions.map((cls) => (
@@ -182,12 +141,11 @@ export default function FiltersCard({
             {/* === SPORT === */}
             {showSport && (
               <div className="col-lg-2 col-md-6">
-                <label className="form-label" style={labelStyle}>Sport</label>
+                <label className="filter-label text-primary">Sport</label>
                 <select
-                  className="form-select text-secondary"
+                  className="form-select filter-input text-secondary shadow-none"
                   value={safeSport}
                   onChange={(e) => setSport(e.target.value)}
-                  style={inputStyle}
                 >
                   <option value="">All Sports</option>
                   <option value="football">Football</option>
@@ -199,15 +157,30 @@ export default function FiltersCard({
               </div>
             )}
 
+            {/* === CATEGORY (U-15 / U-18) === */}
+            {showCategory && (
+              <div className="col-lg-2 col-md-6">
+                <label className="filter-label text-primary">Category</label>
+                <select
+                  className="form-select filter-input text-secondary shadow-none"
+                  value={safeCategory}
+                  onChange={(e) => setCategory(e.target.value)}
+                >
+                  <option value="">All Categories</option>
+                  <option value="U-15">U-15 Squad</option>
+                  <option value="U-18">U-18 Squad</option>
+                </select>
+              </div>
+            )}
+
             {/* === STATUS === */}
             {showStatus && (
               <div className="col-lg-2 col-md-6">
-                <label className="form-label" style={labelStyle}>Status</label>
+                <label className="filter-label text-primary">Status</label>
                 <select
-                  className="form-select text-secondary"
+                  className="form-select filter-input text-secondary shadow-none"
                   value={safeStatus}
                   onChange={(e) => setStatus(e.target.value)}
-                  style={inputStyle}
                 >
                   <option value="">All Status</option>
                   <option value="pending">Pending</option>
@@ -222,22 +195,8 @@ export default function FiltersCard({
             <div className="col-lg-2 col-md-12 ms-auto">
               <button
                 type="button"
-                className="btn w-100 fw-bold d-flex align-items-center justify-content-center gap-2"
+                className="btn btn-outline-primary w-100 fw-bold d-flex align-items-center justify-content-center gap-2 filter-btn-reset"
                 onClick={onReset}
-                style={{
-                  color: THEME.indigo,
-                  borderColor: THEME.indigo,
-                  padding: "10px",
-                  borderRadius: "8px",
-                  fontSize: "0.9rem",
-                  transition: "all 0.2s"
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = THEME.lightBlue;
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                }}
               >
                 <FiRefreshCw />
                 Reset
@@ -247,6 +206,46 @@ export default function FiltersCard({
           </div>
         </form>
       </div>
+
+      {/* Scoped CSS classes instead of messy inline styles */}
+      <style>{`
+        .filter-card-wrapper {
+          border-top: 4px solid #0d6efd !important;
+          border-radius: 12px;
+        }
+        .filter-label {
+          font-size: 0.75rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          margin-bottom: 6px;
+          display: block;
+        }
+        .filter-input {
+          font-size: 0.9rem;
+          padding: 10px 12px;
+          border-radius: 8px;
+          border: 1px solid #dee2e6;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .filter-input:focus {
+          border-color: #0d6efd;
+        }
+        .filter-input:disabled {
+          background-color: #f8f9fa;
+        }
+        .filter-input-radius-left {
+          border-radius: 8px 0 0 8px;
+        }
+        .filter-input-radius-right {
+          border-radius: 0 8px 8px 0;
+        }
+        .filter-btn-reset {
+          padding: 10px;
+          border-radius: 8px;
+          font-size: 0.9rem;
+        }
+      `}</style>
     </div>
   );
 }

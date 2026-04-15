@@ -1,4 +1,5 @@
 const Schedule = require("../models/Schedule");
+const Attendance = require("../models/Attendance");
 const User = require("../models/User");
 
 exports.getCoachSchedules = async (req, res) => {
@@ -10,7 +11,6 @@ exports.getCoachSchedules = async (req, res) => {
       status: "approved",
     };
 
-    // Optional category filtering (U-15 / U-18)
     if (category) {
       filter.playerCategory = category;
     }
@@ -25,8 +25,6 @@ exports.getCoachSchedules = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch schedules" });
   }
 };
-
-// backend/controllers/scheduleController.js
 
 exports.getPlayerSchedules = async (req, res) => {
   try {
@@ -51,9 +49,66 @@ exports.getPlayerSchedules = async (req, res) => {
       .sort({ sessionDate: 1, startTime: 1 })
       .lean();
 
-    res.json({ schedules });
+    const attendance = await Attendance.find({
+      playerId,
+    });
+
+    const map = {};
+    attendance.forEach((a) => {
+      if (a.bookingId) {
+        map[a.bookingId.toString()] = a.status;
+      }
+    });
+
+    const enriched = schedules.map((s) => ({
+      ...s,
+      attendanceStatus: map[s.bookingId?.toString()] || null,
+    }));
+
+    res.json({ schedules: enriched });
   } catch (err) {
     console.error("getPlayerSchedules error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getAllSchedules = async (req, res) => {
+  try {
+    const schedules = await Schedule.find({ status: "approved" })
+      .populate("coachId", "firstName lastName")
+      .lean();
+
+    const bookingIds = schedules
+      .map((s) => s.bookingId)
+      .filter(Boolean);
+
+    const attendance = await Attendance.find({
+      bookingId: { $in: bookingIds },
+    });
+
+    const statsMap = {};
+
+    attendance.forEach((a) => {
+      const key = a.bookingId?.toString();
+      if (!key) return;
+
+      if (!statsMap[key]) {
+        statsMap[key] = { present: 0, absent: 0, late: 0 };
+      }
+
+      if (a.status === "Present") statsMap[key].present++;
+      else if (a.status === "Absent") statsMap[key].absent++;
+      else if (a.status === "Late") statsMap[key].late++;
+    });
+
+    const enriched = schedules.map((s) => ({
+      ...s,
+      attendanceStats: statsMap[s.bookingId?.toString()] || null,
+    }));
+
+    res.json({ schedules: enriched });
+  } catch (err) {
+    console.error("Get All Schedules Error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
