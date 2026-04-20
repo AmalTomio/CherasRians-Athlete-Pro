@@ -17,6 +17,7 @@ import {
   ClipboardCheck,
 } from "react-bootstrap-icons";
 
+import HeroBanner from "../../components/HeroBanner";
 import MarkAttendanceModal from "../../components/MarkAttendanceModal";
 
 export default function Schedule() {
@@ -55,16 +56,13 @@ export default function Schedule() {
     }
   };
 
-  /* ================= FILTER ================= */
   const filteredSchedules =
     typeFilter === "all"
       ? schedules
       : schedules.filter((s) => s.sessionType === typeFilter);
 
-  /* ================= ACTION ================= */
 
   const handleAttendance = (schedule) => {
-    // IMPORTANT: attendance uses bookingId
     if (!schedule.bookingId) {
       alert("No booking linked to this schedule");
       return;
@@ -74,19 +72,15 @@ export default function Schedule() {
     setShowAttendance(true);
   };
 
-  /* ================= RENDER ================= */
 
   return (
-    <div className="px-4 py-4 w-100">
-      {/* HEADER */}
-      <div className="mb-4">
-        <h2 className="fw-bold">Schedule Management</h2>
-        <p className="text-muted">
-          Manage training sessions and attendance
-        </p>
-      </div>
+    <div className="px-4 py-4 ">
+      <HeroBanner 
+              title="Schedule Management"
+              subtitle="Manage training sessions and attendance"
+            />
+      
 
-      {/* STATS */}
       <Row className="g-4 mb-4">
         <Col md={3}>
           <StatCard title="Sessions" value={schedules.length} icon={<Calendar />} />
@@ -101,7 +95,6 @@ export default function Schedule() {
         </Col>
       </Row>
 
-      {/* FILTER */}
       <Card className="p-3 mb-4">
         <Form.Select
           style={{ width: 220 }}
@@ -146,7 +139,6 @@ export default function Schedule() {
 
                     <h5 className="fw-bold">{s.title}</h5>
 
-                    {/* INFO */}
                     <div className="mt-3 text-muted small">
                       <div>📅 {new Date(s.sessionDate).toLocaleDateString()}</div>
                       <div>⏰ {s.startTime} – {s.endTime}</div>
@@ -180,7 +172,6 @@ export default function Schedule() {
         </Row>
       )}
 
-      {/* MODAL */}
       <MarkAttendanceModal
         show={showAttendance}
         onHide={() => setShowAttendance(false)}
@@ -191,7 +182,6 @@ export default function Schedule() {
   );
 }
 
-/* ================= COMPONENT ================= */
 
 function StatCard({ title, value, icon }) {
   return (

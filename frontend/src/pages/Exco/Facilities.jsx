@@ -6,7 +6,6 @@ import { confirmAlert, successAlert, errorAlert } from "../../utils/swal";
 import { HomeIcon, CheckCircleIcon, ToolsIcon } from "@primer/octicons-react";
 import { FiPlus, FiEdit3, FiTrash2, FiTool, FiCheckCircle, FiMapPin, FiFileText } from "react-icons/fi";
 
-// Centralized Components
 import AddFacilityModal from "../../components/AddFacilityModal";
 import StatCard from "../../components/StatCard";
 import HeroBanner from "../../components/HeroBanner";
@@ -16,7 +15,6 @@ export default function Facilities() {
   const [facilities, setFacilities] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // UI States
   const [activeTab, setActiveTab] = useState("available");
   const [showModal, setShowModal] = useState(false);
   const [selectedFacility, setSelectedFacility] = useState(null);
@@ -25,7 +23,6 @@ export default function Facilities() {
     fetchFacilities();
   }, []);
 
-  /* ================= FETCH ================= */
   const fetchFacilities = async () => {
     setLoading(true);
     try {
@@ -38,7 +35,6 @@ export default function Facilities() {
     }
   };
 
-  /* ================= HANDLERS ================= */
   const handleDelete = async (id) => {
     const result = await confirmAlert.fire({
       title: "Remove Facility?",
@@ -59,21 +55,18 @@ export default function Facilities() {
 
   const handleStatusChanged = async (id, newStatus) => {
     try {
-      // Assuming your backend handles the status update on a specific route or via generic PUT
       await api.put(`/facilities/${id}`, { status: newStatus });
       successAlert(`Facility marked as ${newStatus}`);
       fetchFacilities();
     } catch (err) {
       errorAlert("Failed to update status");
       
-      // Fallback: Optimistic UI update if API doesn't exist yet, keeping original logic
       setFacilities((prev) =>
         prev.map((f) => (f._id === id ? { ...f, status: newStatus } : f))
       );
     }
   };
 
-  /* ================= DATA PREP ================= */
   const filteredFacilities = facilities.filter((f) => f.status === activeTab);
 
   const stats = {
@@ -82,7 +75,6 @@ export default function Facilities() {
     maintenance: facilities.filter((f) => f.status === "maintenance").length,
   };
 
-  /* ================= TABLE CONFIG ================= */
   const columns = [
     {
       key: "details",
@@ -156,10 +148,8 @@ export default function Facilities() {
     }
   ];
 
-  /* ================= UI ================= */
   return (
     <div className="px-4 py-4">
-      {/* ================= HERO BANNER ================= */}
       <HeroBanner 
         title="Facilities Management"
         subtitle="Manage and view all facilities in the system."
@@ -171,7 +161,6 @@ export default function Facilities() {
         }}
       />
 
-      {/* ================= STATS ================= */}
       <div className="row g-4 mb-5">
         <StatCard
           title="Total Facilities"
@@ -198,14 +187,12 @@ export default function Facilities() {
         />
       </div>
 
-      {/* ================= PILL TABS HEADER ================= */}
       <div className="d-flex align-items-center justify-content-between mb-3">
         <h5 className="fw-bold text-dark m-0 d-flex align-items-center gap-2">
           {activeTab === "available" ? <CheckCircleIcon className="text-success"/> : <ToolsIcon className="text-danger"/>}
           {activeTab === "available" ? "Available Facilities" : "Under Maintenance"}
         </h5>
 
-        {/* Custom Booking-style Tabs */}
         <div className="bg-light p-1 rounded-pill d-inline-flex border shadow-sm">
           <button
             className={`btn btn-sm rounded-pill px-4 fw-bold transition-all ${
@@ -230,7 +217,6 @@ export default function Facilities() {
         </div>
       </div>
 
-      {/* ================= DATA TABLE CONTAINER ================= */}
       <div className="card border-0 shadow-sm rounded-4 bg-white overflow-hidden" style={{ minHeight: "300px" }}>
         {filteredFacilities.length === 0 && !loading ? (
            <div className="text-center py-5 text-muted">
@@ -250,7 +236,6 @@ export default function Facilities() {
         )}
       </div>
 
-      {/* ================= MODAL ================= */}
       <AddFacilityModal
         show={showModal}
         onClose={() => {
@@ -261,7 +246,6 @@ export default function Facilities() {
         facility={selectedFacility}
       />
 
-      {/* Hover styling for unselected tab */}
       <style>{`
         .hover-dark:hover {
           color: #1e293b !important;

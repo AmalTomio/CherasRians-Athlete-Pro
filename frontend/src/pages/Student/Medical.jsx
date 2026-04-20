@@ -20,13 +20,16 @@ const StudentMedicalPage = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [showForm, setShowForm] = useState(false);
   const [userId, setUserId] = useState(null);
-  const [pdfUrl, setPdfUrl] = useState(null);
-  const [showPdf, setShowPdf] = useState(false);
+
+  const [fileUrl, setFileUrl] = useState(null);
+  const [fileType, setFileType] = useState(null);
+  const [showFile, setShowFile] = useState(false);
 
   useEffect(() => {
     loadProfile();
   }, []);
 
+  /* ================= LOAD PROFILE ================= */
   const loadProfile = async () => {
     try {
       const res = await axios.get("/auth/me");
@@ -37,6 +40,7 @@ const StudentMedicalPage = () => {
     }
   };
 
+  /* ================= LOAD LEAVES ================= */
   const loadLeaves = async (id) => {
     try {
       const res = await axios.get(`/leave/student/${id}`);
@@ -48,6 +52,7 @@ const StudentMedicalPage = () => {
     }
   };
 
+  /* ================= SUBMIT ================= */
   const handleSubmit = async (formData) => {
     try {
       const fd = new FormData();
@@ -67,6 +72,7 @@ const StudentMedicalPage = () => {
     }
   };
 
+  /* ================= DELETE ================= */
   const deleteLeave = async (leaveId) => {
     try {
       await axios.delete(`/leave/student/${leaveId}`);
@@ -77,30 +83,38 @@ const StudentMedicalPage = () => {
     }
   };
 
+  /* ================= FILTER ================= */
   const filtered = () => {
     if (activeTab === "all") return leaves;
+
     return leaves.filter(
-      (l) => l.status === activeTab.charAt(0).toUpperCase() + activeTab.slice(1)
+      (l) =>
+        l.status ===
+        activeTab.charAt(0).toUpperCase() + activeTab.slice(1)
     );
   };
 
-  const handleViewMC = async (leaveId) => {
+  /* ================= VIEW FILE (FIXED) ================= */
+  const viewMC = async (leaveId) => {
     try {
       const res = await axios.get(`/medical/file/${leaveId}`, {
-        responseType: "blob", // IMPORTANT
+        responseType: "blob",
       });
 
-      const pdfBlob = new Blob([res.data], { type: "application/pdf" });
-      const fileUrl = URL.createObjectURL(pdfBlob);
+      const contentType = res.headers["content-type"];
 
-      setPdfUrl(fileUrl);
-      setShowPdf(true);
+      const blob = new Blob([res.data], { type: contentType });
+      const url = URL.createObjectURL(blob);
+
+      setFileUrl(url);
+      setFileType(contentType);
+      setShowFile(true);
     } catch (err) {
-      console.error(err);
-      errorAlert("Failed to load PDF file");
+      errorAlert("Failed to open file");
     }
   };
 
+  /* ================= STATS ================= */
   const stats = {
     total: leaves.length,
     pending: leaves.filter((l) => l.status === "Pending").length,
@@ -108,58 +122,54 @@ const StudentMedicalPage = () => {
     rejected: leaves.filter((l) => l.status === "Rejected").length,
   };
 
+  /* ================= UI ================= */
   return (
-    <div
-      className="student-medical-wrapper"
-      style={{ padding: "24px 24px", boxSizing: "border-box" }}
-    >
+    <div className="px-4 py-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h1 className="mb-2">Medical Leave Applications</h1>
+          <h1>Medical Leave Applications</h1>
           <p className="text-muted">
-            Submit and track your medical leave applications with MC
-            documentation.
+            Submit and track your medical leave applications.
           </p>
         </div>
 
-        <Button
-          className="px-3 py-2 fw-semibold"
-          style={{ fontSize: "14px" }}
-          onClick={() => setShowForm(true)}
-        >
+        <Button onClick={() => setShowForm(true)}>
           + Submit Medical Leave
         </Button>
       </div>
 
-      {/* Stats Row */}
-      <Row className="mb-4 gy-3">
+      {/* STATS */}
+      <Row className="mb-4">
         <Col md={3}>
-          <Card className="p-3 shadow-sm border">
-            <p className="text-muted mb-1">Total Applications</p>
+          <Card className="p-3">
+            <p>Total</p>
             <h4>{stats.total}</h4>
           </Card>
         </Col>
+
         <Col md={3}>
-          <Card className="p-3 shadow-sm border">
-            <p className="text-muted mb-1">Pending</p>
+          <Card className="p-3">
+            <p>Pending</p>
             <h4 className="text-warning">{stats.pending}</h4>
           </Card>
         </Col>
+
         <Col md={3}>
-          <Card className="p-3 shadow-sm border">
-            <p className="text-muted mb-1">Approved</p>
+          <Card className="p-3">
+            <p>Approved</p>
             <h4 className="text-success">{stats.approved}</h4>
           </Card>
         </Col>
+
         <Col md={3}>
-          <Card className="p-3 shadow-sm border">
-            <p className="text-muted mb-1">Rejected</p>
+          <Card className="p-3">
+            <p>Rejected</p>
             <h4 className="text-danger">{stats.rejected}</h4>
           </Card>
         </Col>
       </Row>
 
-      {/* Tabs */}
+      {/* TABS */}
       <Tab.Container activeKey={activeTab} onSelect={setActiveTab}>
         <Nav variant="pills" className="mb-3">
           <Nav.Item>
@@ -178,11 +188,11 @@ const StudentMedicalPage = () => {
 
         {loading ? (
           <div className="text-center py-5">
-            <div className="spinner-border text-primary" />
+            <div className="spinner-border" />
           </div>
         ) : filtered().length === 0 ? (
-          <Card className="shadow-sm text-center py-5">
-            <p className="text-muted mb-0">No applications found.</p>
+          <Card className="text-center py-5">
+            <p>No applications found.</p>
           </Card>
         ) : (
           filtered().map((leave) => (
@@ -191,7 +201,7 @@ const StudentMedicalPage = () => {
               leave={leave}
               role="student"
               onDelete={deleteLeave}
-              onViewMC={handleViewMC}
+              onViewMC={viewMC}
             />
           ))
         )}
@@ -204,25 +214,37 @@ const StudentMedicalPage = () => {
       />
 
       <Modal
-        show={showPdf}
+        show={showFile}
         onHide={() => {
-          setShowPdf(false);
-          URL.revokeObjectURL(pdfUrl);
+          setShowFile(false);
+          if (fileUrl) URL.revokeObjectURL(fileUrl);
         }}
         size="xl"
-        centered
       >
         <Modal.Header closeButton>
-          <Modal.Title>Medical Certificate</Modal.Title>
+          <Modal.Title>Medical Proof</Modal.Title>
         </Modal.Header>
 
         <Modal.Body style={{ height: "80vh" }}>
-          {pdfUrl && (
-            <iframe
-              src={pdfUrl}
-              title="MC Document"
-              style={{ width: "100%", height: "100%", border: "none" }}
-            />
+          {fileUrl && (
+            <>
+              {fileType?.includes("pdf") ? (
+                <iframe
+                  src={fileUrl}
+                  style={{ width: "100%", height: "100%", border: "none" }}
+                />
+              ) : (
+                <img
+                  src={fileUrl}
+                  alt="Medical Proof"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                  }}
+                />
+              )}
+            </>
           )}
         </Modal.Body>
       </Modal>

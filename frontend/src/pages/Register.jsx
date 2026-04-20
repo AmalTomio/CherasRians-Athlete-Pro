@@ -11,27 +11,22 @@ export default function Register() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
 
-  // Student fields
   const [nric, setNric] = useState("");
   const [year, setYear] = useState("");
   const [classGroup, setClassGroup] = useState("");
 
-  // Staff fields
   const [staffId, setStaffId] = useState("");
 
-  // Coach fields
   const [sport, setSport] = useState("");
 
   const navigate = useNavigate();
 
-  // =========================
-  // REGISTER HANDLER
-  // =========================
+ const toUpper = (val) => val.toUpperCase();
+
   const handleRegister = async () => {
     if (!firstName || !lastName) return errorAlert("Name is required.");
     if (!email) return errorAlert("Email is required.");
 
-    // Student validation
     if (role === "student") {
       if (!/^[0-9]{12}$/.test(nric)) {
         return errorAlert("NRIC must be exactly 12 digits.");
@@ -40,12 +35,10 @@ export default function Register() {
       if (!classGroup) return errorAlert("Class Group is required.");
     }
 
-    // Staff validation
     if (role !== "student" && !staffId) {
       return errorAlert("Staff ID is required.");
     }
 
-    // Coach validation
     if (role === "coach" && !sport) {
       return errorAlert("Coach must select a sport.");
     }
@@ -53,8 +46,8 @@ export default function Register() {
     try {
       await api.post("/auth/register", {
         role,
-        firstName,
-        lastName,
+        firstName: firstName.trim().toUpperCase(),
+lastName: lastName.trim().toUpperCase(),
         email,
         nric: role === "student" ? nric : null,
         year: role === "student" ? year : null,
@@ -105,7 +98,6 @@ export default function Register() {
 
   return (
     <Auth title="Create Account" subtitle="Fill the form to continue.">
-      {/* ROLE */}
       <div className="mb-3">
         <label className="form-label">Register As</label>
         <select
@@ -126,7 +118,6 @@ export default function Register() {
         </select>
       </div>
 
-      {/* FIRST + LAST NAME */}
       <div className="row">
         <div className="col-md-6 mb-3">
           <label className="form-label">First Name</label>
@@ -134,7 +125,7 @@ export default function Register() {
             type="text"
             className="form-control"
             value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
+  onChange={(e) => setFirstName(toUpper(e.target.value))}
           />
         </div>
 
@@ -144,12 +135,11 @@ export default function Register() {
             type="text"
             className="form-control"
             value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
+  onChange={(e) => setLastName(toUpper(e.target.value))}
           />
         </div>
       </div>
 
-      {/* EMAIL */}
       <div className="mb-3">
         <label className="form-label">Email</label>
         <input
@@ -160,10 +150,8 @@ export default function Register() {
         />
       </div>
 
-      {/* STUDENT FIELDS */}
       {role === "student" && (
         <>
-          {/* NRIC */}
           <div className="mb-3">
             <label className="form-label">NRIC (12 digits)</label>
             <input
@@ -182,7 +170,7 @@ export default function Register() {
               value={year}
               onChange={(e) => {
                 setYear(e.target.value);
-                setClassGroup(""); // reset class when year changes
+                setClassGroup(""); 
               }}
             >
               <option value="">Select Form</option>
@@ -194,14 +182,13 @@ export default function Register() {
             </select>
           </div>
 
-          {/* CLASS */}
           <div className="mb-3">
             <label className="form-label">Class</label>
             <select
               className="form-select"
               value={classGroup}
               onChange={(e) => setClassGroup(e.target.value)}
-              disabled={!year} // disable until year selected
+              disabled={!year} 
             >
               <option value="">Select Class</option>
 
@@ -215,7 +202,6 @@ export default function Register() {
         </>
       )}
 
-      {/* STAFF ID FIELDS */}
       {(role === "coach" || role === "exco") && (
         <div className="mb-3">
           <label className="form-label">Staff ID</label>
@@ -228,7 +214,6 @@ export default function Register() {
         </div>
       )}
 
-      {/* COACH SPORT */}
       {role === "coach" && (
         <div className="mb-3">
           <label className="form-label">Sport</label>
@@ -246,7 +231,6 @@ export default function Register() {
         </div>
       )}
 
-      {/* SUBMIT */}
       <button className="btn btn-primary w-100 mt-2" onClick={handleRegister}>
         Register
       </button>

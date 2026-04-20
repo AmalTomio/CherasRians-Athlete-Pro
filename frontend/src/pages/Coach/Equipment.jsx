@@ -3,6 +3,8 @@ import api from "../../api/axios";
 import StatCard from "../../components/StatCard";
 import DamageReportModal from "../../components/coach/DamageReportModal";
 import Table from "../../components/Table";
+import HeroBanner from "../../components/HeroBanner";
+
 import SkeletonTableLoader from "../../components/SkeletonTableLoader";
 import { 
   FiTool, 
@@ -58,7 +60,7 @@ export default function CoachEquipment() {
           headers: { "Content-Type": "multipart/form-data" },
         });
 
-        fetchReturnsRequired(); // refresh list
+        fetchReturnsRequired(); 
       };
 
       input.click();
@@ -81,7 +83,6 @@ export default function CoachEquipment() {
     [equipment]
   );
 
-  // Table Columns Configuration - Equipment Inventory
   const columns = useMemo(
     () => [
       {
@@ -157,7 +158,6 @@ export default function CoachEquipment() {
     []
   );
 
-  // Table Columns Configuration - Return Required
   const returnColumns = useMemo(
     () => [
       {
@@ -229,18 +229,8 @@ export default function CoachEquipment() {
 
   return (
     <div className="px-4 py-4">
-      {/* HEADER */}
-      <div className="mb-4">
-        <h2
-          className="fw-bold mb-1 text-dark"
-          style={{ letterSpacing: "-0.5px" }}
-        >
-          Equipment
-        </h2>
-        <p className="text-muted">View inventory and report damaged items.</p>
-      </div>
-
-      {/* STATS CARDS */}
+      <HeroBanner title="Equipment" subtitle="View inventory and report damaged items." />
+      
       <div className="row g-4 mb-5">
         <StatCard
           title="Total Items"
@@ -265,7 +255,6 @@ export default function CoachEquipment() {
         />
       </div>
 
-      {/* DATA TABLE: EQUIPMENT */}
       <div
         className="card border-0 shadow-sm rounded-4 overflow-hidden"
         style={{ minHeight: "300px" }}
@@ -280,7 +269,6 @@ export default function CoachEquipment() {
         </div>
       </div>
 
-      {/* DATA TABLE: RETURNS REQUIRED */}
       <div className="mt-5">
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h4 className="fw-bold text-dark m-0 d-flex align-items-center gap-2">
@@ -312,7 +300,6 @@ export default function CoachEquipment() {
         </div>
       </div>
 
-      {/* DAMAGE MODAL */}
       <DamageReportModal
         show={showDamageModal}
         equipmentList={equipment.filter((eq) => eq.quantityAvailable > 0)}

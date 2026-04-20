@@ -22,15 +22,22 @@ const MedicalLeaveForm = ({ show, onHide, onSubmit }) => {
   };
 
   const handleFile = (file) => {
-    if (!file) return;
+  if (!file) return;
 
-    if (file.type !== "application/pdf") {
-      alert("Only PDF files are allowed.");
-      return;
-    }
+  const allowedTypes = [
+    "application/pdf",
+    "image/jpeg",
+    "image/png",
+    "image/jpg",
+  ];
 
-    setFormData({ ...formData, mcFile: file });
-  };
+  if (!allowedTypes.includes(file.type)) {
+    alert("Only PDF, JPG, PNG files are allowed.");
+    return;
+  }
+
+  setFormData({ ...formData, mcFile: file });
+};
 
   const onDrop = (e) => {
     e.preventDefault();
@@ -128,7 +135,6 @@ const MedicalLeaveForm = ({ show, onHide, onSubmit }) => {
             <Card className="p-3 shadow-sm border rounded">
               <h6 className="fw-semibold mb-3">Medical Certificate (PDF)</h6>
 
-              {/* Drag and Drop Zone */}
               <div
                 onClick={() => document.getElementById("fileInput").click()}
                 onDragEnter={onDrag}
@@ -145,7 +151,7 @@ const MedicalLeaveForm = ({ show, onHide, onSubmit }) => {
               >
                 <input
                   type="file"
-                  accept="application/pdf"
+                  accept=".pdf,image/*"
                   className="d-none"
                   id="fileInput"
                   onChange={(e) => handleFile(e.target.files[0])}

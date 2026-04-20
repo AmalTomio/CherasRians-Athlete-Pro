@@ -4,6 +4,8 @@ import { SPORT_META } from "../../config/sportMeta";
 import { successAlert, errorAlert } from "../../utils/swal";
 import useDebouncedUserSearch from "../../hooks/useDebouncedUserSearch";
 import useAnnouncements from "../../hooks/useAnnouncements";
+import HeroBanner from "../../components/HeroBanner";
+
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   FiSend, 
@@ -116,14 +118,9 @@ export default function Announcements() {
 
   return (
     <div className="px-4 py-4">
-      {/* HEADER */}
-      <div className="mb-4">
-        <h2 className="fw-bold mb-1 text-dark" style={{ letterSpacing: "-0.5px" }}>Broadcast Center</h2>
-        <p className="text-muted">Send updates and notices to your team.</p>
-      </div>
-
+      <HeroBanner title="Broadcast Center" subtitle="Send updates and notices to your team." />
+      
       <div className="row g-4">
-        {/* ================= LEFT: CREATE FORM ================= */}
         <div className="col-lg-7">
           <div className="card border-0 shadow-sm rounded-4 h-100">
             <div className="card-header bg-white border-bottom p-4">
@@ -134,7 +131,6 @@ export default function Announcements() {
             
             <div className="card-body p-4">
               <form onSubmit={handleSubmit}>
-                {/* Headline */}
                 <div className="mb-4">
                   <label className="form-label fw-bold text-secondary small text-uppercase">Headline</label>
                   <input
@@ -147,7 +143,6 @@ export default function Announcements() {
                   />
                 </div>
 
-                {/* Content */}
                 <div className="mb-4">
                   <label className="form-label fw-bold text-secondary small text-uppercase">Message</label>
                   <textarea
@@ -161,11 +156,9 @@ export default function Announcements() {
                   />
                 </div>
 
-                {/* --- BROADCAST MODES --- */}
                 <div className="mb-4">
                   <label className="form-label fw-bold text-secondary small text-uppercase mb-2">Audience</label>
                   <div className="row g-2">
-                    {/* Mode: Specific Users */}
                     <div className="col-4">
                       <motion.div 
                         whileHover={{ scale: 1.02 }}
@@ -178,7 +171,6 @@ export default function Announcements() {
                       </motion.div>
                     </div>
 
-                    {/* Mode: All Players */}
                     <div className="col-4">
                       <motion.div 
                         whileHover={{ scale: 1.02 }}
@@ -191,7 +183,6 @@ export default function Announcements() {
                       </motion.div>
                     </div>
 
-                    {/* Mode: By Category */}
                     <div className="col-4">
                       <motion.div 
                         whileHover={{ scale: 1.02 }}
@@ -206,9 +197,7 @@ export default function Announcements() {
                   </div>
                 </div>
 
-                {/* --- CONDITIONAL INPUTS --- */}
                 <AnimatePresence mode="wait">
-                  {/* 1. SEARCH USERS */}
                   {broadcastMode === "none" && (
                     <motion.div
                       key="search-users"
@@ -279,7 +268,6 @@ export default function Announcements() {
                     </motion.div>
                   )}
 
-                  {/* 2. CATEGORY SELECT */}
                   {broadcastMode === "category" && (
                     <motion.div
                       key="category-select"
@@ -306,7 +294,6 @@ export default function Announcements() {
                   )}
                 </AnimatePresence>
 
-                {/* Expiry */}
                 <div className="mb-4">
                   <label className="form-label fw-bold text-secondary small text-uppercase d-flex justify-content-between">
                     <span>Expiry (Optional)</span>
@@ -346,7 +333,6 @@ export default function Announcements() {
           </div>
         </div>
 
-        {/* ================= RIGHT: HISTORY ================= */}
         <div className="col-lg-5">
           <div className="card border-0 shadow-sm rounded-4 h-100">
             <div className="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
@@ -395,7 +381,6 @@ export default function Announcements() {
                             </small>
                           </div>
 
-                          {/* Audience Badge */}
                           {a.targetCategories?.length > 0 ? (
                             <span className="badge bg-success-subtle text-success border border-success-subtle" style={{ fontSize: "0.65rem" }}>
                               {a.targetCategories.join(", ")}

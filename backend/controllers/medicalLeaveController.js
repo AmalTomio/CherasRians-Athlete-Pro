@@ -2,66 +2,73 @@ const MedicalLeave = require("../models/MedicalLeave");
 const User = require("../models/User");
 const Notification = require("../models/Notification");
 
+/* ================= SUBMIT ================= */
 exports.submitLeave = async (req, res) => {
   try {
-    const { userId, startDate, endDate, reason } = req.body;
+    const userId = req.user._id;
+    const { startDate, endDate, reason } = req.body;
 
     if (!req.file) {
-      return res
-        .status(400)
-        .json({ message: "Medical certificate file is required" });
+      return res.status(400).json({ message: "MC file required" });
     }
 
-    if (!startDate || !endDate) {
-      return res
-        .status(400)
-        .json({ message: "Start date and end date are required" });
+    const allowedTypes = [
+      "application/pdf",
+      "image/jpeg",
+      "image/png",
+      "image/jpg",
+    ];
+
+    if (!allowedTypes.includes(req.file.mimetype)) {
+      return res.status(400).json({
+        message: "Only PDF, JPG, PNG allowed",
+      });
     }
 
-    // Get student details
     const student = await User.findById(userId);
-    if (!student) {
-      return res.status(404).json({ message: "Student not found" });
-    }
+    if (!student) return res.status(404).json({ message: "Student not found" });
 
-    // Calculate duration
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const duration = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
 
-    // Convert file buffer to Base64
-    const fileBuffer = req.file.buffer;
-    const fileBase64 = fileBuffer.toString("base64");
+    const duration =
+      Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
 
     const leave = await MedicalLeave.create({
       userId,
       studentName: `${student.firstName} ${student.lastName}`,
-      studentId: student.staffId || `S${Date.now().toString().slice(-5)}`,
-      team: student.sport ? `${student.sport} Team` : "General Team",
-      sport: student.sport || "General",
+
+      studentId:
+    student.staffId ||
+    student.nric ||
+    `S${Date.now().toString().slice(-5)}`,
+
+  sport: student.sport,
+  category: student.category,
+
       startDate: start,
       endDate: end,
       duration,
       reason,
-      fileData: fileBase64,
-      fileName: req.file.originalname,
+
+      fileData: req.file.buffer,
       fileType: req.file.mimetype,
+      fileName: req.file.originalname,
       fileSize: req.file.size,
+
       status: "Pending",
     });
 
-    // Find coach for this student's sport
     const coach = await User.findOne({
       role: "coach",
       sport: student.sport,
     });
 
     if (coach) {
-      // Create notification for coach
       await Notification.create({
         toUser: coach._id,
-        title: "New Medical Leave Application",
-        message: `${student.firstName} ${student.lastName} submitted a medical leave application`,
+        title: "New Medical Leave",
+        message: `${student.firstName} ${student.lastName} submitted leave`,
         type: "medical_leave",
         referenceId: leave._id,
       });
@@ -69,16 +76,8 @@ exports.submitLeave = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "Medical leave submitted successfully",
-      leave: {
-        _id: leave._id,
-        startDate: leave.startDate,
-        endDate: leave.endDate,
-        duration: leave.duration,
-        reason: leave.reason,
-        status: leave.status,
-        submittedAt: leave.submittedAt,
-      },
+      message: "Medical leave submitted",
+      leave,
     });
   } catch (err) {
     console.error("Submit Leave Error:", err);
@@ -86,138 +85,117 @@ exports.submitLeave = async (req, res) => {
   }
 };
 
+/* ================= STUDENT LIST ================= */
 exports.getStudentLeaves = async (req, res) => {
   try {
     const leaves = await MedicalLeave.find({
       userId: req.params.userId,
     })
-      .select("-fileData") // Don't send file data in list view
-      .sort({ submittedAt: -1 })
-      .populate("coachId", "firstName lastName");
+      .select("-fileData")
+      .sort({ createdAt: -1 })
+      .lean();
 
-    // Get statistics
-    const total = leaves.length;
-    const pending = leaves.filter((l) => l.status === "Pending").length;
-    const approved = leaves.filter((l) => l.status === "Approved").length;
-    const rejected = leaves.filter((l) => l.status === "Rejected").length;
-
-    res.json({
-      leaves,
-      stats: { total, pending, approved, rejected },
-    });
+    res.json({ leaves });
   } catch (err) {
-    console.error("Get Student Leaves Error:", err);
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-// Get file by ID
+/* ================= STUDENT STATS ================= */
+exports.getStudentStats = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const leaves = await MedicalLeave.find({ userId });
+
+    const stats = {
+      total: leaves.length,
+      pending: leaves.filter((l) => l.status === "Pending").length,
+      approved: leaves.filter((l) => l.status === "Approved").length,
+      rejected: leaves.filter((l) => l.status === "Rejected").length,
+    };
+
+    res.json({ stats });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+/* ================= FILE VIEW ================= */
 exports.getFile = async (req, res) => {
   try {
-    const leave = await MedicalLeave.findById(req.params.leaveId).select(
-      "fileData fileName fileType"
-    );
+    const leave = await MedicalLeave.findById(req.params.leaveId);
 
-    if (!leave) {
-      return res.status(404).json({ message: "Medical leave not found" });
+    if (!leave || !leave.fileData) {
+      return res.status(404).json({ message: "File not found" });
     }
 
-    // Convert base64 to buffer
-    const fileBuffer = Buffer.from(leave.fileData, "base64");
+    res.set("Content-Type", leave.fileType);
+    res.set(
+      "Content-Disposition",
+      `inline; filename="${leave.fileName}"`
+    );
 
-    // Set appropriate headers
-    res.set({
-      "Content-Type": leave.fileType,
-      "Content-Disposition": `inline; filename="${leave.fileName}"`,
-      "Content-Length": fileBuffer.length,
-    });
-
-    res.send(fileBuffer);
+    res.send(leave.fileData);
   } catch (err) {
     console.error("Get File Error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-// Get leave details with file info (for coach view)
+/* ================= DETAILS ================= */
 exports.getLeaveDetails = async (req, res) => {
   try {
     const leave = await MedicalLeave.findById(req.params.leaveId)
-      .populate("userId", "firstName lastName staffId sport year classGroup")
+      .populate("userId", "firstName lastName year classGroup")
       .populate("coachId", "firstName lastName");
 
     if (!leave) {
-      return res.status(404).json({ message: "Medical leave not found" });
+      return res.status(404).json({ message: "Not found" });
     }
 
-    res.json({
-      _id: leave._id,
-      studentName: leave.studentName,
-      studentId: leave.studentId,
-      team: leave.team,
-      sport: leave.sport,
-      startDate: leave.startDate,
-      endDate: leave.endDate,
-      duration: leave.duration,
-      reason: leave.reason,
-      fileName: leave.fileName,
-      fileType: leave.fileType,
-      fileSize: leave.fileSize,
-      status: leave.status,
-      coachRemarks: leave.coachRemarks,
-      coachName: leave.coachName,
-      verifiedAt: leave.verifiedAt,
-      submittedAt: leave.submittedAt,
-      student: leave.userId,
-      coach: leave.coachId,
-    });
+    res.json(leave);
   } catch (err) {
-    console.error("Get Leave Details Error:", err);
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
+/* ================= COACH PENDING ================= */
 exports.getCoachPendingLeaves = async (req, res) => {
   try {
-    const coachId = req.user._id;
-    const coach = await User.findById(coachId);
+    const coach = await User.findById(req.user._id);
 
-    // Get leaves for students in coach's sport
     const leaves = await MedicalLeave.find({
       sport: coach.sport,
       status: "Pending",
     })
-      .select("-fileData") // Don't send file data in list
-      .populate("userId", "firstName lastName staffId sport year classGroup")
-      .sort({ submittedAt: -1 });
+      .select("-fileData")
+      .populate("userId", "firstName lastName year classGroup")
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.json({ leaves });
   } catch (err) {
-    console.error("Get Coach Pending Leaves Error:", err);
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
+/* ================= REVIEW ================= */
 exports.reviewLeave = async (req, res) => {
   try {
     const { status, coachRemarks } = req.body;
-    const coach = await User.findById(req.user.userId);
-
-    if (!coach || coach.role !== "coach") {
-      return res.status(403).json({ message: "Access denied" });
-    }
+    const coach = await User.findById(req.user._id);
 
     const leave = await MedicalLeave.findById(req.params.leaveId);
 
-    if (!leave) {
-      return res.status(404).json({ message: "Medical leave not found" });
-    }
+    if (!leave) return res.status(404).json({ message: "Not found" });
 
-    // 🔒 CRITICAL SPORT CHECK
     if (leave.sport !== coach.sport) {
-      return res.status(403).json({
-        message: "You are not allowed to review this application",
-      });
+      return res.status(403).json({ message: "Not allowed" });
     }
 
     leave.status = status;
@@ -227,41 +205,63 @@ exports.reviewLeave = async (req, res) => {
     leave.verifiedAt = new Date();
 
     await leave.save();
+
     await Notification.create({
       toUser: leave.userId,
       title: `Medical Leave ${status}`,
-      message: `Your medical leave has been ${status.toLowerCase()}`,
+      message: `Your leave is ${status}`,
       type: "medical_leave_update",
-      referenceId: leave._id,
     });
-    res.json({
-      success: true,
-      message: `Medical leave ${status.toLowerCase()} successfully`,
-      leave,
-    });
+
+    res.json({ success: true, leave });
   } catch (err) {
-    console.error("Review Leave Error:", err);
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
+/* ================= COACH ALL ================= */
 exports.getCoachLeaves = async (req, res) => {
   try {
-    const coach = await User.findById(req.user.userId);
-
-    if (!coach || coach.role !== "coach") {
-      return res.status(403).json({ message: "Access denied" });
-    }
+    const coach = await User.findById(req.user._id);
 
     const leaves = await MedicalLeave.find({
-      sport: coach.sport, // 🔒 HARD FILTER BY SPORT
+      sport: coach.sport,
     })
       .select("-fileData")
-      .sort({ submittedAt: -1 });
+      .populate("userId", "firstName lastName year classGroup")
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.json({ leaves });
   } catch (err) {
-    console.error("Get Coach Leaves Error:", err);
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+/* ================= DELETE ================= */
+exports.deleteStudentLeave = async (req, res) => {
+  try {
+    const leave = await MedicalLeave.findById(req.params.leaveId);
+
+    if (!leave) return res.status(404).json({ message: "Not found" });
+
+    if (leave.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    if (leave.status !== "Pending") {
+      return res.status(400).json({
+        message: "Only pending leave can be deleted",
+      });
+    }
+
+    await leave.deleteOne();
+
+    res.json({ message: "Deleted successfully" });
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 };

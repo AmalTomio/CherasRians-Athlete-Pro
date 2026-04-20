@@ -81,7 +81,6 @@ export default function Sidebar({ onToggle }) {
         ["Coaches", FiUser, "/exco/manageCoaches"],
         ["Matches", FiActivity, "/exco/matches"],
         ["Disciplinary", FiClipboard, "/exco/disciplinary"],
-        ["Reports", FiFileText, "/exco/reports"],
         ["Facilities", FaRegBuilding, "/exco/facilities"],
         ["Booking", FiCalendar, "/exco/booking"],
         ["Inventory", FiTool, "/exco/equipment"],

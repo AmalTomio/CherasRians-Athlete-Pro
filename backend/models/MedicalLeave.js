@@ -19,9 +19,8 @@ const medicalLeaveSchema = new mongoose.Schema(
     
     reason: { type: String, default: "" },
     
-    // File stored as Base64 in database
     fileData: { 
-      type: String, // Base64 encoded file
+      type: Buffer, 
       required: true
     },
     fileName: { type: String, required: true },

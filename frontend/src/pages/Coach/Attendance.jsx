@@ -4,6 +4,7 @@ import { Card, Button, Table, Spinner, Row, Col, Form } from "react-bootstrap";
 import { errorAlert } from "../../utils/swal";
 import MarkAttendanceModal from "../../components/MarkAttendanceModal";
 import FiltersCard from "../../components/FiltersCard";
+import HeroBanner from "../../components/HeroBanner";
 
 export default function Attendance() {
   const [sessions, setSessions] = useState([]);
@@ -84,12 +85,8 @@ export default function Attendance() {
 };  
 
   return (
-    <div className="px-4 py-4 w-100">
-      <h1 className="mb-2">Attendance</h1>
-      <p className="text-muted mb-4">
-        Mark attendance for approved training & tryout sessions
-      </p>
-      {/* Filters Card */}
+    <div className="px-4 py-4">
+      <HeroBanner title="Attendance" subtitle="Mark attendance for approved training & tryout sessions" />
       <FiltersCard
         search={search}
         setSearch={setSearch}

@@ -1,26 +1,44 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import api from "../../api/axios";
-import { Row, Col, Card, Nav, Tab, Modal } from "react-bootstrap";
-import LeaveCard from "../../components/student/LeaveCard";
+import { Card, Modal, Button, Badge } from "react-bootstrap";
+import moment from "moment";
 import { successAlert, errorAlert, confirmAlert } from "../../utils/swal";
+import {
+  FiCheckCircle,
+  FiXCircle,
+  FiClock,
+  FiFileText,
+  FiCalendar,
+  FiUser
+} from "react-icons/fi";
+
+import HeroBanner from "../../components/HeroBanner";
+import StatCard from "../../components/StatCard";
+import FiltersCard from "../../components/FiltersCard";
+import Table from "../../components/Table";
 
 const MedicalLeaveReview = () => {
   const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("all");
+
+  const [activeTab, setActiveTab] = useState("All");
+  const [search, setSearch] = useState("");
   const [reviewLoading, setReviewLoading] = useState(false);
+
   const [showPdf, setShowPdf] = useState(false);
   const [pdfUrl, setPdfUrl] = useState(null);
   const [pdfLoading, setPdfLoading] = useState(false);
 
+
+  const [fileType, setFileType] = useState("");
+const [zoom, setZoom] = useState(1);
   useEffect(() => {
     fetchLeaves();
   }, []);
 
-  /* ================= FETCH ALL COACH LEAVES ================= */
   const fetchLeaves = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
       const res = await api.get("/medical/coach");
       setLeaves(res.data.leaves || []);
     } catch (err) {
@@ -31,20 +49,52 @@ const MedicalLeaveReview = () => {
     }
   };
 
+  /* ================= NAME HELPER ================= */
+  const getDisplayName = (row) => {
+    if (row.userId?.firstName) {
+      return `${row.userId.firstName} ${row.userId.lastName || ""}`;
+    }
+    if (row.studentName) {
+      return row.studentName;
+    }
+    return "Unknown";
+  };
+
+  /* ================= FILTER ================= */
+  const filteredLeaves = useMemo(() => {
+    return leaves.filter((l) => {
+      if (activeTab !== "All" && l.status !== activeTab) return false;
+
+      if (search) {
+        const name = getDisplayName(l).toLowerCase();
+        if (!name.includes(search.toLowerCase())) return false;
+      }
+
+      return true;
+    });
+  }, [leaves, activeTab, search]);
+
+  /* ================= STATS ================= */
+  const stats = {
+    total: leaves.length,
+    pending: leaves.filter((l) => l.status === "Pending").length,
+    approved: leaves.filter((l) => l.status === "Approved").length,
+    rejected: leaves.filter((l) => l.status === "Rejected").length,
+  };
+
   /* ================= REVIEW ================= */
   const handleReview = async (leaveId, status) => {
     const result = await confirmAlert.fire({
       title: `${status} Medical Leave?`,
       text:
         status === "Approved"
-          ? "Are you sure you want to approve this medical leave?"
-          : "Are you sure you want to reject this medical leave?",
+          ? "Approve this leave?"
+          : "Reject this leave?",
       icon: "question",
-      confirmButtonText: status === "Approved" ? "Approve" : "Reject",
-      confirmButtonColor: status === "Approved" ? "#28a745" : "#dc3545",
+      confirmButtonText: status,
+      confirmButtonColor: status === "Approved" ? "#10b981" : "#ef4444",
       input: "textarea",
       inputLabel: "Remarks (optional)",
-      inputPlaceholder: "Enter remarks for the student...",
     });
 
     if (!result.isConfirmed) return;
@@ -58,218 +108,319 @@ const MedicalLeaveReview = () => {
       });
 
       successAlert(`Medical leave ${status.toLowerCase()} successfully`);
-      fetchLeaves(); // refresh list
+      fetchLeaves();
     } catch (err) {
-      console.error("Review error:", err);
-      errorAlert(
-        err.response?.data?.message || "Failed to update medical leave"
-      );
+      console.error(err);
+      errorAlert("Failed to update medical leave");
     } finally {
       setReviewLoading(false);
     }
   };
 
-  /* ================= FILTER ================= */
-  const filteredLeaves = () => {
-    if (activeTab === "all") return leaves;
-    return leaves.filter((l) => l.status.toLowerCase() === activeTab);
+const viewMC = async (leaveId) => {
+  try {
+    setPdfLoading(true);
+
+    const res = await api.get(`/medical/file/${leaveId}`, {
+      responseType: "blob",
+    });
+
+    const contentType = res.headers["content-type"];
+
+    const blob = new Blob([res.data], { type: contentType });
+    const url = URL.createObjectURL(blob);
+
+    setPdfUrl(url);
+    setFileType(contentType); 
+    setZoom(1);
+    setShowPdf(true);
+  } catch (err) {
+    console.error(err);
+    errorAlert("Failed to open file");
+  } finally {
+    setPdfLoading(false);
+  }
+};
+  const getStatusBadge = (status) => {
+    if (status === "Approved") return <Badge bg="success" className="px-3 py-2 rounded-pill shadow-sm bg-opacity-75 border border-success">Approved</Badge>;
+    if (status === "Rejected") return <Badge bg="danger" className="px-3 py-2 rounded-pill shadow-sm bg-opacity-75 border border-danger">Rejected</Badge>;
+    return <Badge bg="warning" text="dark" className="px-3 py-2 rounded-pill shadow-sm border border-warning">Pending</Badge>;
   };
 
-  /* ================= STATS ================= */
-  const stats = {
-    total: leaves.length,
-    pending: leaves.filter((l) => l.status === "Pending").length,
-    approved: leaves.filter((l) => l.status === "Approved").length,
-    rejected: leaves.filter((l) => l.status === "Rejected").length,
-  };
+  /* ================= TABLE ================= */
+  const columns = [
+    {
+      key: "student",
+      label: "Athlete",
+      accessor: (row) => {
+        const name = getDisplayName(row);
+        const parts = name.split(" ");
+        const initials = ((parts[0]?.charAt(0) || "") + (parts[1]?.charAt(0) || "")).toUpperCase();
 
-  const viewMC = async (leaveId) => {
-    try {
-      setPdfLoading(true);
-
-      const res = await api.get(`/medical/file/${leaveId}`, {
-        responseType: "blob",
-        headers: {
-          "Cache-Control": "no-cache",
-          Pragma: "no-cache",
-        },
-      });
-
-      const pdfBlob = new Blob([res.data], {
-        type: res.headers["content-type"] || "application/pdf",
-      });
-
-      const url = URL.createObjectURL(pdfBlob);
-      setPdfUrl(url);
-      setShowPdf(true);
-    } catch (err) {
-      console.error(err);
-      errorAlert("Failed to open medical certificate");
-    }
-  };
+        return (
+          <div className="d-flex align-items-center gap-3 py-2">
+            <div
+              className="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center fw-bolder"
+              style={{ width: '42px', height: '42px', fontSize: '0.95rem' }}
+            >
+              {initials}
+            </div>
+            <div className="d-flex flex-column">
+              <span className="fw-bolder text-dark" style={{ fontSize: '0.95rem' }}>{name}</span>
+              <span className="small text-muted fw-medium d-flex align-items-center gap-1">
+                <FiUser size={12}/> ID: {row.userId?._id?.slice(-5).toUpperCase() || "N/A"}
+              </span>
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      key: "dates",
+      label: "Leave Duration",
+      accessor: (row) => (
+        <div className="d-flex flex-column py-2">
+          <span className="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+            <FiCalendar size={14} className="text-primary"/>
+            {moment(row.startDate).format("DD MMM YYYY")}
+            {row.endDate &&
+              row.endDate !== row.startDate &&
+              ` - ${moment(row.endDate).format("DD MMM YYYY")}`}
+          </span>
+          <span className="text-muted small text-truncate" style={{ maxWidth: '250px' }} title={row.reason}>
+            {row.reason}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: "document",
+      label: "Medical Cert",
+      accessor: (row) => (
+        <Button 
+          variant="light" 
+          size="sm" 
+          className="border shadow-sm text-primary fw-bold d-inline-flex align-items-center gap-2 rounded-pill px-3 py-2" 
+          onClick={() => viewMC(row._id)}
+        >
+          <FiFileText size={16}/> View MC
+        </Button>
+      ),
+    },
+    {
+      key: "status",
+      label: "Status",
+      accessor: (row) => getStatusBadge(row.status),
+    },
+    {
+      key: "actions",
+      label: "Actions",
+      accessor: (row) =>
+        row.status === "Pending" ? (
+          <div className="d-flex align-items-center gap-2 py-2">
+            <Button
+              variant="success"
+              size="sm"
+              className="rounded-pill px-3 py-2 fw-bold shadow-sm border-0 d-flex align-items-center gap-2"
+              onClick={() => handleReview(row._id, "Approved")}
+              disabled={reviewLoading}
+            >
+              <FiCheckCircle size={16}/> Approve
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              className="rounded-pill px-3 py-2 fw-bold shadow-sm border-0 d-flex align-items-center gap-2"
+              onClick={() => handleReview(row._id, "Rejected")}
+              disabled={reviewLoading}
+            >
+              <FiXCircle size={16}/> Reject
+            </Button>
+          </div>
+        ) : (
+          <span className="text-muted small fst-italic d-block py-2">Reviewed</span>
+        ),
+    },
+  ];
 
   return (
-    <div className="px-4 py-4 w-100">
-      {/* HEADER */}
+    <div className="px-4 py-4">
+      <HeroBanner
+        title="Medical Leave Applications"
+        subtitle="Review and verify student leave applications submitted to your squad."
+      />
+
+      <div className="row mb-4 g-4">
+        <StatCard title="Pending" value={stats.pending} icon={<FiClock size={22}/>} iconBg="#fffbeb" iconColor="#d97706" />
+        <StatCard title="Approved" value={stats.approved} icon={<FiCheckCircle size={22}/>} iconBg="#ecfdf5" iconColor="#10b981" />
+        <StatCard title="Rejected" value={stats.rejected} icon={<FiXCircle size={22}/>} iconBg="#fef2f2" iconColor="#ef4444" />
+      </div>
+
       <div className="mb-4">
-        <h1 className="mb-2">Medical Leave Applications</h1>
-        <p className="text-muted">
-          Review and verify student medical leave applications
-        </p>
+        <FiltersCard
+          search={search}
+          setSearch={setSearch}
+          searchPlaceholder="Search athlete name..."
+          showYear={false}
+          showClass={false} 
+          showSport={false} 
+          showStatus={false}
+          showCategory={false}
+          onReset={() => setSearch("")}
+        />
       </div>
-      {/* STATS */}
-    <div className="row mb-4 gy-3">
-  <div className="col-md-3">
-    <div className="card border-primary">
-      <div className="card-body text-center">
-        <h5 className="card-title text-primary">Total</h5>
-        <h2 className="card-text">{stats.total}</h2>
-      </div>
-    </div>
-  </div>
-  <div className="col-md-3">
-    <div className="card border-warning">
-      <div className="card-body text-center">
-        <h5 className="card-title text-warning">Pending</h5>
-        <h2 className="card-text">{stats.pending}</h2>
-      </div>
-    </div>
-  </div>
-  <div className="col-md-3">
-    <div className="card border-success">
-      <div className="card-body text-center">
-        <h5 className="card-title text-success">Approved</h5>
-        <h2 className="card-text">{stats.approved}</h2>
-      </div>
-    </div>
-  </div>
-  <div className="col-md-3">
-    <div className="card border-danger">
-      <div className="card-body text-center">
-        <h5 className="card-title text-danger">Rejected</h5>
-        <h2 className="card-text">{stats.rejected}</h2>
-      </div>
-    </div>
-  </div>
-</div>
-      {/* TABS */}
-      <Tab.Container activeKey={activeTab} onSelect={setActiveTab}>
-        <Nav variant="pills" className="mb-3">
-          <Nav.Item>
-            <Nav.Link eventKey="all">All</Nav.Link>
-          </Nav.Item>
-          <Nav.Item>
-            <Nav.Link eventKey="pending">Pending</Nav.Link>
-          </Nav.Item>
-          <Nav.Item>
-            <Nav.Link eventKey="approved">Approved</Nav.Link>
-          </Nav.Item>
-          <Nav.Item>
-            <Nav.Link eventKey="rejected">Rejected</Nav.Link>
-          </Nav.Item>
-        </Nav>
 
-        {loading ? (
-          <div className="text-center py-5">
-            <div className="spinner-border text-primary" />
-          </div>
-        ) : filteredLeaves().length === 0 ? (
-          <Card className="shadow-sm text-center py-5">
-            <p className="text-muted mb-0">
-              No medical leave applications found.
-            </p>
-          </Card>
-        ) : (
-          filteredLeaves().map((leave) => (
-            <LeaveCard
-              key={leave._id}
-              leave={leave}
-              role="coach"
-              onViewMC={viewMC}
-              onReview={handleReview}
-            />
-          ))
-        )}
-      </Tab.Container>
-      <Modal
-        show={showPdf}
-        onHide={() => {
-          setShowPdf(false);
-          setPdfLoading(false);
+      <div className="d-flex align-items-center justify-content-between mb-3">
+        <h5 className="fw-bold text-dark m-0 d-flex align-items-center gap-2">
+          Leave Applications
+        </h5>
 
-          if (pdfUrl) {
-            URL.revokeObjectURL(pdfUrl);
-            setPdfUrl(null);
-          }
-        }}
-        size="xl"
-        centered
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Medical Certificate</Modal.Title>
-        </Modal.Header>
-
-        <Modal.Body
-          style={{ height: "80vh", padding: 0, position: "relative" }}
-        >
-          {/* SKELETON LOADER */}
-          {pdfLoading && (
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                background: "#f8f9fa",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                zIndex: 2,
-              }}
+        <div className="bg-light p-1 rounded-pill d-inline-flex border shadow-sm flex-wrap gap-1">
+          {["All", "Pending", "Approved", "Rejected"].map((tab) => (
+            <button
+              key={tab}
+              className={`btn btn-sm rounded-pill px-4 fw-bold transition-all ${
+                activeTab === tab
+                  ? "bg-white text-primary shadow-sm"
+                  : "text-muted hover-dark"
+              }`}
+              onClick={() => setActiveTab(tab)}
             >
-              <div style={{ width: "60%" }}>
-                <div className="placeholder-glow mb-3">
-                  <div
-                    className="placeholder col-12"
-                    style={{ height: "20px" }}
-                  />
-                </div>
-                <div className="placeholder-glow mb-3">
-                  <div
-                    className="placeholder col-10"
-                    style={{ height: "20px" }}
-                  />
-                </div>
-                <div className="placeholder-glow mb-3">
-                  <div
-                    className="placeholder col-8"
-                    style={{ height: "20px" }}
-                  />
-                </div>
-                <div className="placeholder-glow">
-                  <div
-                    className="placeholder col-6"
-                    style={{ height: "20px" }}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+              {tab}
+            </button>
+          ))}
+        </div>
+      </div>
 
-          {/* PDF IFRAME */}
-          {pdfUrl && (
-            <iframe
-              src={pdfUrl}
-              title="Medical Certificate"
-              width="100%"
-              height="100%"
-              style={{
-                border: "none",
-                visibility: pdfLoading ? "hidden" : "visible",
-              }}
-              onLoad={() => setPdfLoading(false)}
-            />
-          )}
-        </Modal.Body>
-      </Modal>
+      <div className="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+        {filteredLeaves.length === 0 && !loading ? (
+           <div className="text-center py-5 text-muted">
+             <div className="bg-light rounded-circle d-inline-flex p-3 mb-3">
+               <FiFileText size={28} className="text-slate-400 opacity-50" />
+             </div>
+             <h6 className="fw-bold mb-1 text-dark">No Applications Found</h6>
+             <p className="mb-0 small">No leave records match your current filters.</p>
+           </div>
+        ) : (
+           <Table 
+             columns={columns} 
+             data={filteredLeaves} 
+             loading={loading} 
+             itemsPerPage={10} 
+           />
+        )}
+      </div>
+
+      <Modal
+  show={showPdf}
+  onHide={() => {
+    setShowPdf(false);
+    if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+  }}
+  size="xl"
+>
+  <Modal.Header closeButton className="border-bottom-0">
+    <Modal.Title className="fw-bolder">
+      Medical Certificate
+    </Modal.Title>
+
+    {/* 🔥 ACTION BUTTONS */}
+    <div className="d-flex gap-2 ms-auto">
+
+      {/* ZOOM IN */}
+      <Button
+        size="sm"
+        variant="light"
+        onClick={() => setZoom((z) => z + 0.2)}
+      >
+        +
+      </Button>
+
+      {/* ZOOM OUT */}
+      <Button
+        size="sm"
+        variant="light"
+        onClick={() => setZoom((z) => Math.max(1, z - 0.2))}
+      >
+        -
+      </Button>
+
+      {/* DOWNLOAD */}
+      <Button
+        size="sm"
+        variant="primary"
+        onClick={() => {
+          const a = document.createElement("a");
+          a.href = pdfUrl;
+          a.download = "medical-proof";
+          a.click();
+        }}
+      >
+        Download
+      </Button>
+
+      {/* FULLSCREEN */}
+      <Button
+        size="sm"
+        variant="dark"
+        onClick={() => window.open(pdfUrl, "_blank")}
+      >
+        Fullscreen
+      </Button>
+
+    </div>
+  </Modal.Header>
+
+  <Modal.Body
+    style={{
+      height: "80vh",
+      padding: 0,
+      background: "#f8fafc",
+      overflow: "hidden",
+    }}
+  >
+    {pdfLoading ? (
+      <div className="d-flex justify-content-center align-items-center h-100">
+        Loading...
+      </div>
+    ) : pdfUrl ? (
+      fileType === "application/pdf" ? (
+        <iframe
+          src={pdfUrl}
+          width="100%"
+          height="100%"
+          style={{ border: "none" }}
+        />
+      ) : (
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            overflow: "auto",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <img
+            src={pdfUrl}
+            alt="Medical Proof"
+            style={{
+              transform: `scale(${zoom})`,
+              transition: "0.2s",
+              maxWidth: "100%",
+              maxHeight: "100%",
+            }}
+          />
+        </div>
+      )
+    ) : null}
+  </Modal.Body>
+</Modal>
+
+      <style>{`
+        .hover-dark:hover { color: #1e293b !important; }
+      `}</style>
     </div>
   );
 };
