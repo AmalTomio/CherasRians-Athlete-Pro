@@ -167,9 +167,6 @@ const viewMC = async (leaveId) => {
             </div>
             <div className="d-flex flex-column">
               <span className="fw-bolder text-dark" style={{ fontSize: '0.95rem' }}>{name}</span>
-              <span className="small text-muted fw-medium d-flex align-items-center gap-1">
-                <FiUser size={12}/> ID: {row.userId?._id?.slice(-5).toUpperCase() || "N/A"}
-              </span>
             </div>
           </div>
         );

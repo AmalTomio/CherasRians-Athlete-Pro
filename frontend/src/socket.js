@@ -1,13 +1,43 @@
+// import { io } from "socket.io-client";
+
+// let socket;
+
+// export const initSocket = (token) => {
+//   if (!token) return;
+
+//   socket = io("http://localhost:5000", {
+//     auth: { token }
+//   });
+// };
+
+// export const getSocket = () => socket;
+
+// src/socket.js
 import { io } from "socket.io-client";
 
-let socket;
+let socket = null;
 
 export const initSocket = (token) => {
   if (!token) return;
 
+  if (socket && socket.connected) return socket;
+
   socket = io("http://localhost:5000", {
-    auth: { token }
+    auth: { token },
+    transports: ["websocket"],
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 2000,
   });
+
+    return socket;
 };
 
 export const getSocket = () => socket;
+
+export const disconnectSocket = () => {
+  if (socket) {
+    socket.disconnect();
+    socket = null;
+  }
+};

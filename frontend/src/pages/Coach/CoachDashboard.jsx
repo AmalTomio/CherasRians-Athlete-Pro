@@ -1,221 +1,254 @@
-import { useEffect, useState } from "react";
+import React, { useMemo, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { Badge } from "react-bootstrap";
+import moment from "moment";
 import {
-  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
-  ResponsiveContainer, Legend, LabelList
-} from "recharts";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import api from "../../api/axios";
-import {
-  FiCalendar, FiUsers, FiActivity, FiInfo,
-  FiRefreshCw, FiArrowRight, FiTrendingUp
+  FiCalendar, FiUsers, FiActivity, FiRefreshCw,
+  FiCheckSquare, FiPlus, FiAlertCircle, FiFileText,
+  FiClock, FiMapPin, FiFlag
 } from "react-icons/fi";
 
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import HeroBanner from "../../components/HeroBanner";
+import StatCard from "../../components/StatCard";
+
+import { coachService } from "../../services/coachServices";
+import { initSocket } from "../../socket";
+
 export default function CoachDashboard() {
-  const [dashboardData, setDashboardData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
+  const queryClient = useQueryClient();
 
-  const navigate = useNavigate();
-
-  const fetchData = async (isRefresh = false) => {
-    if (isRefresh) setRefreshing(true);
-    else setLoading(true);
-
+  const user = useMemo(() => {
     try {
-      const res = await api.get("/coach/dashboard");
-      setDashboardData(res.data);
-      setError(null);
-    } catch (err) {
-      setError(err.response?.data?.message || err.message || "Failed to load dashboard data");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+      return JSON.parse(localStorage.getItem("user")) || {};
+    } catch {
+      return {};
     }
-  };
-
-  useEffect(() => {
-    fetchData();
   }, []);
 
-  if (loading) {
+  const firstName = user.firstName || "Coach";
+  const [activeTab, setActiveTab] = useState("training");
+
+  /* ================= DATA ================= */
+
+  const { data: dashboardData = {}, isLoading: loadingDashboard } = useQuery({
+    queryKey: ["dashboard"],
+    queryFn: coachService.getDashboard,
+  });
+
+  const { data: leaves = [], isLoading: loadingLeaves } = useQuery({
+    queryKey: ["leaves"],
+    queryFn: coachService.getPendingLeaves,
+  });
+
+  const { data: announcements = [], isLoading: loadingAnnouncements } = useQuery({
+    queryKey: ["announcements"],
+    queryFn: coachService.getAnnouncements,
+  });
+
+  const { data: schedules = [], isLoading: loadingSchedules } = useQuery({
+    queryKey: ["schedules"],
+    queryFn: coachService.getSchedules,
+  });
+
+  const { data: matches = [], isLoading: loadingMatches } = useQuery({
+    queryKey: ["matches"],
+    queryFn: coachService.getMatches,
+  });
+
+  /* ================= SOCKET ================= */
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const socket = initSocket(token);
+    if (!socket) return;
+
+    const handler = () => {
+      queryClient.invalidateQueries();
+    };
+
+    socket.on("dashboard_update", handler);
+    return () => socket.off("dashboard_update", handler);
+  }, [queryClient]);
+
+  /* ================= LOADING ================= */
+
+  if (
+    loadingDashboard ||
+    loadingLeaves ||
+    loadingAnnouncements ||
+    loadingSchedules ||
+    loadingMatches
+  ) {
     return (
-      <div className="d-flex flex-column align-items-center justify-content-center w-100 text-muted" style={{ minHeight: "70vh" }}>
-        <div className="spinner-border text-primary mb-3"></div>
-        <h5 className="fw-bold">Loading insights...</h5>
+      <div className="text-center py-5">
+        <div className="spinner-border text-primary"></div>
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="px-4 py-4 w-100">
-        <div className="alert alert-danger shadow-sm rounded-4 d-flex gap-3">
-          <FiInfo size={24} />
-          <div>
-            <h6 className="fw-bold mb-1">Error Loading Dashboard</h6>
-            <p className="mb-0 small">{error}</p>
-          </div>
-        </div>
-        <button className="btn btn-outline-danger mt-2 fw-bold" onClick={() => fetchData()}>
-          <FiRefreshCw className="me-2" /> Try Again
-        </button>
-      </div>
-    );
-  }
+  /* ================= FIXED LOGIC ================= */
 
-  const kpi = dashboardData?.kpi || {};
-  const categories = dashboardData?.categories || { U15: 0, U18: 0 };
-  const attendanceTrend = dashboardData?.attendanceTrend || [];
-  const weeklySessions = dashboardData?.weeklySessions || [];
+  const now = new Date();
 
-  /* ================= NORMALIZE ATTENDANCE ================= */
-  const normalizedAttendance = [];
-  for (let i = 6; i >= 0; i--) {
-    const date = new Date();
-    date.setDate(date.getDate() - i);
-    const formatted = date.toISOString().split("T")[0];
+  const upcomingMatches = matches
+    .filter(m => new Date(m.matchDate).getTime() >= now.getTime() && m.status !== "completed")
+    .sort((a, b) => new Date(a.matchDate) - new Date(b.matchDate))
+    .slice(0, 5);
 
-    const found = attendanceTrend.find(a => a.date === formatted);
+  const upcomingTraining = schedules
+    .filter(s => new Date(s.startAt).getTime() >= now.getTime()) // ✅ FIXED FIELD
+    .sort((a, b) => new Date(a.startAt) - new Date(b.startAt))
+    .slice(0, 5);
 
-    normalizedAttendance.push({
-      date: formatted,
-      rate: found ? found.rate : 0,
-      present: found?.present || 0,
-      total: found?.total || 0,
-    });
-  }
+  const kpi = dashboardData?.kpi ?? {
+    totalPlayers: 0,
+    attendanceRate: 0,
+    upcomingSessions: 0,
+  };
 
-  const weeklyData = weeklySessions.map(w => ({
-    name: new Date(w.date).toLocaleDateString("en-US", { weekday: "short" }),
-    count: w.count
-  }));
+  const topLeaves = leaves.slice(0, 5);
+  const topAnnouncements = announcements.slice(0, 5);
 
-  const hasCategoryData = categories.U15 > 0 || categories.U18 > 0;
-  const categoryData = hasCategoryData
-    ? [
-        { name: "U-15 Sessions", value: categories.U15 },
-        { name: "U-18 Sessions", value: categories.U18 }
-      ]
-    : [{ name: "No Data", value: 1 }];
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 18) return "Good Afternoon";
+    return "Good Evening";
+  };
 
-  const categoryColors = hasCategoryData ? ["#3b82f6", "#10b981"] : ["#e5e7eb"];
-  const totalCategorySessions = categories.U15 + categories.U18;
+  /* ================= UI ================= */
 
   return (
     <div className="px-4 py-4 w-100">
 
-      {/* HEADER */}
-      <div className="d-flex justify-content-between mb-4">
-        <div>
-          <h2 className="fw-bold">Dashboard</h2>
-          <p className="text-muted">Overview of your team performance</p>
-        </div>
-        <button className="btn btn-outline-primary" onClick={() => fetchData(true)}>
-          <FiRefreshCw /> Refresh
-        </button>
-      </div>
+      {/* HERO */}
+      <HeroBanner
+        title={`${getGreeting()}, Coach ${firstName}! 👋`}
+        subtitle={`Here is your squad overview for ${moment().format("dddd, MMMM Do YYYY")}.`}
+        buttonText="Refresh Data"
+        buttonIcon={FiRefreshCw}
+        onButtonClick={() => queryClient.invalidateQueries()}
+      />
 
       {/* KPI */}
       <div className="row g-4 mb-4">
-        <KpiCard title="Upcoming Sessions" value={kpi.upcomingSessions || 0} icon={<FiCalendar />} />
-        <KpiCard title="Players" value={kpi.totalPlayers || 0} icon={<FiUsers />} />
-        <KpiCard title="Avg. Attendance (7d)" value={`${kpi.attendanceRate || 0}%`} icon={<FiActivity />} />
+        <StatCard title="Total Players" value={kpi.totalPlayers} icon={<FiUsers size={22} />} />
+        <StatCard title="Upcoming Sessions" value={kpi.upcomingSessions || upcomingTraining.length} icon={<FiCalendar size={22} />} />
+        <StatCard title="Avg. Attendance (7d)" value={`${kpi.attendanceRate}%`} icon={<FiActivity size={22} />} />
       </div>
 
-      {/* ATTENDANCE */}
+      {/* UPCOMING */}
       <div className="row g-4 mb-4">
-        <div className="col-lg-8">
-          <DashboardCard title="Attendance Trend" subtitle="Last 7 days" icon={<FiTrendingUp />}>
-            <div style={{ height: 320, width: "100%", minHeight: 320 }}>
-              <ResponsiveContainer>
-                <AreaChart data={normalizedAttendance}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis domain={[0, 100]} />
-                  <RechartsTooltip
-                    formatter={(val, name, props) => [
-                      `${val}%`,
-                      `(${props.payload.present}/${props.payload.total})`
-                    ]}
-                  />
-                  <Area type="monotone" dataKey="rate" stroke="#6366f1" fill="#c7d2fe" />
-                </AreaChart>
-              </ResponsiveContainer>
+
+        <div className="col-12 col-xl-8">
+          <div className="card shadow-sm border-0 rounded-4 bg-white">
+
+            <div className="card-header bg-white">
+              <button
+                className={`btn btn-sm ${activeTab === "training" ? "fw-bold text-primary" : ""}`}
+                onClick={() => setActiveTab("training")}
+              >
+                <FiActivity className="me-2" /> Training
+              </button>
+
+              <button
+                className={`btn btn-sm ${activeTab === "matches" ? "fw-bold text-primary" : ""}`}
+                onClick={() => setActiveTab("matches")}
+              >
+                <FiFlag className="me-2" /> Matches
+              </button>
             </div>
-          </DashboardCard>
-        </div>
 
-        {/* CATEGORY */}
-        <div className="col-lg-4">
-          <DashboardCard title="Sessions by Category">
-            <div style={{ height: 320 }}>
-              <ResponsiveContainer>
-                <PieChart>
-                  <Pie data={categoryData} dataKey="value">
-                    {categoryData.map((entry, i) => (
-                      <Cell key={i} fill={categoryColors[i]} />
-                    ))}
-                  </Pie>
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
+            <div className="card-body">
+
+              {activeTab === "training" ? (
+                upcomingTraining.length === 0 ? (
+                  <p className="text-muted text-center">No upcoming training</p>
+                ) : (
+                  upcomingTraining.map(t => (
+                    <div key={t._id} className="mb-2">
+                      <strong>{t.title || "Training Session"}</strong><br />
+                      <small>
+                        {moment(t.startAt).format("DD MMM YYYY")} • {t.startTime} - {t.endTime}
+                      </small>
+                    </div>
+                  ))
+                )
+              ) : (
+                upcomingMatches.length === 0 ? (
+                  <p className="text-muted text-center">No upcoming matches</p>
+                ) : (
+                  upcomingMatches.map(m => (
+                    <div key={m._id} className="mb-2">
+                      <strong>vs {m.opponent}</strong><br />
+                      <small>
+                        {moment(m.matchDate).format("DD MMM YYYY")} • {m.venue || "TBA"}
+                      </small>
+                    </div>
+                  ))
+                )
+              )}
+
             </div>
-            <div className="text-center fw-bold mt-2">
-              Total: {totalCategorySessions}
-            </div>
-          </DashboardCard>
-        </div>
-      </div>
-
-      {/* WEEKLY */}
-      <DashboardCard title="Sessions (Last 7 Days)">
-        <div style={{ height: 280, minHeight: 280 }}>
-          <ResponsiveContainer>
-            <BarChart data={weeklyData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <RechartsTooltip />
-              <Bar dataKey="count" fill="#8b5cf6">
-                <LabelList dataKey="count" position="top" />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </DashboardCard>
-
-    </div>
-  );
-}
-
-/* ================= COMPONENTS ================= */
-
-function KpiCard({ title, value, icon }) {
-  return (
-    <div className="col-md-4">
-      <div className="card p-3 shadow-sm">
-        <div className="d-flex justify-content-between">
-          <div>
-            <div className="text-muted small">{title}</div>
-            <div className="fs-4 fw-bold">{value}</div>
           </div>
-          {icon}
         </div>
-      </div>
-    </div>
-  );
-}
 
-function DashboardCard({ title, subtitle, icon, children }) {
-  return (
-    <div className="card p-3 shadow-sm h-100">
-      <div className="mb-3">
-        <h6 className="fw-bold">{icon} {title}</h6>
-        {subtitle && <small className="text-muted">{subtitle}</small>}
+        {/* QUICK ACTION */}
+        <div className="col-12 col-xl-4">
+          <Link to="/coach/attendance" className="btn btn-light w-100 mb-2">
+            <FiCheckSquare className="me-2" /> Mark Attendance
+          </Link>
+
+          <Link to="/coach/matches" className="btn btn-primary w-100">
+            <FiPlus className="me-2" /> Schedule Match
+          </Link>
+        </div>
+
       </div>
-      {children}
+
+      {/* BOTTOM */}
+      <div className="row g-4">
+
+        <div className="col-12 col-lg-6">
+          <div className="card p-4">
+            <h5 className="fw-bold mb-3">
+              <FiAlertCircle className="me-2 text-danger" />
+              Pending Medical Leaves
+            </h5>
+
+            {topLeaves.length === 0 ? (
+              <p className="text-muted">No pending leaves</p>
+            ) : (
+              topLeaves.map(l => (
+                <div key={l._id} className="mb-2">
+                  <strong>{l.studentName}</strong><br />
+                  <small>{moment(l.startDate).format("DD MMM")} • {l.reason}</small>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="col-12 col-lg-6">
+          <div className="card p-4">
+            <h5 className="fw-bold mb-3">Announcements</h5>
+
+            {topAnnouncements.length === 0 ? (
+              <p className="text-muted">No announcements</p>
+            ) : (
+              topAnnouncements.map(a => (
+                <div key={a._id} className="mb-2">
+                  <strong>{a.title}</strong><br />
+                  <small>{moment(a.createdAt).format("DD MMM YYYY")}</small>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+      </div>
+
     </div>
   );
 }

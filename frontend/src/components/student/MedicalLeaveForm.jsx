@@ -133,7 +133,7 @@ const MedicalLeaveForm = ({ show, onHide, onSubmit }) => {
           {/* Right Column */}
           <Col md={6}>
             <Card className="p-3 shadow-sm border rounded">
-              <h6 className="fw-semibold mb-3">Medical Certificate (PDF)</h6>
+              <h6 className="fw-semibold mb-3">Medical Certificate</h6>
 
               <div
                 onClick={() => document.getElementById("fileInput").click()}
