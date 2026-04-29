@@ -1,28 +1,18 @@
-// import { io } from "socket.io-client";
-
-// let socket;
-
-// export const initSocket = (token) => {
-//   if (!token) return;
-
-//   socket = io("http://localhost:5000", {
-//     auth: { token }
-//   });
-// };
-
-// export const getSocket = () => socket;
-
-// src/socket.js
 import { io } from "socket.io-client";
 
 let socket = null;
 
+const getBaseURL = () => {
+  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  return apiUrl.replace("/api", ""); 
+};
+
 export const initSocket = (token) => {
-  if (!token) return;
+  if (!token) return null;
 
-  if (socket) return socket;
+  if (socket && socket.connected) return socket;
 
-  socket = io("http://localhost:5000", {
+  socket = io(getBaseURL(), {
     auth: { token },
     transports: ["websocket"],
     reconnection: true,
@@ -30,7 +20,19 @@ export const initSocket = (token) => {
     reconnectionDelay: 2000,
   });
 
-    return socket;
+  socket.on("connect", () => {
+    console.log("🟢 Socket connected:", socket.id);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("🔴 Socket disconnected");
+  });
+
+  socket.on("connect_error", (err) => {
+    console.error("❌ Socket error:", err.message);
+  });
+
+  return socket;
 };
 
 export const getSocket = () => socket;
