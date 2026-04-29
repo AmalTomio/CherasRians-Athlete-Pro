@@ -9,6 +9,12 @@ const {
 } = require("../controllers/attendanceController");
 
 const { verifyToken, requireCoach } = require("../middleware/authMiddleware");
+const { requireStudent } = require("../middleware/authMiddleware");
+const {
+  getStudentAttendance,
+} = require("../controllers/attendanceController");
+
+const { getCoachAttendanceHistory } = require("../controllers/attendanceController");
 
 router.get(
   "/sessions/coach",
@@ -36,6 +42,19 @@ router.get(
   verifyToken,
   requireCoach,
   getSessionAttendance
+);
+
+router.get(
+  "/coach/history",
+  verifyToken,
+  requireCoach,
+  getCoachAttendanceHistory
+);
+router.get(
+  "/student",
+  verifyToken,
+  requireStudent,
+  getStudentAttendance
 );
 
 module.exports = router;

@@ -7,7 +7,6 @@ const DisciplinaryCase = require("../models/DisciplinaryRecord");
 
 const ATTENDANCE_SESSION_TYPES = ["training", "tryout"];
 
-/* ================= GET COACH SESSIONS ================= */
 exports.getCoachSessions = async (req, res) => {
   try {
     const coachId = new mongoose.Types.ObjectId(
@@ -29,7 +28,6 @@ exports.getCoachSessions = async (req, res) => {
   }
 };
 
-/* ================= GET SESSION PLAYERS ================= */
 exports.getSessionPlayers = async (req, res) => {
   try {
     const coachId = new mongoose.Types.ObjectId(
@@ -68,7 +66,6 @@ exports.getSessionPlayers = async (req, res) => {
   }
 };
 
-/* ================= MARK ATTENDANCE ================= */
 exports.markAttendance = async (req, res) => {
   try {
     const coachId = new mongoose.Types.ObjectId(
@@ -94,7 +91,6 @@ exports.markAttendance = async (req, res) => {
 
     const coach = await User.findById(coachId).select("sport");
 
-    /* ================= SAVE ATTENDANCE ================= */
     const ops = records.map((r) => ({
       updateOne: {
         filter: {
@@ -116,8 +112,8 @@ exports.markAttendance = async (req, res) => {
     }));
 
     await Attendance.bulkWrite(ops);
-
-    /* ================= AUTO DISCIPLINARY ================= */
+    req.app.get("io").emit("dashboard_update");
+    
     for (const r of records) {
       if (["Absent", "Late", "Injured"].includes(r.status)) {
         const attendance = await Attendance.findOne({
@@ -125,7 +121,6 @@ exports.markAttendance = async (req, res) => {
           playerId: r.playerId,
         });
 
-        // 🔥 Prevent duplicate AUTO case
         const exists = await DisciplinaryCase.findOne({
           playerId: r.playerId,
           attendanceId: attendance?._id,
@@ -155,7 +150,6 @@ exports.markAttendance = async (req, res) => {
   }
 };
 
-/* ================= GET SESSION ATTENDANCE ================= */
 exports.getSessionAttendance = async (req, res) => {
   try {
     const coachId = new mongoose.Types.ObjectId(
@@ -180,6 +174,53 @@ exports.getSessionAttendance = async (req, res) => {
     res.json({ attendance });
   } catch (err) {
     console.error("Get Attendance Error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getCoachAttendanceHistory = async (req, res) => {
+  try {
+    const coachId = req.user.userId || req.user._id;
+
+    const records = await Attendance.find({ recordedBy: coachId })
+      .populate({
+        path: "bookingId",
+        select: "startAt endAt facilityId",
+        populate: {
+          path: "facilityId",
+          select: "name",
+        },
+      })
+      .populate("playerId", "firstName lastName")
+      .sort({ recordedAt: -1 })
+      .lean();
+
+    res.json({ records });
+  } catch (err) {
+    console.error("Coach Attendance History Error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getStudentAttendance = async (req, res) => {
+  try {
+    const playerId = req.user.userId || req.user._id;
+
+    const records = await Attendance.find({ playerId })
+      .populate({
+        path: "bookingId",
+        select: "sessionTitle startAt endAt facilityId playerCategory",
+        populate: {
+          path: "facilityId",
+          select: "name",
+        },
+      })
+      .sort({ recordedAt: -1 })
+      .lean();
+
+    res.json({ records });
+  } catch (err) {
+    console.error("Get Student Attendance Error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };

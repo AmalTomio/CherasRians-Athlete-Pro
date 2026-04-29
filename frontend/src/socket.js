@@ -20,7 +20,7 @@ let socket = null;
 export const initSocket = (token) => {
   if (!token) return;
 
-  if (socket && socket.connected) return socket;
+  if (socket) return socket;
 
   socket = io("http://localhost:5000", {
     auth: { token },

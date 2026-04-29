@@ -9,7 +9,6 @@ const controller = require("../controllers/teamLineupController");
 router.post("/", verifyToken, requireCoach, controller.saveLineup);
 router.get("/", verifyToken, requireCoach, controller.getLineup);
 
-/* ✅ FIX DROPDOWN */
 router.get("/all", verifyToken, requireCoach, controller.getAllLineups);
 
 module.exports = router;

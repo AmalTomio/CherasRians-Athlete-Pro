@@ -117,3 +117,23 @@ exports.getTeamPerformance = async (req, res) => {
     res.status(500).json({ message: "Error fetching team performance" });
   }
 };
+
+const MatchPlayerStats = require("../models/MatchPlayerStats");
+exports.getStudentMatchPerformance = async (req, res) => {
+  try {
+    const playerId = req.user._id;
+
+    const stats = await MatchPlayerStats.find({ playerId })
+      .populate({
+        path: "matchId",
+        select: "matchDate opponent result",
+      })
+      .sort({ "matchId.matchDate": 1 })
+      .lean();
+
+    res.json({ stats });
+  } catch (err) {
+    console.error("Student Match Performance Error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};

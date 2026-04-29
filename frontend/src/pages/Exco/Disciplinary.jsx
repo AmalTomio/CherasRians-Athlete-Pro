@@ -143,9 +143,7 @@ export default function ExcoDisciplinary() {
               <span className="fw-bolder text-dark d-block" style={{ fontSize: '0.95rem' }}>
                 {fName} {lName}
               </span>
-              <span className="small text-muted fw-medium">
-                ID: {row.playerId?._id?.slice(-5).toUpperCase() || "N/A"}
-              </span>
+              
             </div>
           </div>
         );

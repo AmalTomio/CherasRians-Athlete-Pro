@@ -42,6 +42,7 @@ import Medical from "./pages/Student/Medical";
 import ScheduleStud from "./pages/Student/Schedule";
 import StudentAnnouncements from "./pages/Student/Announcement";
 import StudentPerformance from "./pages/Student/Performance";
+import StudentAttendance from "./pages/Student/Attendance";
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -338,7 +339,17 @@ export default function App() {
           }
         />
 
-        {/* 404 */}
+        <Route
+          path="/student/attendance"
+          element={
+            <ProtectedRoute allowedRoles={["student"]}>
+              <WithSidebar>
+                <StudentAttendance />
+              </WithSidebar>
+            </ProtectedRoute>
+          }
+        />
+
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>

@@ -7,6 +7,7 @@ import { successAlert, errorAlert } from "../../utils/swal";
 import FiltersCard from "../../components/FiltersCard";
 import Table from "../../components/Table";
 import SkeletonTableLoader from "../../components/SkeletonTableLoader";
+import HeroBanner from "../../components/HeroBanner";
 import {
   FiCheckCircle,
   FiXCircle,
@@ -223,17 +224,14 @@ export default function Bookings() {
 
   return (
     <div className="px-4 py-4">
-      <div className="mb-4">
-        <h2
-          className="fw-bold mb-1 text-dark"
-          style={{ letterSpacing: "-0.5px" }}
-        >
-          Booking Management
-        </h2>
-        <p className="text-muted mb-0">
-          Review booking requests and view booking history
-        </p>
-      </div>
+
+      <HeroBanner
+        title="Booking Management"
+        subtitle="Review booking requests and view booking history."
+        buttonText="Export Report"
+             />
+
+      
 
       <FiltersCard
         search={search}
@@ -364,7 +362,7 @@ export default function Bookings() {
 
       <div
         className="card border-0 shadow-sm rounded-4 overflow-hidden"
-        style={{ minHeight: "300px" }}
+       
       >
         <div className="table-responsive">
           <Table
