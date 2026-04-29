@@ -4,7 +4,7 @@ let socket = null;
 
 const getBaseURL = () => {
   const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-  return apiUrl.replace("/api", ""); 
+  return apiUrl.replace("/api", "");
 };
 
 export const initSocket = (token) => {
