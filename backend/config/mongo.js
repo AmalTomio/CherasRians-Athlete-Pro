@@ -1,4 +1,3 @@
-// backend/config/mongo.js
 const mongoose = require("mongoose");
 
 const connectDB = async () => {
@@ -8,9 +7,8 @@ const connectDB = async () => {
       throw new Error("MONGO_URI not set in .env");
     }
 
-    // Mongoose modern options no longer need useNewUrlParser/useUnifiedTopology
     await mongoose.connect(uri, {
-      dbName: "sportcms", // optional: specify db name
+      dbName: "sportcms", 
     });
 
     console.log("MongoDB Connected Successfully 🚀");

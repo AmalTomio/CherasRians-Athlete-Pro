@@ -1,7 +1,6 @@
 const DisciplinaryCase = require("../models/DisciplinaryRecord");
 const mongoose = require("mongoose");
 
-/* ================= CREATE (MANUAL) ================= */
 exports.createCase = async (req, res) => {
   try {
     const coachId = new mongoose.Types.ObjectId(req.user._id);
@@ -25,7 +24,6 @@ exports.createCase = async (req, res) => {
   }
 };
 
-/* ================= UPDATE ================= */
 exports.updateCase = async (req, res) => {
   try {
     const { id } = req.params;
@@ -45,7 +43,6 @@ exports.updateCase = async (req, res) => {
   }
 };
 
-/* ================= COACH VIEW ================= */
 exports.getCoachCases = async (req, res) => {
   try {
     const coachId = new mongoose.Types.ObjectId(req.user._id);
@@ -60,7 +57,6 @@ exports.getCoachCases = async (req, res) => {
   }
 };
 
-/* ================= PLAYER VIEW ================= */
 exports.getPlayerCases = async (req, res) => {
   try {
     const playerId = req.user._id;
@@ -74,7 +70,6 @@ exports.getPlayerCases = async (req, res) => {
   }
 };
 
-/* ================= EXCO VIEW ================= */
 exports.getAllCases = async (req, res) => {
   try {
     const { playerName, sport, category } = req.query;

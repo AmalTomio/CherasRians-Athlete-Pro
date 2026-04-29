@@ -1,24 +1,29 @@
 import React, { useState, useEffect } from "react";
-import { Modal, Form, Button, Row, Col } from "react-bootstrap";
+import { Modal, Form, Button, Row, Col, Spinner } from "react-bootstrap";
+import { FiUsers, FiMapPin, FiCalendar, FiClock, FiTag, FiClipboard } from "react-icons/fi";
 import api from "../api/axios";
 import { errorAlert, successAlert } from "../utils/swal";
 
 export default function MatchModal({ show, onHide, onSaved }) {
-  const [formData, setFormData] = useState({
+  const initialState = {
     opponent: "",
     matchDate: "",
     matchTime: "",
     venue: "",
     category: "U-15",
-    lineupId: "", // ✅ REQUIRED
-  });
+    lineupId: "", 
+  };
 
+  const [formData, setFormData] = useState(initialState);
   const [lineups, setLineups] = useState([]);
   const [loading, setLoading] = useState(false);
 
   /* ================= FETCH LINEUPS ================= */
   useEffect(() => {
     if (!show) return;
+    
+    // Reset form when modal opens
+    setFormData(initialState);
 
     const fetchLineups = async () => {
       try {
@@ -65,129 +70,166 @@ export default function MatchModal({ show, onHide, onSaved }) {
     }
   };
 
+  // Filter lineups dynamically based on selected category
+  const filteredLineups = lineups.filter((l) => l.category === formData.category);
+
   /* ================= UI ================= */
   return (
-    <Modal show={show} onHide={onHide} centered>
-      <Modal.Header closeButton className="border-0 pb-0">
-        <Modal.Title className="fw-bold">
-          Schedule New Match
+    <Modal show={show} onHide={onHide} centered backdrop="static" size="lg">
+      <Modal.Header closeButton className="border-0 bg-light pb-4">
+        <Modal.Title className="fw-bold fs-4 text-dark">
+          Schedule Match Fixture
         </Modal.Title>
       </Modal.Header>
 
-      <Modal.Body>
+      <Modal.Body className="p-4 pt-2">
         <Form onSubmit={handleSubmit}>
-          {/* Opponent */}
-          <Form.Group className="mb-3">
-            <Form.Label className="fw-bold small text-muted">
-              Opponent Team
-            </Form.Label>
-            <Form.Control
-              type="text"
-              name="opponent"
-              placeholder="e.g. SMK Cheras"
-              value={formData.opponent}
-              onChange={handleChange}
-              required
-              className="shadow-sm"
-            />
-          </Form.Group>
+          
+          <div className="bg-white p-3 rounded-4 border shadow-sm mb-4">
+            <h6 className="fw-bold text-dark mb-3 pb-2 border-bottom">Match Details</h6>
+            <Row className="g-3">
+              {/* Opponent */}
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label className="fw-bold small text-secondary mb-1">
+                    <FiUsers className="me-1 mb-1"/> Opponent Team
+                  </Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="opponent"
+                    placeholder="e.g. SMK Cheras"
+                    value={formData.opponent}
+                    onChange={handleChange}
+                    required
+                    className="shadow-sm border-0 bg-light py-2"
+                  />
+                </Form.Group>
+              </Col>
 
-          {/* Date + Time */}
-          <Row className="g-3 mb-3">
-            <Col md={6}>
-              <Form.Group>
-                <Form.Label className="fw-bold small text-muted">
-                  Match Date
-                </Form.Label>
-                <Form.Control
-                  type="date"
-                  name="matchDate"
-                  value={formData.matchDate}
-                  onChange={handleChange}
-                  required
-                  className="shadow-sm"
-                />
-              </Form.Group>
-            </Col>
+              {/* Venue */}
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label className="fw-bold small text-secondary mb-1">
+                    <FiMapPin className="me-1 mb-1"/> Venue
+                  </Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="venue"
+                    placeholder="e.g. Home Ground"
+                    value={formData.venue}
+                    onChange={handleChange}
+                    required
+                    className="shadow-sm border-0 bg-light py-2"
+                  />
+                </Form.Group>
+              </Col>
 
-            <Col md={6}>
-              <Form.Group>
-                <Form.Label className="fw-bold small text-muted">
-                  Time
-                </Form.Label>
-                <Form.Control
-                  type="time"
-                  name="matchTime"
-                  value={formData.matchTime}
-                  onChange={handleChange}
-                  className="shadow-sm"
-                />
-              </Form.Group>
-            </Col>
-          </Row>
+              {/* Date */}
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label className="fw-bold small text-secondary mb-1">
+                    <FiCalendar className="me-1 mb-1"/> Match Date
+                  </Form.Label>
+                  <Form.Control
+                    type="date"
+                    name="matchDate"
+                    value={formData.matchDate}
+                    onChange={handleChange}
+                    required
+                    className="shadow-sm border-0 bg-light py-2"
+                  />
+                </Form.Group>
+              </Col>
 
-          {/* Venue */}
-          <Form.Group className="mb-3">
-            <Form.Label className="fw-bold small text-muted">
-              Venue
-            </Form.Label>
-            <Form.Control
-              type="text"
-              name="venue"
-              placeholder="e.g. Home Ground"
-              value={formData.venue}
-              onChange={handleChange}
-              required
-              className="shadow-sm"
-            />
-          </Form.Group>
+              {/* Time */}
+              <Col md={6}>
+                <Form.Group>
+                  <Form.Label className="fw-bold small text-secondary mb-1">
+                    <FiClock className="me-1 mb-1"/> Time
+                  </Form.Label>
+                  <Form.Control
+                    type="time"
+                    name="matchTime"
+                    value={formData.matchTime}
+                    onChange={handleChange}
+                    className="shadow-sm border-0 bg-light py-2"
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+          </div>
 
-          {/* Category */}
-          <Form.Group className="mb-3">
-            <Form.Label className="fw-bold small text-muted">
-              Category
-            </Form.Label>
-            <Form.Select
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              required
+          <div className="bg-white p-3 rounded-4 border shadow-sm mb-4">
+            <h6 className="fw-bold text-dark mb-3 pb-2 border-bottom">Squad Assignment</h6>
+            <Row className="g-3">
+              {/* Category */}
+              <Col md={4}>
+                <Form.Group>
+                  <Form.Label className="fw-bold small text-secondary mb-1">
+                    <FiTag className="me-1 mb-1"/> Category
+                  </Form.Label>
+                  <Form.Select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    required
+                    className="shadow-sm border-0 bg-light py-2"
+                  >
+                    <option value="U-15">U-15</option>
+                    <option value="U-18">U-18</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+
+              {/* Lineup */}
+              <Col md={8}>
+                <Form.Group>
+                  <Form.Label className="fw-bold small text-secondary mb-1">
+                    <FiClipboard className="me-1 mb-1"/> Selected Lineup
+                  </Form.Label>
+                  <Form.Select
+                    name="lineupId"
+                    value={formData.lineupId}
+                    onChange={handleChange}
+                    required
+                    className="shadow-sm border-0 bg-light py-2"
+                  >
+                    <option value="" disabled>-- Select a lineup --</option>
+                    {filteredLineups.map((l) => (
+                      <option key={l._id} value={l._id}>
+                        {l.name ? `${l.name} (${l.category})` : `${l.category} Lineup`}
+                      </option>
+                    ))}
+                  </Form.Select>
+                  {filteredLineups.length === 0 && (
+                    <Form.Text className="text-danger small mt-1 d-block">
+                      <FiTag className="me-1"/> No saved lineups found for {formData.category}.
+                    </Form.Text>
+                  )}
+                </Form.Group>
+              </Col>
+            </Row>
+          </div>
+
+          <div className="d-flex justify-content-end gap-2 pt-2">
+            <Button
+              variant="light"
+              onClick={onHide}
+              className="fw-bold rounded-pill px-4"
+              disabled={loading}
             >
-              <option value="U-15">U-15</option>
-              <option value="U-18">U-18</option>
-            </Form.Select>
-          </Form.Group>
-
-          {/* Lineup */}
-          <Form.Group className="mb-4">
-            <Form.Label className="fw-bold small text-muted">
-              Lineup
-            </Form.Label>
-            <Form.Select
-              name="lineupId"
-              value={formData.lineupId}
-              onChange={handleChange}
-              required
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              type="submit"
+              className="fw-bold rounded-pill px-4 shadow-sm"
+              disabled={loading || filteredLineups.length === 0}
             >
-              <option value="">Select lineup</option>
-              {lineups
-                .filter((l) => l.category === formData.category)
-                .map((l) => (
-                  <option key={l._id} value={l._id}>
-                    {l.category}
-                  </option>
-                ))}
-            </Form.Select>
-          </Form.Group>
-
-          <Button
-            variant="primary"
-            type="submit"
-            className="w-100 fw-bold rounded-pill"
-            disabled={loading}
-          >
-            {loading ? "Scheduling..." : "Schedule Match"}
-          </Button>
+              {loading ? <Spinner size="sm" className="me-2" /> : null}
+              Schedule Match
+            </Button>
+          </div>
         </Form>
       </Modal.Body>
     </Modal>

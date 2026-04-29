@@ -1,4 +1,3 @@
-// backend/controllers/authController.js
 const User = require("../models/User");
 const Session = require("../models/Session");
 const jwt = require("jsonwebtoken");
@@ -7,7 +6,6 @@ const { encrypt, decrypt } = require("../utils/crypto");
 
 const JWT_SECRET = process.env.JWT_SECRET || "changeme";
 
-// helpers
 const isValidNRIC = (val) => /^[0-9]{12}$/.test(val);
 const VALID_ROLES = ["student", "coach", "exco"];
 const VALID_SPORTS = [
@@ -18,7 +16,6 @@ const VALID_SPORTS = [
   "netball",
 ];
 
-/* REGISTER */
 exports.registerUser = async (req, res) => {
   try {
     const {
@@ -86,9 +83,7 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-/* ============================================================
-   LOGIN
-=============================================================== */
+
 exports.loginUser = async (req, res) => {
   try {
     const { role, identifier } = req.body;
@@ -109,7 +104,6 @@ exports.loginUser = async (req, res) => {
     let matched = null;
 
     if (role === "student") {
-      // match NRIC
       for (const u of candidates) {
         if (!u.nricEncrypted) continue;
         if (decrypt(u.nricEncrypted) === identifier) {
@@ -118,7 +112,6 @@ exports.loginUser = async (req, res) => {
         }
       }
     } else {
-      // match hashed staffId
       for (const u of candidates) {
         if (!u.staffId) continue;
         if (await bcrypt.compare(identifier, u.staffId)) {
@@ -172,12 +165,9 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-/* ============================================================
-   GET LOGGED IN USER (auth/me)
-=============================================================== */
+
 exports.getMe = async (req, res) => {
   try {
-    // req.user comes from verifyToken
     const id = req.user.userId || req.user._id;
 
     const user = await User.findById(id).select("-nricEncrypted -staffId -__v");

@@ -9,7 +9,6 @@ const EquipmentBorrow = require("../models/EquipmentBorrow");
 const moment = require("moment-timezone");
 const TZ = "Asia/Kuala_Lumpur";
 
-/* ================= CHECK AVAILABILITY ================= */
 
 exports.checkAvailability = async (req, res) => {
   try {
@@ -72,7 +71,6 @@ exports.checkAvailability = async (req, res) => {
   }
 };
 
-/* ================= CREATE BOOKING (COACH) ================= */
 
 exports.createBooking = async (req, res) => {
   try {
@@ -87,14 +85,12 @@ exports.createBooking = async (req, res) => {
       equipmentRequests = [],
     } = req.body;
 
-    // Basic required fields
     if (!sessionType || !sessionTitle) {
       return res.status(400).json({
         message: "Session type and title are required",
       });
     }
 
-    // Category REQUIRED only for training / tryout
     const requiresCategory = ["training", "tryout"].includes(sessionType);
     if (requiresCategory && !playerCategory) {
       return res.status(400).json({
@@ -174,7 +170,6 @@ exports.createBooking = async (req, res) => {
   }
 };
 
-/* ================= APPROVE / REJECT (EXCO) ================= */
 
 exports.approveBooking = async (req, res) => {
   try {
@@ -187,7 +182,6 @@ exports.approveBooking = async (req, res) => {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    // ❌ REJECT
     if (!approve) {
       booking.status = "rejected";
       await booking.save();
@@ -234,7 +228,6 @@ exports.approveBooking = async (req, res) => {
   status: "approved",
 };
 
-// attach ONLY when required
 if (
   booking.sessionType === "training" ||
   booking.sessionType === "tryout"
@@ -264,7 +257,6 @@ const schedule = await Schedule.create(scheduleData);
   }
 };
 
-/* ================= GET COACH BOOKINGS ================= */
 
 exports.getCoachBookings = async (req, res) => {
   try {
@@ -282,7 +274,6 @@ exports.getCoachBookings = async (req, res) => {
   }
 };
 
-/* ================= GET PENDING BOOKINGS (EXCO) ================= */
 
 exports.getPendingBookings = async (req, res) => {
   try {
@@ -298,7 +289,6 @@ exports.getPendingBookings = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-/* ================= GET ALL BOOKINGS (EXCO) ================= */
 
 exports.getAllBookings = async (req, res) => {
   try {

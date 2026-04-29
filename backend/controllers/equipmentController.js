@@ -1,11 +1,9 @@
-// backend/controllers/equipmentController.js
 const Equipment = require("../models/Equipment");
 const EquipmentRequest = require("../models/EquipmentRequest");
 const DamageReport = require("../models/EquipmentDamageReport");
 const Booking = require("../models/Booking");
 const User = require("../models/User");
 
-// List all equipment (open to authenticated users)
 exports.getEquipmentList = async (req, res) => {
   try {
     const items = await Equipment.find().sort({ name: 1 }).lean();
@@ -16,7 +14,6 @@ exports.getEquipmentList = async (req, res) => {
   }
 };
 
-// equipmentController.js
 exports.getAvailableEquipment = async (req, res) => {
   try {
     const items = await Equipment.find({
@@ -35,7 +32,6 @@ exports.getAvailableEquipment = async (req, res) => {
   }
 };
 
-// Create equipment (EXCO)
 exports.createEquipment = async (req, res) => {
   try {
     const { name, category, quantityTotal = 0 } = req.body;
@@ -64,7 +60,6 @@ exports.createEquipment = async (req, res) => {
   }
 };
 
-// Coach: request equipment for a booking/session
 exports.requestEquipment = async (req, res) => {
   try {
     const coachId = req.user.userId;
@@ -269,7 +264,7 @@ exports.processRequest = async (req, res) => {
         request: reqDoc,
       });
     } else {
-      // reject
+      
       reqDoc.status = "rejected";
       reqDoc.processedBy = excoId;
       reqDoc.processedAt = new Date();
@@ -283,7 +278,7 @@ exports.processRequest = async (req, res) => {
   }
 };
 
-// EXCO: Get ALL damage reports (global history)
+
 exports.getAllDamageReports = async (req, res) => {
   try {
     const reports = await DamageReport.find()

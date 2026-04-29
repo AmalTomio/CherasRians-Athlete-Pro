@@ -93,7 +93,6 @@ exports.createAnnouncement = async (req, res) => {
         .lean();
     }
 
-    // Remove duplicates (safety)
     const uniqueUsers = [
       ...new Map(users.map((u) => [u._id.toString(), u])).values(),
     ];
@@ -157,23 +156,18 @@ exports.getAnnouncements = async (req, res) => {
         {
           $or: [
 
-            // Direct Target
             { targetUsers: user._id },
 
-            // Role Target
             { targetRoles: user.role },
 
-            // Sport Target
             user.sport
               ? { targetSports: user.sport }
               : null,
 
-            // Category Target
             user.category
               ? { targetCategories: user.category }
               : null,
 
-            // Sender always sees their own
             { createdBy: user._id }
 
           ].filter(Boolean)

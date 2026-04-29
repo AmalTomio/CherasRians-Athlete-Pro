@@ -1,4 +1,3 @@
-/* coachController.js */
 
 const mongoose = require("mongoose");
 
@@ -15,7 +14,6 @@ const moment = require("moment-timezone");
 
 const TZ = "Asia/Kuala_Lumpur";
 
-/* ================= UTIL ================= */
 const formatStatus = (status) => {
   switch (status) {
     case "active":
@@ -29,7 +27,6 @@ const formatStatus = (status) => {
   }
 };
 
-/* ================= PLAYERS ================= */
 exports.getPlayers = async (req, res) => {
   try {
     const coachSport = req.user.sport;
@@ -126,13 +123,11 @@ const coachId = new mongoose.Types.ObjectId(req.user._id);
     const todayStart = now.clone().startOf("day").toDate();
     const todayEnd = now.clone().endOf("day").toDate();
 
-    // 🔥 7-DAY WINDOWS
     const fromDate7 = now.clone().subtract(6, "days").startOf("day").toDate();
 
     const coach = await User.findById(coachId).select("sport").lean();
     const coachSport = coach?.sport;
 
-    /* ================= KPI ================= */
     const [
       upcomingSessions,
       totalPlayers,
@@ -160,7 +155,6 @@ const coachId = new mongoose.Types.ObjectId(req.user._id);
       }),
     ]);
 
-    /* ================= TODAY SESSION ================= */
     const todaySession = await Schedule.findOne({
       coachId,
       sessionDate: { $gte: todayStart, $lte: todayEnd },
@@ -174,8 +168,8 @@ const coachId = new mongoose.Types.ObjectId(req.user._id);
     $match: {
       coachId,
       status: "approved",
-      playerCategory: { $exists: true, $ne: null }, // ✅ IMPORTANT
-      sessionType: { $in: ["training", "practice", "tryout"] }, // ✅ FILTER
+      playerCategory: { $exists: true, $ne: null }, 
+      sessionType: { $in: ["training", "practice", "tryout"] }, 
     },
   },
   {
@@ -191,7 +185,6 @@ const coachId = new mongoose.Types.ObjectId(req.user._id);
       U18: categoryAgg.find((c) => c._id === "U-18")?.count || 0,
     };
 
-    /* ================= ATTENDANCE (7 DAYS) ================= */
     const attendanceTrendRaw = await Attendance.aggregate([
       {
         $match: {
@@ -244,7 +237,6 @@ const coachId = new mongoose.Types.ObjectId(req.user._id);
         ? 0
         : Math.round((totalPresent / totalRecords) * 100);
 
-    /* ================= WEEKLY SESSIONS ================= */
     const weeklyAgg = await Schedule.aggregate([
       {
         $match: {
@@ -283,7 +275,6 @@ const coachId = new mongoose.Types.ObjectId(req.user._id);
 
     weeklySessions.reverse();
 
-    /* ================= PERFORMANCE ================= */
     const topPlayers = await PlayerPerformance.find({
       sport: coachSport,
     })
@@ -306,7 +297,6 @@ const coachId = new mongoose.Types.ObjectId(req.user._id);
       ? Number(avgRatingAgg[0].avgRating.toFixed(1))
       : 0;
 
-    /* ================= ANNOUNCEMENTS ================= */
     const nowDate = new Date();
 
     const recentAnnouncements = await Announcement.find({
@@ -331,12 +321,11 @@ const coachId = new mongoose.Types.ObjectId(req.user._id);
       .limit(5)
       .lean();
 
-    /* ================= RESPONSE ================= */
     res.json({
       kpi: {
         upcomingSessions,
         totalPlayers,
-        attendanceRate, // ✅ now 7-day average
+        attendanceRate,
         pendingBookings,
         injuryCount,
       },
@@ -356,7 +345,6 @@ const coachId = new mongoose.Types.ObjectId(req.user._id);
   }
 };
 
-/* ================= SEARCH ================= */
 exports.searchUsers = async (req, res) => {
   try {
     const { q = "" } = req.query;

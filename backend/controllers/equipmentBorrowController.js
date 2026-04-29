@@ -14,7 +14,6 @@ exports.releaseEquipment = async (req, res) => {
     if (!booking.equipmentRequests?.length)
       return res.json({ message: "No equipment to release" });
 
-    // 🔵 Create borrow record
     await EquipmentBorrow.create({
       bookingId: booking._id,
       coachId: booking.coachId,
@@ -52,7 +51,6 @@ exports.submitReturn = async (req, res) => {
     borrow.status = "return_submitted";
     borrow.returnedAt = new Date();
 
-    // 🔵 NEW — proof file
     if (req.file) {
       borrow.returnProof = req.file.filename;
     }
@@ -91,7 +89,6 @@ exports.verifyReturn = async (req, res) => {
     if (borrow.status !== "return_submitted")
       return res.status(400).json({ message: "Return not submitted yet" });
 
-    // ❌ Reject
     if (!approve) {
       borrow.status = "rejected";
       borrow.notes = notes || "";
@@ -99,7 +96,6 @@ exports.verifyReturn = async (req, res) => {
       return res.json({ message: "Return rejected", borrow });
     }
 
-    // ✅ Restore inventory for ALL items
     if (borrow.items?.length) {
       for (const item of borrow.items) {
         await Equipment.findByIdAndUpdate(item.equipmentId, {
@@ -143,7 +139,6 @@ exports.getPendingReturns = async (req, res) => {
       .sort({ updatedAt: -1 })
       .lean();
 
-    // Map coachId -> borrowedBy (for frontend compatibility)
     const formatted = borrows.map((b) => ({
       ...b,
       borrowedBy: b.coachId,
