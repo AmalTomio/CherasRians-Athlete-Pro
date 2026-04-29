@@ -1,4 +1,3 @@
-// backend/server.js
 require("dotenv").config();
 
 const express = require("express");
@@ -26,7 +25,6 @@ const JWT_SECRET = process.env.JWT_SECRET || "changeme";
 
 const app = express();
 
-
 app.use(helmet());
 
 app.use(
@@ -36,28 +34,38 @@ app.use(
   })
 );
 
+const allowedOrigins = [
+  process.env.CLIENT_URL, 
+  "http://localhost:5173", 
+];
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true); 
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      console.error("❌ CORS blocked:", origin);
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   })
 );
 
 app.use(express.json());
 
-
-
 const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
     credentials: true,
   },
 });
-
 
 io.use((socket, next) => {
   try {
@@ -80,7 +88,6 @@ io.use((socket, next) => {
   }
 });
 
-
 io.on("connection", (socket) => {
   console.log("🔌 Socket connected:", socket.user._id);
 
@@ -94,7 +101,6 @@ io.on("connection", (socket) => {
 app.set("io", io);
 global.io = io;
 
-
 (async () => {
   try {
     await connectDB();
@@ -104,7 +110,6 @@ global.io = io;
     process.exit(1);
   }
 })();
-
 
 app.use("/api/auth", authRoutes);
 app.use("/api/exco", excoRoutes);
@@ -127,9 +132,15 @@ app.use("/api/performance", require("./routes/performanceRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
 app.use("/api/disciplinary", disciplinaryRoutes);
 
-
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+app.get("/healthz", (req, res) => {
+  res.status(200).json({ status: "OK" });
+});
+
+app.get("/", (req, res) => {
+  res.send("🚀 API is running...");
+});
 
 const PORT = process.env.PORT || 5000;
 

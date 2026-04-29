@@ -24,6 +24,7 @@ export const initSocket = (token) => {
   socket = io(baseURL, {
     auth: { token },
     transports: ["websocket"],
+    withCredentials: true, // 🔥 IMPORTANT for CORS
     reconnection: true,
     reconnectionAttempts: 5,
     reconnectionDelay: 2000,
