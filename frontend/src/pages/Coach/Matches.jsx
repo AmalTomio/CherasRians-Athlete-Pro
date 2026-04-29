@@ -1,364 +1,246 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { Form, Button, Modal, Row, Col } from "react-bootstrap";
+import React, { useState, useEffect, useMemo } from "react";
+import { Spinner, Form, InputGroup, Pagination, Dropdown } from "react-bootstrap";
 import moment from "moment";
+import { 
+  FiSearch, FiClock, FiMapPin, 
+  FiCheckCircle, FiXCircle, FiAlertCircle, 
+  FiFlag, FiMoreVertical, FiPlus, FiBarChart2, FiTarget
+} from "react-icons/fi";
+
 import api from "../../api/axios";
-import { successAlert, errorAlert } from "../../utils/swal";
-import { FiPlus, FiEdit3, FiFileText } from "react-icons/fi";
-
+import { errorAlert, successAlert } from "../../utils/swal";
 import HeroBanner from "../../components/HeroBanner";
-import FiltersCard from "../../components/FiltersCard";
-import Table from "../../components/Table";
-
-import { SPORT_STATS } from "../../config/sportMeta";
+import ResultModal from "../../components/ResultModal";
+import StatsForm from "../../components/StatsForm";
+import MatchModal from "../../components/MatchModal"; 
 
 export default function Matches() {
-  const user = JSON.parse(localStorage.getItem("user"));
-
-  /* ================= STATE ================= */
   const [matches, setMatches] = useState([]);
-  const [lineups, setLineups] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [showCreate, setShowCreate] = useState(false);
-  const [selected, setSelected] = useState(null);
+  const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
-  const [showStats, setShowStats] = useState(false);
-  const [players, setPlayers] = useState([]);
-  const [playerStats, setPlayerStats] = useState({});
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [showStatsModal, setShowStatsModal] = useState(false);
+  const [selectedMatch, setSelectedMatch] = useState(null);
 
-  const [form, setForm] = useState({
-    opponent: "",
-    venue: "",
-    matchDate: "",
-    category: "U-15",
-    lineupId: "",
-  });
-
-  const [score, setScore] = useState({ our: "", opponent: "" });
-
-  /* ================= FETCH ================= */
-  const fetchMatches = useCallback(async () => {
-    setLoading(true);
+  const fetchMatches = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await api.get("/matches/coach");
-      setMatches(res.data.matches || []);
-    } catch {
+      setMatches(res.data?.matches || []);
+    } catch (err) {
+      console.error("Fetch matches error:", err);
       errorAlert("Failed to load matches");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
-  }, []);
-
-  const fetchLineups = useCallback(async () => {
-    try {
-      const res = await api.get("/team-lineup/all", {
-        params: { sport: user.sport },
-      });
-      setLineups(res.data.lineups || []);
-    } catch {
-      setLineups([]);
-    }
-  }, [user.sport]);
+  };
 
   useEffect(() => {
     fetchMatches();
-    fetchLineups();
-  }, [fetchMatches, fetchLineups]);
+  }, []);
 
-  /* ================= CREATE MATCH ================= */
-  const handleCreate = async () => {
-    if (!form.opponent || !form.venue || !form.matchDate || !form.lineupId) {
-      return errorAlert("Complete all fields");
+  const filteredData = useMemo(() => {
+    return matches.filter((m) => {
+      const keyword = search.toLowerCase();
+      const matchesSearch = 
+        m.opponent?.toLowerCase().includes(keyword) || 
+        m.venue?.toLowerCase().includes(keyword);
+
+      const status = (m.status || "scheduled").toLowerCase();
+
+      const matchesTab =
+        activeTab === "All" ||
+        (activeTab === "Upcoming" && status === "scheduled") ||
+        status === activeTab.toLowerCase();
+
+      return matchesSearch && matchesTab;
+    });
+  }, [matches, search, activeTab]);
+
+  const stats = useMemo(() => {
+    const total = matches.length;
+    const upcoming = matches.filter(m => m.status === "scheduled").length;
+    const completed = matches.filter(m => m.status === "completed").length;
+    const cancelled = matches.filter(m => m.status === "cancelled").length;
+    return { total, upcoming, completed, cancelled };
+  }, [matches]);
+
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredData.slice(start, start + itemsPerPage);
+  }, [filteredData, currentPage]);
+
+  const openResultModal = (match) => {
+    setSelectedMatch(match);
+    setShowResultModal(true);
+  };
+
+  const openStatsModal = (match) => {
+    const lineupId =
+      typeof match.lineupId === "object"
+        ? match.lineupId._id
+        : match.lineupId;
+
+    if (!lineupId) {
+      return errorAlert("No lineup assigned to this match");
     }
 
+    setSelectedMatch({ ...match, lineupId });
+    setShowStatsModal(true);
+  };
+
+  const handleSaved = () => {
+    fetchMatches(true);
+    setShowScheduleModal(false);
+    setShowResultModal(false);
+    setShowStatsModal(false);
+    setSelectedMatch(null);
+  };
+
+  const handleCancelMatch = async (matchId) => {
     try {
-      await api.post("/matches", form);
-      successAlert("Match created");
-      setShowCreate(false);
-      fetchMatches();
-    } catch {
-      errorAlert("Create failed");
+      await api.patch(`/matches/${matchId}/cancel`);
+      successAlert("Match cancelled");
+      fetchMatches(true);
+    } catch (err) {
+      console.error(err);
+      errorAlert(err.response?.data?.message || "Failed to cancel match");
     }
   };
 
-  /* ================= RESULT ================= */
-  const handleSaveResult = async () => {
-    try {
-      await api.post(`/matches/result/${selected._id}`, {
-        ourScore: Number(score.our),
-        opponentScore: Number(score.opponent),
-      });
-
-      successAlert("Result saved");
-      setSelected(null);
-      fetchMatches();
-    } catch {
-      errorAlert("Failed");
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "completed":
+        return <span className="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2 border border-success border-opacity-25"><FiCheckCircle className="me-1"/> Completed</span>;
+      case "cancelled":
+        return <span className="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-2 border border-danger border-opacity-25"><FiXCircle className="me-1"/> Cancelled</span>;
+      default:
+        return <span className="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3 py-2 border border-warning border-opacity-25"><FiClock className="me-1"/> Upcoming</span>;
     }
   };
 
-  /* ================= FETCH PLAYERS (FIXED) ================= */
-  const fetchLineupPlayers = async (match) => {
-    try {
-      const res = await api.get("/team-lineup", {
-        params: {
-          sport: match.sport,
-          category: match.category,
-        },
-      });
+  const tabs = ["All", "Upcoming", "Completed", "Cancelled"];
 
-      const lineup = res.data?.lineup;
-
-      if (!lineup) {
-        return errorAlert("Lineup not found");
-      }
-
-      const allPlayers = [
-        ...(lineup.starters || []),
-        ...(lineup.substitutes || []),
-      ];
-
-      const init = {};
-      allPlayers.forEach((p) => {
-        init[p.playerId._id] = {
-          minutesPlayed: 0,
-          rating: 0,
-          stats: {},
-        };
-      });
-
-      setPlayers(allPlayers);
-      setPlayerStats(init);
-      setSelected(match);
-      setShowStats(true);
-    } catch {
-      errorAlert("Failed to load players");
-    }
-  };
-
-  /* ================= INPUT ================= */
-  const handleStatChange = (pid, key, value) => {
-    setPlayerStats((prev) => ({
-      ...prev,
-      [pid]: {
-        ...prev[pid],
-        stats: {
-          ...prev[pid].stats,
-          [key]: Number(value),
-        },
-      },
-    }));
-  };
-
-  const handleFieldChange = (pid, field, value) => {
-    setPlayerStats((prev) => ({
-      ...prev,
-      [pid]: {
-        ...prev[pid],
-        [field]: Number(value),
-      },
-    }));
-  };
-
-  /* ================= SAVE STATS ================= */
-  const handleSaveStats = async () => {
-    try {
-      const payload = {
-        stats: players.map((p) => ({
-          playerId: p.playerId._id,
-          minutesPlayed: playerStats[p.playerId._id]?.minutesPlayed || 0,
-          rating: playerStats[p.playerId._id]?.rating || 0,
-          stats: playerStats[p.playerId._id]?.stats || {},
-        })),
-      };
-
-      await api.post(`/matches/stats/${selected._id}`, payload);
-
-      successAlert("Stats saved");
-      setShowStats(false);
-    } catch {
-      errorAlert("Failed to save stats");
-    }
-  };
-
-  /* ================= TABLE ================= */
-  const columns = [
-    {
-      key: "opponent",
-      label: "Opponent",
-      accessor: (row) => row.opponent,
-    },
-    {
-      key: "date",
-      label: "Date",
-      accessor: (row) =>
-        moment(row.matchDate).format("DD MMM YYYY"),
-    },
-    {
-      key: "score",
-      label: "Score",
-      accessor: (row) =>
-        row.score ? `${row.score.our}-${row.score.opponent}` : "-",
-    },
-    {
-      key: "action",
-      label: "Action",
-      accessor: (row) => (
-        <div className="d-flex gap-2">
-          {row.status !== "completed" ? (
-            <Button size="sm" onClick={() => setSelected(row)}>
-              <FiEdit3 /> Result
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              variant="success"
-              onClick={() => fetchLineupPlayers(row)}
-            >
-              <FiFileText /> Stats
-            </Button>
-          )}
-        </div>
-      ),
-    },
-  ];
-
-  /* ================= UI ================= */
   return (
-    <div className="px-4 py-4">
+    <div className="container-fluid px-4 py-4 bg-light min-vh-100">
+
       <HeroBanner
-        title="Matches"
-        subtitle="Manage fixtures"
-        buttonText="Create Match"
+        title="Match Fixtures & Results"
+        subtitle="Oversee upcoming games, record final scores, and update player statistics."
+        buttonText="Schedule Match"
         buttonIcon={FiPlus}
-        onButtonClick={() => setShowCreate(true)}
+        onButtonClick={() => setShowScheduleModal(true)}
       />
 
-      <Table columns={columns} data={matches} loading={loading} />
+      {/* TABLE */}
+      <div className="card border-0 shadow-sm rounded-4 overflow-hidden bg-white mt-4">
+        <div className="table-responsive">
+          <table className="table table-hover align-middle mb-0">
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="text-center py-5">
+                    <Spinner size="sm" /> Loading...
+                  </td>
+                </tr>
+              ) : (
+                paginatedData.map((m) => {
+                  // ✅ FIX: DEFINE HERE
+                  const our = m.score?.our ?? 0;
+                  const opp = m.score?.opponent ?? 0;
 
-      {/* ================= CREATE MODAL ================= */}
-      <Modal show={showCreate} onHide={() => setShowCreate(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Create Match</Modal.Title>
-        </Modal.Header>
+                  return (
+                    <tr key={m._id}>
+                      <td className="px-4 py-3">
+                        <div className="fw-bold">vs {m.opponent}</div>
+                        <small className="text-muted">
+                          <FiMapPin /> {m.venue}
+                        </small>
+                      </td>
 
-        <Modal.Body>
-          <Form>
-            <Form.Control
-              placeholder="Opponent"
-              className="mb-2"
-              onChange={(e) =>
-                setForm({ ...form, opponent: e.target.value })
-              }
-            />
+                      <td>
+                        {moment(m.matchDate).format("DD MMM YYYY")}
+                      </td>
 
-            <Form.Control
-              placeholder="Venue"
-              className="mb-2"
-              onChange={(e) =>
-                setForm({ ...form, venue: e.target.value })
-              }
-            />
+                      <td className="text-center">
+                        {m.status === "completed" ? (
+                          <div className="fw-bold">
+                            <span className={our > opp ? "text-success" : ""}>
+                              {our}
+                            </span>
+                            <span className="mx-2">-</span>
+                            <span className={opp > our ? "text-danger" : ""}>
+                              {opp}
+                            </span>
+                          </div>
+                        ) : "TBD"}
+                      </td>
 
-            <Form.Control
-              type="date"
-              className="mb-2"
-              onChange={(e) =>
-                setForm({ ...form, matchDate: e.target.value })
-              }
-            />
+                      <td>{getStatusBadge(m.status)}</td>
 
-            <Form.Select
-              className="mb-2"
-              onChange={(e) =>
-                setForm({ ...form, category: e.target.value })
-              }
-            >
-              <option>U-15</option>
-              <option>U-18</option>
-            </Form.Select>
+                      <td className="text-end">
+                        <Dropdown>
+                          <Dropdown.Toggle variant="light" size="sm">
+                            <FiMoreVertical />
+                          </Dropdown.Toggle>
+                          <Dropdown.Menu>
+                            <Dropdown.Item onClick={() => openResultModal(m)}>
+                              Update Result
+                            </Dropdown.Item>
+                            <Dropdown.Item onClick={() => openStatsModal(m)}>
+                              Player Stats
+                            </Dropdown.Item>
+                            <Dropdown.Item
+                              className="text-danger"
+                              onClick={() => handleCancelMatch(m._id)}
+                            >
+                              Cancel Match
+                            </Dropdown.Item>
+                          </Dropdown.Menu>
+                        </Dropdown>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-            <Form.Select
-              onChange={(e) =>
-                setForm({ ...form, lineupId: e.target.value })
-              }
-            >
-              <option value="">Select Lineup</option>
-              {lineups.map((l) => (
-                <option key={l._id} value={l._id}>
-                  {l.category}
-                </option>
-              ))}
-            </Form.Select>
-          </Form>
-        </Modal.Body>
+      {/* MODALS */}
+      <MatchModal
+        show={showScheduleModal}
+        onHide={() => setShowScheduleModal(false)}
+        onSaved={handleSaved}
+      />
 
-        <Modal.Footer>
-          <Button onClick={handleCreate}>Create</Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* ================= STATS MODAL ================= */}
-      <Modal show={showStats} onHide={() => setShowStats(false)} size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>Player Stats</Modal.Title>
-        </Modal.Header>
-
-        <Modal.Body>
-          {players.map((p) => {
-            const pid = p.playerId._id;
-            const fields = SPORT_STATS[user.sport] || [];
-
-            return (
-              <div key={pid} className="border p-3 mb-3">
-                <b>
-                  {p.playerId.firstName} {p.playerId.lastName}
-                </b>
-
-                <Row className="mt-2">
-                  <Col>
-                    <Form.Control
-                      placeholder="Minutes"
-                      type="number"
-                      onChange={(e) =>
-                        handleFieldChange(pid, "minutesPlayed", e.target.value)
-                      }
-                    />
-                  </Col>
-
-                  <Col>
-                    <Form.Control
-                      placeholder="Rating"
-                      type="number"
-                      onChange={(e) =>
-                        handleFieldChange(pid, "rating", e.target.value)
-                      }
-                    />
-                  </Col>
-                </Row>
-
-                <Row className="mt-2">
-                  {fields.map((f) => (
-                    <Col key={f}>
-                      <Form.Control
-                        placeholder={f}
-                        type="number"
-                        onChange={(e) =>
-                          handleStatChange(pid, f, e.target.value)
-                        }
-                      />
-                    </Col>
-                  ))}
-                </Row>
-              </div>
-            );
-          })}
-        </Modal.Body>
-
-        <Modal.Footer>
-          <Button onClick={handleSaveStats}>Save</Button>
-        </Modal.Footer>
-      </Modal>
+      {selectedMatch && (
+        <>
+          <ResultModal
+            show={showResultModal}
+            onHide={() => setShowResultModal(false)}
+            matchId={selectedMatch._id}
+            onSaved={handleSaved}
+          />
+          <StatsForm
+            show={showStatsModal}
+            onHide={() => setShowStatsModal(false)}
+            matchId={selectedMatch._id}
+            lineupId={selectedMatch.lineupId}
+            sport={selectedMatch.sport}
+            onSaved={handleSaved}
+          />
+        </>
+      )}
     </div>
   );
 }

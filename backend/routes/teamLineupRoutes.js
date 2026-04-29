@@ -11,4 +11,5 @@ router.get("/", verifyToken, requireCoach, controller.getLineup);
 
 router.get("/all", verifyToken, requireCoach, controller.getAllLineups);
 
+router.get("/:id", verifyToken, requireCoach, controller.getLineupById);
 module.exports = router;

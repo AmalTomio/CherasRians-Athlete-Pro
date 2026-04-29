@@ -14,7 +14,6 @@ exports.verifyToken = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    // Normalize user id
     req.user = {
       ...decoded,
       _id: decoded._id || decoded.userId,

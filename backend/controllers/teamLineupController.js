@@ -55,6 +55,25 @@ exports.getLineup = async (req, res) => {
   }
 };
 
+exports.getLineupById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const lineup = await TeamLineup.findById(id)
+      .populate("starters.playerId substitutes.playerId")
+      .lean();
+
+    if (!lineup) {
+      return res.status(404).json({ message: "Lineup not found" });
+    }
+
+    res.json({ lineup });
+  } catch (err) {
+    console.error("Get Lineup By ID Error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 exports.getAllLineups = async (req, res) => {
   try {
     const coachId = new mongoose.Types.ObjectId(

@@ -5,6 +5,8 @@ import PlayerForm from "../../components/PlayerForm";
 import FiltersCard from "../../components/FiltersCard";
 import SkeletonTableLoader from "../../components/SkeletonTableLoader";
 import "react-loading-skeleton/dist/skeleton.css";
+
+import HeroBanner from "../../components/HeroBanner";
 import {
   FiEdit2,
   FiChevronLeft,
@@ -155,29 +157,12 @@ export default function Players() {
   return (
     <div className="px-4 py-4">
       {/* HEADER */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h2
-            className="fw-bold mb-1 text-dark"
-            style={{ letterSpacing: "-0.5px" }}
-          >
-            My Players
-          </h2>
-          <p className="text-muted mb-0">
-            Manage athlete profiles and statuses
-          </p>
-        </div>
-
-        <div className="d-flex gap-2">
-          <button
-            className="btn btn-light text-primary fw-bold d-flex align-items-center gap-2 shadow-sm"
-            onClick={() => fetchPlayers()}
-            style={{ borderRadius: "10px" }}
-          >
-            <FiUsers /> Total: {players.length}
-          </button>
-        </div>
-      </div>
+      <div className="mb-4">
+        <HeroBanner
+          title="My Players"
+          subtitle="Manage athlete profiles and statuses"
+        />
+      </div>     
 
       {/* FILTERS */}
       <FiltersCard
@@ -398,7 +383,7 @@ export default function Players() {
                         }`}
                         style={{
                           backgroundColor:
-                            page === pageNum ? "#6366f1" : "transparent", // Indigo Active
+                            page === pageNum ? "#6366f1" : "transparent",
                         }}
                         onClick={() => setPage(pageNum)}
                       >

@@ -96,12 +96,22 @@ exports.getAllMatches = async (req, res) => {
 exports.saveResult = async (req, res) => {
   try {
     const { matchId } = req.params;
-    const { ourScore, opponentScore } = req.body;
+    let { ourScore, opponentScore } = req.body;
+
+    ourScore = Number(ourScore);
+    opponentScore = Number(opponentScore);
+
+    if (isNaN(ourScore) || isNaN(opponentScore)) {
+      return res.status(400).json({ message: "Invalid score values" });
+    }
 
     const match = await Match.findById(matchId);
     if (!match) return res.status(404).json({ message: "Match not found" });
 
-    match.score = { our: ourScore, opponent: opponentScore };
+    match.score = {
+      our: ourScore,
+      opponent: opponentScore,
+    };
 
     if (ourScore > opponentScore) match.result = "win";
     else if (ourScore < opponentScore) match.result = "loss";
@@ -114,9 +124,10 @@ exports.saveResult = async (req, res) => {
     req.app.get("io").emit("dashboard_update");
 
     res.json({ match });
+
   } catch (err) {
-    console.error("Save Result Error:", err);
-    res.status(500).json({ message: "Error saving result" });
+    console.error("SAVE RESULT ERROR:", err);
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -155,5 +166,28 @@ exports.savePlayerStats = async (req, res) => {
   } catch (err) {
     console.error("Save Stats Error:", err);
     res.status(500).json({ message: "Error saving stats" });
+  }
+};
+
+exports.cancelMatch = async (req, res) => {
+  try {
+    const { matchId } = req.params;
+
+    const match = await Match.findById(matchId);
+    if (!match) return res.status(404).json({ message: "Match not found" });
+
+    if (match.status === "completed") {
+      return res.status(400).json({ message: "Cannot cancel completed match" });
+    }
+
+    match.status = "cancelled";
+    await match.save();
+
+    req.app.get("io").emit("dashboard_update");
+
+    res.json({ message: "Match cancelled" });
+  } catch (err) {
+    console.error("Cancel Match Error:", err);
+    res.status(500).json({ message: err.message });
   }
 };
