@@ -1,9 +1,9 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
-import { FaRunning, FaRegBuilding } from "react-icons/fa";
+import { FaRegBuilding } from "react-icons/fa";
 import {
   FiHome, FiUsers, FiUser, FiClipboard, FiBell, FiCalendar, FiTool,
-  FiMenu, FiLogOut, FiActivity, FiGrid, FiStar, FiX
+  FiMenu, FiLogOut, FiActivity, FiGrid, FiStar, FiX, FiTarget
 } from "react-icons/fi";
 
 import "./Sidebar.css";
@@ -45,7 +45,7 @@ export default function Sidebar({ onToggle, isOpen, onClose }) {
   }, []);
 
   const menu = useMemo(() => {
-     const baseMenu = {
+    const baseMenu = {
       student: [
         ["Dashboard", FiHome, "/dashboard"],
         ["Schedule", FiCalendar, "/student/schedule"],
@@ -104,24 +104,28 @@ export default function Sidebar({ onToggle, isOpen, onClose }) {
 
       <div className={sidebarClass}>
         <div className="sidebar-header">
-          <div className="brand-wrapper">
-            <div className="brand-logo">
-              <FaRunning style={{ marginLeft: "2px" }} />
-            </div>
-            {(!collapsed || isMobile) && (
-              <div className="brand-text">
-                <h4 className="m-0">CherasRians</h4>
-                <span className="brand-subtitle">Athlete Pro</span>
+          
+          {(!collapsed || isMobile) && (
+            <div className="brand-wrapper">
+              {/* Replaced specific logo with a generic icon */}
+              <div className="brand-logo shadow-sm" style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)' }}>
+                <FiTarget size={22} className="text-white" />
               </div>
-            )}
-          </div>
+              <div className="brand-text">
+                {/* Replaced Brand Name */}
+                <h4 className="m-0">Athlete Portal</h4>
+                <span className="brand-subtitle">Management System</span>
+              </div>
+            </div>
+          )}
 
           {!isMobile && (
             <button className="toggle-btn" onClick={() => setCollapsed(!collapsed)}>
               <FiMenu />
             </button>
           )}
-           {isMobile && (
+
+          {isMobile && (
             <button className="toggle-btn text-white" onClick={onClose}>
               <FiX />
             </button>
