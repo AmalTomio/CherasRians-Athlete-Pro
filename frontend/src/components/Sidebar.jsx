@@ -1,32 +1,21 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
-// 1. New Sports Icon
 import { FaRunning, FaRegBuilding } from "react-icons/fa";
 import {
-  FiHome,
-  FiUsers,
-  FiUser,
-  FiClipboard,
-  FiBell,
-  FiCalendar,
-  FiTool,
-  FiMenu,
-  FiLogOut,
-  FiFileText,
-  FiActivity,
-  FiGrid,
-  FiStar,
+  FiHome, FiUsers, FiUser, FiClipboard, FiBell, FiCalendar, FiTool,
+  FiMenu, FiLogOut, FiActivity, FiGrid, FiStar, FiX
 } from "react-icons/fi";
 
 import "./Sidebar.css";
 
 const getInitials = (role) => (role ? role.slice(0, 2).toUpperCase() : "US");
 
-export default function Sidebar({ onToggle }) {
+export default function Sidebar({ onToggle, isOpen, onClose }) {
   const location = useLocation();
   const navigate = useNavigate();
 
   const [collapsed, setCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024);
   const [user, setUser] = useState({ role: "", name: "User" });
 
   useEffect(() => {
@@ -42,7 +31,13 @@ export default function Sidebar({ onToggle }) {
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 1025) setCollapsed(true);
+      const mobile = window.innerWidth <= 1024;
+      setIsMobile(mobile);
+      if (mobile) {
+        setCollapsed(true);
+      } else {
+        setCollapsed(false);
+      }
     };
     handleResize();
     window.addEventListener("resize", handleResize);
@@ -50,7 +45,7 @@ export default function Sidebar({ onToggle }) {
   }, []);
 
   const menu = useMemo(() => {
-    const baseMenu = {
+     const baseMenu = {
       student: [
         ["Dashboard", FiHome, "/dashboard"],
         ["Schedule", FiCalendar, "/student/schedule"],
@@ -97,70 +92,86 @@ export default function Sidebar({ onToggle }) {
     navigate("/login");
   };
 
+  const sidebarClass = isMobile 
+    ? `sidebar ${isOpen ? "mobile-open" : "mobile-closed"}` 
+    : `sidebar ${collapsed ? "collapsed" : ""}`;
+
   return (
-    <div className={`sidebar ${collapsed ? "collapsed" : ""}`}>
-      {/* BRAND HEADER */}
-      <div className="sidebar-header">
-        <div className="brand-wrapper">
-          <div className="brand-logo">
-            {/* 2. Using the Athlete Icon */}
-            <FaRunning style={{ marginLeft: "2px" }} />
-          </div>
-          {!collapsed && (
-            <div className="brand-text">
-              <h4 className="m-0">CherasRians</h4>
-              <span className="brand-subtitle">Athlete Pro</span>
+    <>
+      {isMobile && isOpen && (
+        <div className="sidebar-backdrop" onClick={onClose}></div>
+      )}
+
+      <div className={sidebarClass}>
+        <div className="sidebar-header">
+          <div className="brand-wrapper">
+            <div className="brand-logo">
+              <FaRunning style={{ marginLeft: "2px" }} />
             </div>
+            {(!collapsed || isMobile) && (
+              <div className="brand-text">
+                <h4 className="m-0">CherasRians</h4>
+                <span className="brand-subtitle">Athlete Pro</span>
+              </div>
+            )}
+          </div>
+
+          {!isMobile && (
+            <button className="toggle-btn" onClick={() => setCollapsed(!collapsed)}>
+              <FiMenu />
+            </button>
+          )}
+           {isMobile && (
+            <button className="toggle-btn text-white" onClick={onClose}>
+              <FiX />
+            </button>
           )}
         </div>
-        <button className="toggle-btn" onClick={() => setCollapsed(!collapsed)}>
-          <FiMenu />
-        </button>
-      </div>
 
-      {/* MENU LIST */}
-      <div className="sidebar-menu-wrapper">
-        <p className="menu-label">{!collapsed ? "Main Menu" : "..."}</p>
-        <ul className="sidebar-menu">
-          {menu.map(([label, Icon, path], idx) => {
-            const isActive = location.pathname === path;
-            return (
-              <li key={idx}>
-                <Link
-                  to={path}
-                  className={`sidebar-link ${isActive ? "active" : ""}`}
-                >
-                  <div className="icon-wrapper">
-                    <Icon />
-                  </div>
-                  {!collapsed && <span className="label">{label}</span>}
+        <div className="sidebar-menu-wrapper">
+          <p className="menu-label">{!collapsed || isMobile ? "Main Menu" : "..."}</p>
+          <ul className="sidebar-menu">
+            {menu.map(([label, Icon, path], idx) => {
+              const isActive = location.pathname === path;
+              return (
+                <li key={idx}>
+                  <Link
+                    to={path}
+                    className={`sidebar-link ${isActive ? "active" : ""}`}
+                    onClick={() => {
+                      if (isMobile && onClose) onClose();
+                    }}
+                  >
+                    <div className="sb-icon">
+                      <Icon />
+                    </div>
+                    {(!collapsed || isMobile) && <span className="label">{label}</span>}
+                    {isActive && (!collapsed || isMobile) && <div className="active-glow" />}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
 
-                  {isActive && !collapsed && <div className="active-glow" />}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-
-      {/* FOOTER */}
-      <div className="sidebar-footer">
-        {!collapsed && (
-          <div className="user-info">
-            <div className="user-avatar">{getInitials(user.role)}</div>
-            <div className="user-details">
-              <span className="user-name text-truncate">
-                {user.firstName || user.role?.toUpperCase()}
-              </span>
-              <span className="user-role">{user.role} Account</span>
+        <div className="sidebar-footer">
+          {(!collapsed || isMobile) && (
+            <div className="user-info">
+              <div className="user-avatar">{getInitials(user.role)}</div>
+              <div className="user-details">
+                <span className="user-name text-truncate">
+                  {user.firstName || user.role?.toUpperCase()}
+                </span>
+                <span className="user-role">{user.role} Account</span>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <button className="logout-btn" onClick={handleLogout} title="Logout">
-          <FiLogOut />
-        </button>
+          <button className="logout-btn" onClick={handleLogout} title="Logout">
+            <FiLogOut />
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

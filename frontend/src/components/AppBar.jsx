@@ -5,11 +5,12 @@ import {
   FiShield,
   FiCalendar,
   FiCheck,
+  FiMenu, // Added FiMenu
 } from "react-icons/fi";
 import api from "../api/axios";
 import { io } from "socket.io-client";
 
-export default function AppBar() {
+export default function AppBar({ onMenuClick }) { // Added onMenuClick prop
   const user = JSON.parse(localStorage.getItem("user"));
   const token = localStorage.getItem("token");
 
@@ -80,7 +81,7 @@ export default function AppBar() {
 
   return (
     <nav
-      className="navbar navbar-light bg-white border-bottom px-4 sticky-top"
+      className="navbar navbar-light bg-white border-bottom px-3 px-md-4 sticky-top"
       style={{
         zIndex: 100,
         height: "85px",
@@ -88,26 +89,43 @@ export default function AppBar() {
       }}
     >
       <div className="container-fluid px-0 d-flex align-items-center justify-content-between">
-        <div className="d-flex align-items-center h-100 overflow-hidden">
+        
+        {/* LEFT SIDE: Hamburger & Welcome Text */}
+        <div className="d-flex align-items-center h-100 overflow-hidden gap-3">
+          
+          {/* MOBILE HAMBURGER BUTTON */}
+          <button
+            className="btn d-lg-none d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm"
+            onClick={onMenuClick}
+            style={{
+              backgroundColor: "#0f172a",
+              color: "#ffffff",
+              borderRadius: "8px",
+              width: "42px",
+              height: "42px",
+              border: "none",
+              padding: 0
+            }}
+          >
+            <FiMenu size={22} />
+          </button>
+
           <div
             className="d-flex flex-column justify-content-center"
             style={{ minWidth: 0 }}
           >
-            <h4
-              className="m-0 fw-bold text-dark text-truncate"
-              style={{ letterSpacing: "-0.5px", maxWidth: "250px" }}
+            <h5
+              className="m-0 fw-bold text-dark"
+              style={{ letterSpacing: "-0.5px"}}
               title={`Welcome, ${capitalize(firstName)}`}
             >
               Welcome, {capitalize(firstName)}
-            </h4>
-            <small className="text-muted d-none d-md-block">
-              Have a productive day!
-            </small>
+            </h5>
           </div>
 
           {(sport || role) && (
             <div
-              className="mx-4 d-none d-lg-block"
+              className="mx-2 mx-md-4 d-none d-lg-block"
               style={{ height: "40px", width: "1px", background: "#e2e8f0" }}
             />
           )}
@@ -132,7 +150,7 @@ export default function AppBar() {
                 className="badge rounded-pill d-flex align-items-center gap-2 shadow-sm text-white"
                 style={{
                   background:
-                    "linear-gradient(135deg, #6366f1 0%, #4338ca 100%)", // Indigo
+                    "linear-gradient(135deg, #6366f1 0%, #4338ca 100%)", 
                   padding: "8px 16px",
                   fontSize: "0.85rem",
                 }}
@@ -146,7 +164,7 @@ export default function AppBar() {
                 className="badge rounded-pill d-flex align-items-center gap-2 shadow-sm text-white"
                 style={{
                   background:
-                    "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)", // Sea Blue
+                    "linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)", 
                   padding: "8px 16px",
                   fontSize: "0.85rem",
                 }}
@@ -158,7 +176,8 @@ export default function AppBar() {
           </div>
         </div>
 
-        <div className="d-flex align-items-center gap-4">
+        {/* RIGHT SIDE: Clock & Notifications */}
+        <div className="d-flex align-items-center gap-3 gap-md-4">
           <div className="d-none d-md-flex flex-column align-items-end text-end lh-sm">
             <span
               className="fw-bold text-dark d-flex align-items-center gap-2"
@@ -225,6 +244,7 @@ export default function AppBar() {
                 style={{
                   right: 0,
                   width: "360px",
+                  maxWidth: "90vw",
                   maxHeight: "450px",
                   overflowY: "auto",
                   zIndex: 1000,
