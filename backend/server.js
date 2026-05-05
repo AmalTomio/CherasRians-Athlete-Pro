@@ -25,6 +25,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "changeme";
 
 const app = express();
 
+
 app.use(helmet());
 
 app.use(
@@ -34,28 +35,35 @@ app.use(
   })
 );
 
+
 const allowedOrigins = [
-  process.env.CLIENT_URL, 
-  "http://localhost:5173", 
+  process.env.CLIENT_URL,
+  "http://localhost:5173",
+  "https://app.cherasrians.my",
+  "https://cherasrians.my",
 ];
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true); 
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true); 
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
 
-      console.error("❌ CORS blocked:", origin);
-      return callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-  })
-);
+    console.warn("❌ CORS blocked:", origin);
+    return callback(null, false); 
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
+
+app.options("*", cors(corsOptions));
+
 
 app.use(express.json());
+
 
 const server = http.createServer(app);
 
@@ -101,6 +109,7 @@ io.on("connection", (socket) => {
 app.set("io", io);
 global.io = io;
 
+
 (async () => {
   try {
     await connectDB();
@@ -110,6 +119,7 @@ global.io = io;
     process.exit(1);
   }
 })();
+
 
 app.use("/api/auth", authRoutes);
 app.use("/api/exco", excoRoutes);
@@ -134,6 +144,7 @@ app.use("/api/disciplinary", disciplinaryRoutes);
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+
 app.get("/healthz", (req, res) => {
   res.status(200).json({ status: "OK" });
 });
@@ -141,6 +152,7 @@ app.get("/healthz", (req, res) => {
 app.get("/", (req, res) => {
   res.send("🚀 API is running...");
 });
+
 
 const PORT = process.env.PORT || 5000;
 
