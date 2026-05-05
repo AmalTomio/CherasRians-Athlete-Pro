@@ -1,4 +1,3 @@
-/* Sidebar Container */
 .sidebar {
   width: 280px;
   height: 100vh;
@@ -20,7 +19,6 @@
   width: 80px;
 }
 
-/* Sidebar Header */
 .sidebar-header {
   height: 88px;
   display: flex;
@@ -31,7 +29,6 @@
   transition: padding 0.3s;
 }
 
-/* Brand Wrapper */
 .brand-wrapper {
   display: flex;
   align-items: center;
@@ -39,7 +36,6 @@
   overflow: hidden;
 }
 
-/* Brand Logo */
 .brand-logo {
   width: 42px;
   height: 42px;
@@ -54,7 +50,6 @@
   box-shadow: 0 0 15px rgba(14, 165, 233, 0.4); 
 }
 
-/* Brand Text */
 .brand-text h4 {
   font-size: 17px;
   font-weight: 800;
@@ -71,7 +66,6 @@
   font-weight: 600;
 }
 
-/* Toggle Button */
 .toggle-btn {
   background: none;
   border: none;
@@ -87,14 +81,12 @@
   color: #0ea5e9; 
 }
 
-/* Sidebar Menu Wrapper */
 .sidebar-menu-wrapper {
   flex: 1 1 auto; 
   overflow-y: auto; 
   padding: 24px 16px;
 }
 
-/* Scrollbar Styles */
 .sidebar-menu-wrapper::-webkit-scrollbar {
   width: 4px;
 }
@@ -103,7 +95,6 @@
   border-radius: 4px;
 }
 
-/* Menu Label */
 .menu-label {
   font-size: 11px;
   font-weight: 700;
@@ -115,7 +106,6 @@
   transition: all 0.3s;
 }
 
-/* Sidebar Menu */
 .sidebar-menu {
   list-style: none;
   padding: 0;
@@ -126,7 +116,6 @@
   margin-bottom: 8px;
 }
 
-/* Link Styling */
 .sidebar-link {
   display: flex;
   align-items: center;
@@ -142,7 +131,6 @@
   border: 1px solid transparent; 
 }
 
-/* Unique Icon Class */
 .sb-icon {
   font-size: 20px;
   display: flex;
@@ -152,7 +140,6 @@
   min-width: 24px;
 }
 
-/* Hover State */
 .sidebar-link:hover {
   background: rgba(255, 255, 255, 0.04);
   color: #e2e8f0;
@@ -164,7 +151,6 @@
   color: #0ea5e9; 
 }
 
-/* Active State */
 .sidebar-link.active {
   background: linear-gradient(90deg, rgba(14, 165, 233, 0.15) 0%, rgba(99, 102, 241, 0.05) 100%);
   color: #fff !important;
@@ -188,7 +174,6 @@
   box-shadow: 0 0 12px rgba(14, 165, 233, 0.8);
 }
 
-/* Sidebar Footer */
 .sidebar-footer {
   padding: 20px 24px;
   background: rgba(15, 23, 42, 0.6);
@@ -200,7 +185,6 @@
   transition: padding 0.3s;
 }
 
-/* User Info */
 .user-info {
   display: flex;
   align-items: center;
@@ -262,18 +246,15 @@
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
-/* DESKTOP COLLAPSED FIXES */
 .sidebar.collapsed .sidebar-header {
   justify-content: center;
   padding: 0;
 }
 
-/* Hide the logo entirely when collapsed on desktop */
 .sidebar.collapsed .brand-wrapper {
   display: none;
 }
 
-/* Ensure the hamburger button takes up the space naturally */
 .sidebar.collapsed .toggle-btn {
   margin: 0 auto;
 }
@@ -298,12 +279,9 @@
   padding: 20px 0;
 }
 
-/* ==================================================
-   MOBILE FIX: SLIDE-OUT DRAWER (< 1024px)
-   ================================================== */
+
 @media (max-width: 1024px) {
   .sidebar {
-    /* When OPEN: Acts as a full-height slide-out drawer */
     width: 280px !important;
     height: 100dvh !important;
     background: linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%) !important;
@@ -311,17 +289,15 @@
     z-index: 1050 !important; 
     bottom: auto;
     top: 0;
-    left: -280px; /* Start hidden off-screen to the left */
+    left: -280px;
     transition: left 0.3s ease-in-out;
   }
 
-  /* When the drawer is open */
   .sidebar.mobile-open {
     left: 0;
     box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5) !important;
   }
 
-  /* When the drawer is closed */
   .sidebar.mobile-closed {
     left: -280px;
     box-shadow: none !important;
@@ -334,14 +310,12 @@
     justify-content: space-between;
   }
 
-  /* Full opacity for menu items on mobile */
   .sidebar-menu-wrapper,
   .sidebar-footer {
     opacity: 1 !important;
     visibility: visible !important;
   }
 
-  /* Backdrop for when the drawer is open */
   .sidebar-backdrop {
     position: fixed;
     top: 0;
@@ -349,7 +323,7 @@
     right: 0;
     bottom: 0;
     background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1040; /* Just below the sidebar */
+    z-index: 1040; 
     backdrop-filter: blur(2px);
   }
 }
