@@ -44,20 +44,16 @@ const allowedOrigins = [
 ];
 
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true); 
-
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
-    console.warn("❌ CORS blocked:", origin);
-    return callback(null, false); 
-  },
+  origin: [
+    "http://localhost:5173",
+    "https://app.cherasrians.my",
+    "https://cherasrians.my",
+  ],
   credentials: true,
 };
 
 app.use(cors(corsOptions));
+
 
 app.use((req, res, next) => {
   if (req.method === "OPTIONS") {

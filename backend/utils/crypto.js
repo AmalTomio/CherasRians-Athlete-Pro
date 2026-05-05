@@ -2,7 +2,7 @@
 const crypto = require("crypto");
 
 const ALGO = "aes-256-cbc";
-const SECRET = process.env.CRYPTO_SECRET || ""; // must be 32 bytes ideally
+const SECRET = process.env.CRYPTO_SECRET || ""; 
 
 if (!SECRET || SECRET.length < 32) {
   console.warn(
@@ -23,17 +23,20 @@ function encrypt(text) {
 
 function decrypt(payload) {
   if (!payload) return null;
+
   try {
     const [ivB64, encrypted] = payload.split(":");
     const iv = Buffer.from(ivB64, "base64");
     const key = Buffer.from(SECRET.padEnd(32).slice(0, 32));
+
     const decipher = crypto.createDecipheriv(ALGO, key, iv);
     let dec = decipher.update(encrypted, "base64", "utf8");
     dec += decipher.final("utf8");
+
     return dec;
   } catch (err) {
-    console.error("Decrypt error:", err);
-    return null;
+    console.warn("⚠️ Decrypt failed, returning fallback value");
+    return "[ENCRYPTED]";
   }
 }
 
