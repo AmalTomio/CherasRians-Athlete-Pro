@@ -1,3 +1,5 @@
+// backend/jobs/scheduler.js
+
 const cron = require("node-cron");
 const Booking = require("../models/Booking");
 const Notification = require("../models/Notification");
@@ -8,11 +10,16 @@ const { runEquipmentOverdueCheck } = require("./equipmentOverdueJob");
 
 const TZ = "Asia/Kuala_Lumpur";
 
-function startWeeklyResetJobs() {
+const getCategoryByYear = (year) => {
+  const y = Number(year);
 
-  /* =====================================================
-     WEEKLY RESET — Every Sunday 8PM MYT
-  ====================================================== */
+  if (y >= 1 && y <= 3) return "U-15";
+  if (y >= 4 && y <= 5) return "U-18";
+
+  return "";
+};
+
+function startWeeklyResetJobs() {
   cron.schedule(
     "0 20 * * 0",
     async () => {
@@ -23,7 +30,7 @@ function startWeeklyResetJobs() {
 
         await Booking.updateMany(
           { startAt: { $gte: today } },
-          { status: "cancelled" }
+          { status: "cancelled" },
         );
 
         const coaches = await User.find({ role: "coach" }).lean();
@@ -34,8 +41,8 @@ function startWeeklyResetJobs() {
               title: "Weekly Schedule Reset",
               message:
                 "All upcoming facility bookings have been reset. Please rebook your facilities.",
-            })
-          )
+            }),
+          ),
         );
 
         console.log("[Scheduler] Weekly reset completed.");
@@ -43,7 +50,7 @@ function startWeeklyResetJobs() {
         console.error("[Scheduler] Weekly reset error:", err);
       }
     },
-    { timezone: TZ }
+    { timezone: TZ },
   );
 
   /* =====================================================
@@ -71,10 +78,10 @@ function startWeeklyResetJobs() {
                 toUser: c._id,
                 title: "Reminder: Schedule Reset Soon",
                 message: `Schedules will reset on ${nextSunday.format(
-                  "YYYY-MM-DD"
+                  "YYYY-MM-DD",
                 )}. Please ensure your bookings are updated.`,
-              })
-            )
+              }),
+            ),
           );
 
           console.log("[Scheduler] 2-day reset reminders sent.");
@@ -83,7 +90,7 @@ function startWeeklyResetJobs() {
         console.error("[Scheduler] Reminder job error:", err);
       }
     },
-    { timezone: TZ }
+    { timezone: TZ },
   );
 
   /* =====================================================
@@ -118,14 +125,14 @@ function startWeeklyResetJobs() {
           });
 
           console.log(
-            `[Scheduler] Equipment auto-released for booking ${booking._id}`
+            `[Scheduler] Equipment auto-released for booking ${booking._id}`,
           );
         }
       } catch (err) {
         console.error("[Scheduler] Equipment release error:", err);
       }
     },
-    { timezone: TZ }
+    { timezone: TZ },
   );
 
   /* =====================================================
@@ -141,9 +148,57 @@ function startWeeklyResetJobs() {
         console.error("[Scheduler] Overdue check error:", err);
       }
     },
-    { timezone: TZ }
+    { timezone: TZ },
   );
+  /* =====================================================
+   YEARLY STUDENT PROGRESSION — Every Jan 1st 12AM
+===================================================== */
+  cron.schedule(
+    "0 0 1 1 *",
+    async () => {
+      try {
+        console.log("[Scheduler] Running yearly student progression...");
 
+        const students = await User.find({
+          role: "student",
+          isActive: true,
+        });
+
+        for (const student of students) {
+          // FORM 5 → GRADUATED
+          if (student.year >= 5) {
+            student.status = "graduated";
+            student.isActive = false;
+
+            await student.save();
+
+            console.log(
+              `[Scheduler] Student graduated: ${student.firstName} ${student.lastName}`,
+            );
+
+            continue;
+          }
+
+          // PROGRESS YEAR
+          student.year += 1;
+
+          // AUTO UPDATE CATEGORY
+          student.category = getCategoryByYear(student.year);
+
+          await student.save();
+
+          console.log(
+            `[Scheduler] Updated ${student.firstName} ${student.lastName} → Form ${student.year} (${student.category})`,
+          );
+        }
+
+        console.log("[Scheduler] Yearly progression completed.");
+      } catch (err) {
+        console.error("[Scheduler] Yearly progression error:", err);
+      }
+    },
+    { timezone: TZ },
+  );
   console.log("Scheduler jobs started (Timezone: Asia/Kuala_Lumpur)");
 }
 

@@ -42,7 +42,10 @@ const fadeUp = {
 
 export default function AuthLayout({ title, subtitle, children }) {
   return (
+
+        
     <div className="d-flex vh-100 bg-light">
+      
       {/* ================= LEFT: BRANDING PANEL ================= */}
       <motion.div
         className="d-none d-md-flex col-md-6 position-relative text-white overflow-hidden"

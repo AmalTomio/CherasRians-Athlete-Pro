@@ -1,3 +1,4 @@
+//controllers/authController.js
 const User = require("../models/User");
 const Session = require("../models/Session");
 const jwt = require("jsonwebtoken");
@@ -15,7 +16,14 @@ const VALID_SPORTS = [
   "badminton",
   "netball",
 ];
+const getCategoryByYear = (year) => {
+  const y = Number(year);
 
+  if (y >= 1 && y <= 3) return "U-15";
+  if (y >= 4 && y <= 5) return "U-18";
+
+  return "";
+};
 exports.registerUser = async (req, res) => {
   try {
     const {
@@ -72,6 +80,7 @@ exports.registerUser = async (req, res) => {
       sport: role === "coach" ? sport : undefined,
       classGroup: role === "student" ? classGroup : undefined,
       year: role === "student" ? year : undefined,
+      category: role === "student" ? getCategoryByYear(year) : undefined,
     });
 
     await user.save();
@@ -82,7 +91,6 @@ exports.registerUser = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
-
 
 exports.loginUser = async (req, res) => {
   try {
@@ -137,7 +145,7 @@ exports.loginUser = async (req, res) => {
         sport: matched.sport,
       },
       JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES || "1d" }
+      { expiresIn: process.env.JWT_EXPIRES || "1d" },
     );
 
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -165,7 +173,6 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-
 exports.getMe = async (req, res) => {
   try {
     const id = req.user.userId || req.user._id;
@@ -180,4 +187,3 @@ exports.getMe = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
-
