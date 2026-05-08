@@ -25,17 +25,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "changeme";
 
 const app = express();
 
-
-app.use(helmet());
-
-app.use(
-  rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-  })
-);
-
-
+/* ================= CORS ================= */
 const allowedOrigins = [
   "http://localhost:5173",
   "https://app.cherasrians.my",
@@ -59,9 +49,21 @@ app.use(
   })
 );
 
+app.options("*", cors());
+
+/* ================= HELMET ================= */
+app.use(helmet());
+
+/* ================= RATE LIMIT ================= */
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+  })
+);
+
 
 app.use(express.json());
-
 
 const server = http.createServer(app);
 
