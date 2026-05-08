@@ -37,30 +37,28 @@ app.use(
 
 
 const allowedOrigins = [
-  process.env.CLIENT_URL,
   "http://localhost:5173",
   "https://app.cherasrians.my",
   "https://cherasrians.my",
 ];
 
-const corsOptions = {
-  origin: [
-    "http://localhost:5173",
-    "https://app.cherasrians.my",
-    "https://cherasrians.my",
-  ],
-  credentials: true,
-};
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
 
-app.use(cors(corsOptions));
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
 
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
-app.use((req, res, next) => {
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
-  next();
-});
 
 app.use(express.json());
 
