@@ -4,11 +4,11 @@ import api from "../api/axios";
 import Swal from "sweetalert2";
 import { FiCamera, FiEdit2, FiX } from "react-icons/fi";
 import Avatar from "../components/Avatar";
-import HeroBanner from "../components/HeroBanner"; // Added HeroBanner import
+import HeroBanner from "../components/HeroBanner";
+import { formatSportName } from "../utils/format";
 
 const BACKEND_URL =
-  import.meta.env.VITE_API_BASE?.replace("/api", "") ||
-  "http://localhost:5000";
+  import.meta.env.VITE_API_BASE?.replace("/api", "") || "http://localhost:5000";
 
 export default function Profile() {
   const [loading, setLoading] = useState(true);
@@ -96,7 +96,7 @@ export default function Profile() {
     const preview = URL.createObjectURL(file);
     setForm((prev) => ({ ...prev, profileUrl: preview }));
     setSelectedFile(file);
-    
+
     // Auto-save image to mimic seamless profile picture updates
     handleImageUpload(file);
   };
@@ -112,7 +112,13 @@ export default function Profile() {
         profileUrl: `${BACKEND_URL}${newUrl}`,
       }));
       setSelectedFile(null);
-      Swal.fire({ title: "Success", text: "Profile picture updated.", icon: "success", timer: 1500, showConfirmButton: false });
+      Swal.fire({
+        title: "Success",
+        text: "Profile picture updated.",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+      });
     } catch (err) {
       Swal.fire("Error", "Failed to update profile picture.", "error");
     }
@@ -147,14 +153,14 @@ export default function Profile() {
         title: "Success",
         text: "Your profile has been updated.",
         icon: "success",
-        confirmButtonColor: "#0d6efd"
+        confirmButtonColor: "#0d6efd",
       });
       setIsEditing(false);
     } catch (err) {
       Swal.fire(
         "Error",
         err.response?.data?.message || "Update failed",
-        "error"
+        "error",
       );
     } finally {
       setSaving(false);
@@ -172,7 +178,10 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ minHeight: "60vh" }}
+      >
         <Spinner animation="border" variant="primary" />
       </div>
     );
@@ -182,7 +191,6 @@ export default function Profile() {
 
   return (
     <div className="container-fluid px-4 py-4 bg-light min-vh-100">
-      
       {/* Custom Styles matching the reference image */}
       <style>{`
         .section-title { 
@@ -287,12 +295,16 @@ export default function Profile() {
       `}</style>
 
       {/* REUSED HEROBANNER COMPONENT */}
-      <HeroBanner 
-        title="My Profile" 
-        subtitle="Manage your personal information, contact details, and system preferences." 
+      <HeroBanner
+        title="My Profile"
+        subtitle="Manage your personal information, contact details, and system preferences."
       />
 
-      {error && <Alert variant="danger" className="border-0 shadow-sm mt-4">{error}</Alert>}
+      {error && (
+        <Alert variant="danger" className="border-0 shadow-sm mt-4">
+          {error}
+        </Alert>
+      )}
 
       <div className="mt-4">
         {/* ================= CARD 1: HEADER ================= */}
@@ -309,13 +321,23 @@ export default function Profile() {
               <FiCamera />
             </div>
           </div>
-          <input type="file" ref={fileRef} hidden accept="image/*" onChange={handleImageChange} />
+          <input
+            type="file"
+            ref={fileRef}
+            hidden
+            accept="image/*"
+            onChange={handleImageChange}
+          />
 
           <div>
-            <h5 className="fw-bold text-dark mb-1">{fullName || "Unknown User"}</h5>
+            <h5 className="fw-bold text-dark mb-1">
+              {fullName || "Unknown User"}
+            </h5>
             <div className="text-muted small text-capitalize mb-1">{role}</div>
             <div className="text-muted small">
-              {form.sport !== "-" ? form.sport : "No Sport Assigned"} 
+              {form.sport !== "-"
+                ? formatSportName(form.sport)
+                : "No Sport Assigned"}{" "}
               {form.formClass !== "-" ? `, ${form.formClass}` : ""}
             </div>
           </div>
@@ -326,11 +348,17 @@ export default function Profile() {
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h5 className="section-title mb-0">Personal Information</h5>
             {!isEditing ? (
-              <button className="btn-edit-orange" onClick={() => setIsEditing(true)}>
+              <button
+                className="btn-edit-orange"
+                onClick={() => setIsEditing(true)}
+              >
                 Edit <FiEdit2 size={14} />
               </button>
             ) : (
-              <button className="btn btn-sm btn-light text-muted fw-bold border" onClick={() => setIsEditing(false)}>
+              <button
+                className="btn btn-sm btn-light text-muted fw-bold border"
+                onClick={() => setIsEditing(false)}
+              >
                 Cancel <FiX size={16} />
               </button>
             )}
@@ -343,25 +371,46 @@ export default function Profile() {
                 <Col md={4} className="mb-3">
                   <Form.Group>
                     <Form.Label className="info-label">First Name</Form.Label>
-                    <Form.Control value={form.firstName} onChange={(e) => updateField("firstName", e.target.value)} required />
+                    <Form.Control
+                      value={form.firstName}
+                      onChange={(e) => updateField("firstName", e.target.value)}
+                      required
+                    />
                   </Form.Group>
                 </Col>
                 <Col md={4} className="mb-3">
                   <Form.Group>
                     <Form.Label className="info-label">Last Name</Form.Label>
-                    <Form.Control value={form.lastName} onChange={(e) => updateField("lastName", e.target.value)} required />
+                    <Form.Control
+                      value={form.lastName}
+                      onChange={(e) => updateField("lastName", e.target.value)}
+                      required
+                    />
                   </Form.Group>
                 </Col>
                 <Col md={4} className="mb-3">
                   <Form.Group>
-                    <Form.Label className="info-label">Date of Birth</Form.Label>
-                    <Form.Control type="date" value={form.bod} onChange={(e) => updateField("bod", e.target.value)} />
+                    <Form.Label className="info-label">
+                      Date of Birth
+                    </Form.Label>
+                    <Form.Control
+                      type="date"
+                      value={form.bod}
+                      onChange={(e) => updateField("bod", e.target.value)}
+                    />
                   </Form.Group>
                 </Col>
                 <Col md={4} className="mb-3">
                   <Form.Group>
-                    <Form.Label className="info-label">Email Address</Form.Label>
-                    <Form.Control type="email" value={form.email} onChange={(e) => updateField("email", e.target.value)} required />
+                    <Form.Label className="info-label">
+                      Email Address
+                    </Form.Label>
+                    <Form.Control
+                      type="email"
+                      value={form.email}
+                      onChange={(e) => updateField("email", e.target.value)}
+                      required
+                    />
                   </Form.Group>
                 </Col>
 
@@ -369,28 +418,54 @@ export default function Profile() {
                   <Col md={4} className="mb-3">
                     <Form.Group>
                       <Form.Label className="info-label">Age</Form.Label>
-                      <Form.Control type="number" value={form.age} onChange={(e) => updateField("age", e.target.value)} />
+                      <Form.Control
+                        type="number"
+                        value={form.age}
+                        onChange={(e) => updateField("age", e.target.value)}
+                      />
                     </Form.Group>
                   </Col>
                 ) : (
                   <>
                     <Col md={4} className="mb-3">
                       <Form.Group>
-                        <Form.Label className="info-label">Height (cm)</Form.Label>
-                        <Form.Control type="number" value={form.height} onChange={(e) => updateField("height", e.target.value)} />
+                        <Form.Label className="info-label">
+                          Height (cm)
+                        </Form.Label>
+                        <Form.Control
+                          type="number"
+                          value={form.height}
+                          onChange={(e) =>
+                            updateField("height", e.target.value)
+                          }
+                        />
                       </Form.Group>
                     </Col>
                     <Col md={4} className="mb-3">
                       <Form.Group>
-                        <Form.Label className="info-label">Weight (kg)</Form.Label>
-                        <Form.Control type="number" value={form.weight} onChange={(e) => updateField("weight", e.target.value)} />
+                        <Form.Label className="info-label">
+                          Weight (kg)
+                        </Form.Label>
+                        <Form.Control
+                          type="number"
+                          value={form.weight}
+                          onChange={(e) =>
+                            updateField("weight", e.target.value)
+                          }
+                        />
                       </Form.Group>
                     </Col>
                   </>
                 )}
               </Row>
               <div className="d-flex justify-content-end mt-3">
-                <Button variant="success" type="submit" className="px-4 fw-bold" style={{ backgroundColor: '#114232', borderColor: '#114232' }} disabled={saving}>
+                <Button
+                  variant="success"
+                  type="submit"
+                  className="px-4 fw-bold"
+                  style={{ backgroundColor: "#114232", borderColor: "#114232" }}
+                  disabled={saving}
+                >
                   {saving ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
@@ -415,17 +490,31 @@ export default function Profile() {
                 ) : (
                   <>
                     <div className="info-label">Height</div>
-                    <div className="info-value mb-md-0">{form.height ? `${form.height} cm` : "-"}</div>
+                    <div className="info-value mb-md-0">
+                      {form.height ? `${form.height} cm` : "-"}
+                    </div>
                   </>
                 )}
               </Col>
               <Col md={4}>
                 <div className="info-label">Date of Birth</div>
-                <div className="info-value">{form.bod ? new Date(form.bod).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ /g, '-') : "-"}</div>
+                <div className="info-value">
+                  {form.bod
+                    ? new Date(form.bod)
+                        .toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })
+                        .replace(/ /g, "-")
+                    : "-"}
+                </div>
                 {role === "student" && (
                   <>
                     <div className="info-label">Weight</div>
-                    <div className="info-value mb-md-0">{form.weight ? `${form.weight} kg` : "-"}</div>
+                    <div className="info-value mb-md-0">
+                      {form.weight ? `${form.weight} kg` : "-"}
+                    </div>
                   </>
                 )}
               </Col>
@@ -438,25 +527,35 @@ export default function Profile() {
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h5 className="section-title mb-0">System Details</h5>
           </div>
-          
+
           <Row>
             <Col md={4}>
               <div className="info-label">Sport</div>
-              <div className="info-value mb-md-0">{form.sport !== "-" ? form.sport : "Not Assigned"}</div>
+              <div className="info-value mb-md-0">
+                {form.sport !== "-"
+                  ? formatSportName(form.sport)
+                  : "Not Assigned"}{" "}
+              </div>
             </Col>
             <Col md={4}>
               <div className="info-label">Category</div>
-              <div className="info-value mb-md-0">{form.category !== "-" ? form.category : "N/A"}</div>
+              <div className="info-value mb-md-0">
+                {form.category !== "-" ? form.category : "N/A"}
+              </div>
             </Col>
             <Col md={4}>
               <div className="info-label">Position</div>
-              <div className="info-value mb-md-0">{form.position !== "-" ? form.position : "N/A"}</div>
+              <div className="info-value mb-md-0">
+                {form.position !== "-" ? form.position : "N/A"}
+              </div>
             </Col>
-            
+
             {role === "student" && (
               <Col md={4} className="mt-md-4">
                 <div className="info-label">Form Class</div>
-                <div className="info-value mb-0">{form.formClass !== "-" ? form.formClass : "N/A"}</div>
+                <div className="info-value mb-0">
+                  {form.formClass !== "-" ? form.formClass : "N/A"}
+                </div>
               </Col>
             )}
           </Row>

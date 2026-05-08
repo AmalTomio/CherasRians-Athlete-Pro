@@ -212,7 +212,6 @@ export default function ManageStudents() {
                           </div>
                           <div className="d-flex flex-column">
                             <span className="fw-bold text-dark">{s.firstName} {s.lastName}</span>
-                            <small className="text-muted" style={{ fontSize: "0.8rem" }}>{s.email || "No Email"}</small>
                           </div>
                         </div>
                       </td>

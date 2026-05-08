@@ -1,3 +1,5 @@
+//backend/server.js
+
 require("dotenv").config();
 
 const express = require("express");
@@ -45,8 +47,14 @@ app.use(
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "Cache-Control",
+      "Pragma",
+      "Expires",
+    ],
+  }),
 );
 
 app.options(/.*/, cors());
@@ -55,13 +63,15 @@ app.options(/.*/, cors());
 app.use(helmet());
 
 /* ================= RATE LIMIT ================= */
-app.use(
-  rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-  })
-);
-
+/* ================= RATE LIMIT ================= */
+if (process.env.NODE_ENV === "production") {
+  app.use(
+    rateLimit({
+      windowMs: 15 * 60 * 1000,
+      max: 100,
+    }),
+  );
+}
 
 app.use(express.json());
 
@@ -109,7 +119,6 @@ io.on("connection", (socket) => {
 app.set("io", io);
 global.io = io;
 
-
 (async () => {
   try {
     await connectDB();
@@ -119,7 +128,6 @@ global.io = io;
     process.exit(1);
   }
 })();
-
 
 app.use("/api/auth", authRoutes);
 app.use("/api/exco", excoRoutes);
@@ -144,7 +152,6 @@ app.use("/api/disciplinary", disciplinaryRoutes);
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-
 app.get("/healthz", (req, res) => {
   res.status(200).json({ status: "OK" });
 });
@@ -152,7 +159,6 @@ app.get("/healthz", (req, res) => {
 app.get("/", (req, res) => {
   res.send("🚀 API is running...");
 });
-
 
 const PORT = process.env.PORT || 5000;
 

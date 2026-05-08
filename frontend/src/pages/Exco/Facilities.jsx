@@ -86,7 +86,6 @@ export default function Facilities() {
           </div>
           <div className="d-flex flex-column">
             <span className="fw-bolder text-dark" style={{ fontSize: "0.95rem" }}>{row.name || "Unnamed Facility"}</span>
-            <span className="text-muted small fw-medium">Facility ID: {row._id?.slice(-5).toUpperCase() || "N/A"}</span>
           </div>
         </div>
       )
