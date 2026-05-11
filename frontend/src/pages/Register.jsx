@@ -1,10 +1,8 @@
-//Register.jsx
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import api from "../api/axios";
 import { successAlert, errorAlert } from "../utils/swal";
-
 import Auth from "../layouts/Auth";
 
 export default function Register() {
@@ -16,9 +14,7 @@ export default function Register() {
   const [nric, setNric] = useState("");
   const [year, setYear] = useState("");
   const [classGroup, setClassGroup] = useState("");
-
   const [staffId, setStaffId] = useState("");
-
   const [sport, setSport] = useState("");
 
   const [password, setPassword] = useState("");
@@ -83,230 +79,191 @@ export default function Register() {
 
   const getClassOptions = () => {
     if (!year) return [];
-
     if (year === "1" || year === "2" || year === "3") {
-      return [
-        "DINAMIK",
-        "EFEKTIF",
-        "INOVATIF",
-        "INTELEK",
-        "PROAKTIF",
-        "GAMELAN",
-        "SAPELELE",
-        "IMTIAZ",
-      ];
+      return ["DINAMIK", "EFEKTIF", "INOVATIF", "INTELEK", "PROAKTIF", "GAMELAN", "SAPELELE", "IMTIAZ"];
     }
-
     if (year === "4" || year === "5") {
-      return [
-        "ALPHA",
-        "BETA",
-        "DELTA",
-        "COMMERCE",
-        "KREATIF",
-        "SINERGI",
-        "ARTISTIK",
-        "INOVATIF",
-        "GOURMET",
-      ];
+      return ["ALPHA", "BETA", "DELTA", "COMMERCE", "KREATIF", "SINERGI", "ARTISTIK", "INOVATIF", "GOURMET"];
     }
-
     return [];
   };
 
+  const inputStyle = {
+    backgroundColor: "#f1f5f9",
+    border: "1px solid transparent",
+    padding: "0.75rem 1rem",
+    fontSize: "0.95rem",
+    transition: "all 0.2s ease-in-out"
+  };
+
   return (
-    <Auth title="Create Account" subtitle="Fill the form to continue.">
-      <div className="mb-3">
-        <label className="form-label">Register As</label>
-        <select
-          className="form-select"
-          value={role}
-          onChange={(e) => {
-            setRole(e.target.value);
-            setNric("");
-            setStaffId("");
-            setSport("");
-            setYear("");
-            setClassGroup("");
-          }}
-        >
-          <option value="student">Student</option>
-          <option value="coach">Coach</option>
-          <option value="exco">Sport Exco Teacher</option>
-        </select>
-      </div>
-
-      <div className="row">
-        <div className="col-md-6 mb-3">
-          <label className="form-label">First Name</label>
-          <input
-            type="text"
-            className="form-control"
-            value={firstName}
-            onChange={(e) => setFirstName(toUpper(e.target.value))}
-          />
-        </div>
-
-        <div className="col-md-6 mb-3">
-          <label className="form-label">Last Name</label>
-          <input
-            type="text"
-            className="form-control"
-            value={lastName}
-            onChange={(e) => setLastName(toUpper(e.target.value))}
-          />
-        </div>
-      </div>
-
-      <div className="mb-3">
-        <label className="form-label">Email</label>
-        <input
-          type="email"
-          className="form-control"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-      </div>
-
-      {role === "student" && (
-        <>
-          <div className="mb-3">
-            <label className="form-label">NRIC (12 digits)</label>
-            <input
-              type="text"
-              maxLength={12}
-              className="form-control"
-              value={nric}
-              onChange={(e) => setNric(e.target.value.replace(/\D/g, ""))}
-            />
-          </div>
-
-          <div className="mb-3">
-            <label className="form-label">Form (1–5)</label>
-            <select
-              className="form-select"
-              value={year}
-              onChange={(e) => {
-                setYear(e.target.value);
-                setClassGroup("");
-              }}
-            >
-              <option value="">Select Form</option>
-              <option value="1">Form 1</option>
-              <option value="2">Form 2</option>
-              <option value="3">Form 3</option>
-              <option value="4">Form 4</option>
-              <option value="5">Form 5</option>
-            </select>
-          </div>
-
-          <div className="mb-3">
-            <label className="form-label">Class</label>
-            <select
-              className="form-select"
-              value={classGroup}
-              onChange={(e) => setClassGroup(e.target.value)}
-              disabled={!year}
-            >
-              <option value="">Select Class</option>
-
-              {getClassOptions().map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-        </>
-      )}
-
-      {(role === "coach" || role === "exco") && (
+    <Auth title="Join the Elite" subtitle="Create your profile to start tracking performance.">
+      <motion.form 
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleRegister();
+        }}
+        initial={{ opacity: 0, y: 10 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        transition={{ delay: 0.3 }} 
+        className="pb-4"
+      >
         <div className="mb-3">
-          <label className="form-label">Staff ID</label>
-          <input
-            type="text"
-            className="form-control"
-            value={staffId}
-            onChange={(e) => setStaffId(e.target.value)}
-          />
-        </div>
-      )}
-
-      {role === "coach" && (
-        <div className="mb-3">
-          <label className="form-label">Sport</label>
+          <label className="form-label fw-semibold text-dark small">Register As</label>
           <select
-            className="form-select"
-            value={sport}
-            onChange={(e) => setSport(e.target.value)}
+            className="form-select rounded-4 custom-focus-ring"
+            style={inputStyle}
+            value={role}
+            onChange={(e) => {
+              setRole(e.target.value);
+              setNric(""); setStaffId(""); setSport(""); setYear(""); setClassGroup("");
+            }}
           >
-            <option value="">Select Sport</option>
-            <option value="football">Football</option>
-            <option value="volleyball">Volleyball</option>
-            <option value="sepak_takraw">Sepak Takraw</option>
-            <option value="badminton">Badminton</option>
+            <option value="student">Athlete (Student)</option>
+            <option value="coach">Coach</option>
+            <option value="exco">Sport Exco Teacher</option>
           </select>
         </div>
-      )}
 
-      <div className="mb-3">
-        <label className="form-label">Password</label>
+        <div className="row g-2 mb-3">
+          <div className="col-md-6">
+            <label className="form-label fw-semibold text-dark small">First Name</label>
+            <input
+              type="text"
+              className="form-control rounded-4 custom-focus-ring"
+              style={inputStyle}
+              value={firstName}
+              onChange={(e) => setFirstName(toUpper(e.target.value))}
+            />
+          </div>
+          <div className="col-md-6">
+            <label className="form-label fw-semibold text-dark small">Last Name</label>
+            <input
+              type="text"
+              className="form-control rounded-4 custom-focus-ring"
+              style={inputStyle}
+              value={lastName}
+              onChange={(e) => setLastName(toUpper(e.target.value))}
+            />
+          </div>
+        </div>
 
-        <div className="input-group">
+        <div className="mb-3">
+          <label className="form-label fw-semibold text-dark small">Email</label>
           <input
-            type={showPassword ? "text" : "password"}
-            className="form-control"
-            placeholder="Enter password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            type="email"
+            className="form-control rounded-4 custom-focus-ring"
+            style={inputStyle}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
-
-          <button
-            type="button"
-            className="btn btn-outline-secondary"
-            onClick={() => setShowPassword(!showPassword)}
-          >
-            {showPassword ? "Hide" : "Show"}
-          </button>
         </div>
 
-        <div className="form-text">
-          Minimum 8 characters with uppercase, lowercase, number, and symbol.
+        {role === "student" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <div className="mb-3">
+              <label className="form-label fw-semibold text-dark small">NRIC (12 digits)</label>
+              <input
+                type="text"
+                maxLength={12}
+                className="form-control rounded-4 custom-focus-ring"
+                style={inputStyle}
+                value={nric}
+                onChange={(e) => setNric(e.target.value.replace(/\D/g, ""))}
+              />
+            </div>
+            <div className="row g-2 mb-3">
+              <div className="col-md-6">
+                <label className="form-label fw-semibold text-dark small">Form</label>
+                <select className="form-select rounded-4 custom-focus-ring" style={inputStyle} value={year} onChange={(e) => { setYear(e.target.value); setClassGroup(""); }}>
+                  <option value="">Select Form</option>
+                  <option value="1">Form 1</option>
+                  <option value="2">Form 2</option>
+                  <option value="3">Form 3</option>
+                  <option value="4">Form 4</option>
+                  <option value="5">Form 5</option>
+                </select>
+              </div>
+              <div className="col-md-6">
+                <label className="form-label fw-semibold text-dark small">Class</label>
+                <select className="form-select rounded-4 custom-focus-ring" style={inputStyle} value={classGroup} onChange={(e) => setClassGroup(e.target.value)} disabled={!year}>
+                  <option value="">Select Class</option>
+                  {getClassOptions().map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {(role === "coach" || role === "exco") && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-3">
+            <label className="form-label fw-semibold text-dark small">Staff ID</label>
+            <input type="text" className="form-control rounded-4 custom-focus-ring" style={inputStyle} value={staffId} onChange={(e) => setStaffId(e.target.value)} />
+          </motion.div>
+        )}
+
+        {role === "coach" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-3">
+            <label className="form-label fw-semibold text-dark small">Sport Specialization</label>
+            <select className="form-select rounded-4 custom-focus-ring" style={inputStyle} value={sport} onChange={(e) => setSport(e.target.value)}>
+              <option value="">Select Sport</option>
+              <option value="football">Football</option>
+              <option value="volleyball">Volleyball</option>
+              <option value="sepak_takraw">Sepak Takraw</option>
+              <option value="badminton">Badminton</option>
+            </select>
+          </motion.div>
+        )}
+
+        <div className="row g-2 mb-4">
+          <div className="col-md-6">
+            <label className="form-label fw-semibold text-dark small">Password</label>
+            <div className="input-group">
+              <input type={showPassword ? "text" : "password"} className="form-control rounded-start-4 custom-focus-ring border-end-0" style={inputStyle} value={password} onChange={(e) => setPassword(e.target.value)} />
+              <button type="button" className="btn border-0 rounded-end-4 px-3 d-flex align-items-center justify-content-center" style={{ backgroundColor: "#f1f5f9", color: "#64748b" }} onClick={() => setShowPassword(!showPassword)}>
+                <i className={showPassword ? "bi bi-eye-slash" : "bi bi-eye"}></i>
+              </button>
+            </div>
+          </div>
+          <div className="col-md-6">
+            <label className="form-label fw-semibold text-dark small">Confirm</label>
+            <div className="input-group">
+              <input type={showConfirmPassword ? "text" : "password"} className="form-control rounded-start-4 custom-focus-ring border-end-0" style={inputStyle} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+              <button type="button" className="btn border-0 rounded-end-4 px-3 d-flex align-items-center justify-content-center" style={{ backgroundColor: "#f1f5f9", color: "#64748b" }} onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                <i className={showConfirmPassword ? "bi bi-eye-slash" : "bi bi-eye"}></i>
+              </button>
+            </div>
+          </div>
+          <div className="col-12 form-text text-muted" style={{ fontSize: "0.75rem" }}>
+            Min 8 chars, uppercase, lowercase, number, and symbol.
+          </div>
         </div>
-      </div>
 
-      <div className="mb-3">
-        <label className="form-label">Confirm Password</label>
+        <motion.button 
+          type="submit"
+          whileHover={{ scale: 1.02 }} 
+          whileTap={{ scale: 0.98 }} 
+          className="btn btn-lg w-100 rounded-4 text-white fw-bold shadow-sm" 
+          style={{ background: "linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)", border: "none" }}
+        >
+          Complete Registration
+        </motion.button>
 
-        <div className="input-group">
-          <input
-            type={showConfirmPassword ? "text" : "password"}
-            className="form-control"
-            placeholder="Confirm password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-          />
+        <p className="text-center mt-4 fw-medium text-secondary">
+          Already registered?
+          <Link to="/login" className="fw-bold ms-2 text-decoration-none" style={{ color: "#0072ff" }}>
+            Sign In
+          </Link>
+        </p>
+      </motion.form>
 
-          <button
-            type="button"
-            className="btn btn-outline-secondary"
-            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-          >
-            {showConfirmPassword ? "Hide" : "Show"}
-          </button>
-        </div>
-      </div>
-      
-      <button className="btn btn-primary w-100 mt-2" onClick={handleRegister}>
-        Register
-      </button>
-
-      <p className="text-center mt-3 mb-0">
-        Already have an account?
-        <Link to="/login" className="text-primary fw-bold ms-1">
-          Login
-        </Link>
-      </p>
+      <style>{`
+        .custom-focus-ring:focus {
+          border-color: #00f2fe !important;
+          box-shadow: 0 0 0 0.25rem rgba(0, 242, 254, 0.25) !important;
+          background-color: #fff !important;
+        }
+      `}</style>
     </Auth>
   );
 }

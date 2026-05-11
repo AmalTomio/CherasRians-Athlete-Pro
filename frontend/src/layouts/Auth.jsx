@@ -2,32 +2,33 @@ import {
   TrophyIcon,
   OrganizationIcon,
   GraphIcon,
+  PulseIcon,
+  FlameIcon
 } from "@primer/octicons-react";
 import { motion } from "framer-motion";
 
 /* ================= ANIMATION VARIANTS ================= */
 const panelFade = {
-  hidden: { opacity: 0, x: -40 },
+  hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    x: 0,
-    transition: { duration: 0.8, ease: "easeOut" },
+    transition: { duration: 1, ease: "easeOut" },
   },
 };
 
 const formFade = {
-  hidden: { opacity: 0, scale: 0.96 },
+  hidden: { opacity: 0, x: 20 },
   visible: {
     opacity: 1,
-    scale: 1,
-    transition: { duration: 0.6, ease: "easeOut" },
+    x: 0,
+    transition: { duration: 0.6, ease: "easeOut", delay: 0.2 },
   },
 };
 
 const stagger = {
   hidden: {},
   visible: {
-    transition: { staggerChildren: 0.15 },
+    transition: { staggerChildren: 0.15, delayChildren: 0.3 },
   },
 };
 
@@ -40,118 +41,101 @@ const fadeUp = {
   },
 };
 
+const floatAnim = {
+  initial: { y: 0 },
+  animate: {
+    y: [-10, 10, -10],
+    transition: {
+      duration: 6,
+      repeat: Infinity,
+      ease: "easeInOut",
+    },
+  },
+};
+
 export default function AuthLayout({ title, subtitle, children }) {
   return (
-
-        
-    <div className="d-flex vh-100 bg-light">
+    <div className="d-flex vh-100" style={{ backgroundColor: "#f8fafc" }}>
       
-      {/* ================= LEFT: BRANDING PANEL ================= */}
+      {/* ================= LEFT: IMMERSIVE SPORTS-TECH PANEL ================= */}
       <motion.div
-        className="d-none d-md-flex col-md-6 position-relative text-white overflow-hidden"
+        className="d-none d-lg-flex col-lg-6 position-relative text-white overflow-hidden"
         variants={panelFade}
         initial="hidden"
         animate="visible"
-        style={{ position: "relative" }}
+        style={{
+          background: "#020617", // Deep sleek dark base
+        }}
       >
-        {/* ===== IMAGE BACKGROUND ===== */}
-        <div
-          className="position-absolute"
-          style={{
-            inset: 0,
-            backgroundImage: "url('/panel.jpg')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            opacity: 0.4,
-          }}
-        />
-
-        {/* ===== GRADIENT OVERLAY ===== */}
-        <div
-          className="position-absolute"
-          style={{
-            inset: 0,
-            background:
-              "linear-gradient(135deg, #1e40af 0%, #2563eb 45%, #1e3a8a 100%)",
-            opacity: 0.85,
-          }}
-        />
-
-        {/* ===== DIAGONAL GLASS PANEL ===== */}
-        <div
-          className="position-absolute"
-          style={{
-            inset: 0,
-            background:
-              "linear-gradient(110deg, rgba(255,255,255,0.1) 0%, transparent 65%)",
-            transform: "skewX(-12deg)",
-            transformOrigin: "top left",
-          }}
-        />
-
-        {/* ===== GRID ===== */}
-        <div
-          className="position-absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.12) 1px, transparent 1px)",
-            backgroundSize: "72px 72px",
-            opacity: 0.18,
-          }}
-        />
-
-        {/* ===== GLOW SHAPES ===== */}
-        <div
-          className="position-absolute rounded-circle"
-          style={{
-            width: 420,
-            height: 420,
-            top: -160,
-            right: -160,
-            background: "rgba(255,255,255,0.18)",
-            filter: "blur(160px)",
-          }}
-        />
-        <div
-          className="position-absolute rounded-circle"
-          style={{
-            width: 360,
-            height: 360,
-            bottom: -160,
-            left: -160,
-            background: "rgba(96,165,250,0.35)",
-            filter: "blur(180px)",
-          }}
-        />
-
-        {/* ===== CONTENT ===== */}
+        {/* ===== DYNAMIC GLOWS (Vibrant Cyan & Electric Blue) ===== */}
         <motion.div
-          className="position-relative z-2 d-flex flex-column justify-content-center px-4 px-lg-5 w-100"
-          variants={stagger}
-          initial="hidden"
-          animate="visible"
-        >
-          <div style={{ maxWidth: 520 }}>
+          animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.7, 0.5] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          className="position-absolute rounded-circle"
+          style={{
+            width: 600,
+            height: 600,
+            top: "-10%",
+            left: "-10%",
+            background: "radial-gradient(circle, rgba(0, 198, 255, 0.4) 0%, transparent 70%)",
+            filter: "blur(80px)",
+          }}
+        />
+        <motion.div
+          animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.6, 0.4] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          className="position-absolute rounded-circle"
+          style={{
+            width: 700,
+            height: 700,
+            bottom: "-20%",
+            right: "-20%",
+            background: "radial-gradient(circle, rgba(0, 114, 255, 0.4) 0%, transparent 70%)",
+            filter: "blur(90px)",
+          }}
+        />
+
+        {/* ===== TECH GRID & TRACK LINES ===== */}
+        <div
+          className="position-absolute inset-0 w-100 h-100"
+          style={{
+            backgroundImage: "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)",
+            backgroundSize: "40px 40px",
+            zIndex: 1,
+          }}
+        />
+        <svg className="position-absolute w-100 h-100" style={{ zIndex: 1, opacity: 0.2 }}>
+          <path d="M-100 200 C 300 400, 600 -100, 1000 300" fill="none" stroke="url(#cyan-grad)" strokeWidth="2" />
+          <path d="M-100 220 C 300 420, 600 -80, 1000 320" fill="none" stroke="url(#cyan-grad)" strokeWidth="1" opacity="0.5" />
+          <defs>
+            <linearGradient id="cyan-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#00f2fe" />
+              <stop offset="100%" stopColor="#4facfe" />
+            </linearGradient>
+          </defs>
+        </svg>
+
+        {/* ===== CONTENT CONTAINER ===== */}
+        <div className="position-relative z-3 w-100 d-flex flex-column justify-content-center px-5">
+          <motion.div variants={stagger} initial="hidden" animate="visible" style={{ maxWidth: 580 }}>
+            
             {/* BRAND */}
-            <motion.div
-              variants={fadeUp}
-              className="d-flex align-items-center gap-3 mb-4"
-            >
+            <motion.div variants={fadeUp} className="d-flex align-items-center gap-3 mb-5">
               <div
-                className="d-flex align-items-center justify-content-center rounded-4"
+                className="d-flex align-items-center justify-content-center rounded-4 shadow-lg"
                 style={{
-                  width: 68,
-                  height: 68,
-                  background: "rgba(255,255,255,0.22)",
-                  backdropFilter: "blur(14px)",
+                  width: 56, height: 56,
+                  background: "linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)",
                 }}
               >
-                <TrophyIcon size={36} />
+                <TrophyIcon size={28} className="text-white" />
               </div>
               <div>
-                <h1 className="fw-bold mb-1 fs-3">CherasRians Atheletes Pro</h1>
-                <div className="fs-6 text-white-75">
-                  Athletic Excellence Management
+                <h1 className="fw-bolder mb-0 fs-4 text-white tracking-wide" style={{ letterSpacing: "1px" }}>
+                  CHERASRIANS
+                </h1>
+                <div className="text-info fw-semibold" style={{ fontSize: "0.85rem", letterSpacing: "2px" }}>
+                  ATHLETES PRO
                 </div>
               </div>
             </motion.div>
@@ -159,113 +143,119 @@ export default function AuthLayout({ title, subtitle, children }) {
             {/* HEADLINE */}
             <motion.h1
               variants={fadeUp}
-              className="fw-bold lh-tight mb-3"
-              style={{ fontSize: "2.75rem" }}
+              className="fw-bold mb-4 text-white"
+              style={{ fontSize: "3.5rem", lineHeight: "1.1" }}
             >
-              Elevate Your
+              Elite <span style={{ color: "#00f2fe" }}>Performance.</span>
               <br />
-              Sports Management
-              <br />
-              Experience
+              Precision Control.
             </motion.h1>
 
-            {/* DESCRIPTION */}
             <motion.p
               variants={fadeUp}
-              className="fs-6 text-white-75 mb-4"
-              style={{ maxWidth: 480 }}
+              className="fs-5 mb-5"
+              style={{ color: "rgba(255,255,255,0.7)", maxWidth: "90%" }}
             >
-              A comprehensive platform designed for coaches, players, and
-              administrators to streamline sports operations.
+              The definitive AI-powered platform for next-generation sports management, athlete tracking, and coaching analytics.
             </motion.p>
 
-            {/* FEATURES */}
-            <motion.div
-              variants={stagger}
-              className="d-flex flex-column gap-3"
+            {/* SPORTS HUD FLOATING CARDS */}
+            <motion.div 
+              variants={fadeUp} 
+              className="position-relative mt-4"
+              style={{ height: "180px" }}
             >
-              <Feature
-                icon={<OrganizationIcon size={22} />}
-                title="Team Management"
-                desc="Organize players, schedules, and training sessions"
-              />
-              <Feature
-                icon={<GraphIcon size={22} />}
-                title="Performance Tracking"
-                desc="Monitor attendance, results, and achievements"
-              />
-              <Feature
-                icon={<TrophyIcon size={22} />}
-                title="Multi-Role Access"
-                desc="Tailored dashboards for players, coaches, and staff"
-              />
+              {/* HUD Card 1 */}
+              <motion.div
+                variants={floatAnim}
+                initial="initial"
+                animate="animate"
+                className="position-absolute p-3 rounded-4 shadow-lg"
+                style={{
+                  background: "rgba(255, 255, 255, 0.05)",
+                  backdropFilter: "blur(16px)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  width: "220px",
+                  top: 0, left: 0,
+                }}
+              >
+                <div className="d-flex align-items-center gap-2 mb-2">
+                  <PulseIcon size={16} className="text-info" />
+                  <span className="text-white-50 small fw-semibold">Live Metrics</span>
+                </div>
+                <div className="fw-bold text-white fs-4">Peak Output</div>
+                <div className="progress mt-2" style={{ height: "4px", background: "rgba(255,255,255,0.1)" }}>
+                  <div className="progress-bar" style={{ width: "85%", background: "linear-gradient(90deg, #00f2fe, #4facfe)" }}></div>
+                </div>
+              </motion.div>
+
+              {/* HUD Card 2 */}
+              <motion.div
+                variants={floatAnim}
+                initial="initial"
+                animate="animate"
+                className="position-absolute p-3 rounded-4 shadow-lg"
+                style={{
+                  background: "rgba(255, 255, 255, 0.05)",
+                  backdropFilter: "blur(16px)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  width: "200px",
+                  top: "40px", left: "250px",
+                  animationDelay: "1s"
+                }}
+              >
+                <div className="d-flex align-items-center gap-2 mb-2">
+                  <FlameIcon size={16} className="text-warning" />
+                  <span className="text-white-50 small fw-semibold">Readiness</span>
+                </div>
+                <div className="fw-bold text-white fs-3">98<span className="fs-6 text-white-50">%</span></div>
+                <div className="text-success small fw-semibold mt-1">↑ 2.4% vs last week</div>
+              </motion.div>
             </motion.div>
-          </div>
-        </motion.div>
+
+          </motion.div>
+        </div>
       </motion.div>
 
       {/* ================= RIGHT: AUTH FORM ================= */}
-      <div className="col-12 col-md-6 d-flex flex-column justify-content-center px-4 px-md-5">
+      <div className="col-12 col-lg-6 d-flex flex-column justify-content-center align-items-center px-4 py-5 position-relative">
         <motion.div
-          className="card shadow-lg border-0 rounded-4 p-4 p-md-5 mx-auto w-100"
-          style={{ maxWidth: 560 }}
+          className="w-100"
+          style={{ maxWidth: "480px" }}
           variants={formFade}
           initial="hidden"
           animate="visible"
         >
-          <h2
-            className="fw-bold text-center mb-2"
-            style={{ fontSize: "2rem" }}
-          >
-            {title}
-          </h2>
-          <p className="text-muted mb-4 text-center">{subtitle}</p>
+          {/* Mobile Header (Hidden on Desktop) */}
+          <div className="d-flex d-lg-none align-items-center gap-3 mb-5 justify-content-center">
+            <div
+              className="d-flex align-items-center justify-content-center rounded-4 shadow-sm"
+              style={{ width: 48, height: 48, background: "linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)" }}
+            >
+              <TrophyIcon size={24} className="text-white" />
+            </div>
+            <div>
+              <h1 className="fw-bolder mb-0 fs-5 text-dark tracking-wide">CHERASRIANS</h1>
+              <div className="text-primary fw-semibold" style={{ fontSize: "0.75rem", letterSpacing: "1px" }}>ATHLETES PRO</div>
+            </div>
+          </div>
+
+          <div className="text-center mb-5">
+            <h2 className="fw-bold text-dark mb-2" style={{ fontSize: "2.25rem" }}>
+              {title}
+            </h2>
+            <p className="text-secondary fs-6">{subtitle}</p>
+          </div>
+
           {children}
+
         </motion.div>
 
         {/* COPYRIGHT */}
-        <motion.div
-          className="text-center text-muted small mt-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-        >
-          © {new Date().getFullYear()} CherasRians Athletes Sport System
-        </motion.div>
-      </div>
-    </div>
-  );
-}
-
-/* ================= FEATURE CARD ================= */
-function Feature({ icon, title, desc }) {
-  return (
-    <motion.div
-      variants={fadeUp}
-      className="d-flex gap-3 align-items-start p-3 rounded-3"
-      style={{
-        background: "rgba(255,255,255,0.18)",
-        border: "1px solid rgba(255,255,255,0.25)",
-        backdropFilter: "blur(12px)",
-      }}
-    >
-      <div
-        className="d-flex align-items-center justify-content-center rounded-3"
-        style={{
-          width: 46,
-          height: 46,
-          background: "rgba(255,255,255,0.3)",
-        }}
-      >
-        {icon}
-      </div>
-
-      <div>
-        <div className="fw-bold fs-6">{title}</div>
-        <div className="text-white-75" style={{ fontSize: "0.875rem" }}>
-          {desc}
+        <div className="position-absolute bottom-0 mb-4 text-center w-100 text-muted small fw-medium">
+          © {new Date().getFullYear()} CherasRians Athletes Pro. All rights reserved.
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
