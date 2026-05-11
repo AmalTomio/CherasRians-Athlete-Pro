@@ -9,6 +9,8 @@ moment.tz.setDefault("Asia/Kuala_Lumpur");
 // Auth Pages
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 // Shared Pages
 import Dashboard from "./pages/Dashboard";
@@ -49,7 +51,6 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import WithSidebar from "./layouts/WithSidebar";
 
 export default function App() {
-
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -64,7 +65,9 @@ export default function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
         {/* Protected Routes with Sidebar */}
         <Route
           path="/dashboard"
@@ -206,7 +209,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-       
+
         <Route
           path="/coach/players"
           element={

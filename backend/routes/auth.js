@@ -11,4 +11,7 @@ router.post("/login", authController.loginUser);
 // NEW: Get logged-in user info
 router.get("/me", verifyToken, authController.getMe);
 
+router.post("/forgot-password", authController.forgotPassword);
+router.post("/reset-password/:token", authController.resetPassword);
+
 module.exports = router;

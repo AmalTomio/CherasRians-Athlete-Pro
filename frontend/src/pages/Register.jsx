@@ -21,9 +21,15 @@ export default function Register() {
 
   const [sport, setSport] = useState("");
 
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const navigate = useNavigate();
 
- const toUpper = (val) => val.toUpperCase();
+  const toUpper = (val) => val.toUpperCase();
 
   const handleRegister = async () => {
     if (!firstName || !lastName) return errorAlert("Name is required.");
@@ -45,12 +51,22 @@ export default function Register() {
       return errorAlert("Coach must select a sport.");
     }
 
+    if (!password || !confirmPassword) {
+      return errorAlert("Password fields are required.");
+    }
+
+    if (password !== confirmPassword) {
+      return errorAlert("Passwords do not match.");
+    }
+
     try {
       await api.post("/auth/register", {
         role,
         firstName: firstName.trim().toUpperCase(),
-lastName: lastName.trim().toUpperCase(),
+        lastName: lastName.trim().toUpperCase(),
         email,
+        password,
+        confirmPassword,
         nric: role === "student" ? nric : null,
         year: role === "student" ? year : null,
         classGroup: role === "student" ? classGroup : null,
@@ -127,7 +143,7 @@ lastName: lastName.trim().toUpperCase(),
             type="text"
             className="form-control"
             value={firstName}
-  onChange={(e) => setFirstName(toUpper(e.target.value))}
+            onChange={(e) => setFirstName(toUpper(e.target.value))}
           />
         </div>
 
@@ -137,7 +153,7 @@ lastName: lastName.trim().toUpperCase(),
             type="text"
             className="form-control"
             value={lastName}
-  onChange={(e) => setLastName(toUpper(e.target.value))}
+            onChange={(e) => setLastName(toUpper(e.target.value))}
           />
         </div>
       </div>
@@ -172,7 +188,7 @@ lastName: lastName.trim().toUpperCase(),
               value={year}
               onChange={(e) => {
                 setYear(e.target.value);
-                setClassGroup(""); 
+                setClassGroup("");
               }}
             >
               <option value="">Select Form</option>
@@ -190,7 +206,7 @@ lastName: lastName.trim().toUpperCase(),
               className="form-select"
               value={classGroup}
               onChange={(e) => setClassGroup(e.target.value)}
-              disabled={!year} 
+              disabled={!year}
             >
               <option value="">Select Class</option>
 
@@ -233,6 +249,54 @@ lastName: lastName.trim().toUpperCase(),
         </div>
       )}
 
+      <div className="mb-3">
+        <label className="form-label">Password</label>
+
+        <div className="input-group">
+          <input
+            type={showPassword ? "text" : "password"}
+            className="form-control"
+            placeholder="Enter password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+
+          <button
+            type="button"
+            className="btn btn-outline-secondary"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? "Hide" : "Show"}
+          </button>
+        </div>
+
+        <div className="form-text">
+          Minimum 8 characters with uppercase, lowercase, number, and symbol.
+        </div>
+      </div>
+
+      <div className="mb-3">
+        <label className="form-label">Confirm Password</label>
+
+        <div className="input-group">
+          <input
+            type={showConfirmPassword ? "text" : "password"}
+            className="form-control"
+            placeholder="Confirm password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+
+          <button
+            type="button"
+            className="btn btn-outline-secondary"
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+          >
+            {showConfirmPassword ? "Hide" : "Show"}
+          </button>
+        </div>
+      </div>
+      
       <button className="btn btn-primary w-100 mt-2" onClick={handleRegister}>
         Register
       </button>

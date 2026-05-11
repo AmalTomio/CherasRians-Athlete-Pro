@@ -8,6 +8,8 @@ import { initSocket } from "../socket";
 export default function Login() {
   const [role, setRole] = useState("student");
   const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async () => {
@@ -22,10 +24,15 @@ export default function Login() {
         role === "student" ? "Please enter NRIC" : "Please enter Staff ID",
       );
     }
-
+    if (!password.trim()) {
+      return warningAlert("Please enter password");
+    }
     try {
-      const res = await api.post("/auth/login", { role, identifier });
-
+      const res = await api.post("/auth/login", {
+        role,
+        identifier,
+        password,
+      });
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
@@ -79,13 +86,38 @@ export default function Login() {
           />
         </div>
       )}
-
+      <div className="mb-3">
+        <label className="form-label">Password</label>
+        <div className="input-group">
+          <input
+            type={showPassword ? "text" : "password"}
+            className="form-control"
+            placeholder="Enter password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <button
+            className="btn btn-outline-secondary"
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? "Hide" : "Show"}
+          </button>
+        </div>
+      </div>
+      <div className="d-flex justify-content-end mb-3">
+        <Link to="/forgot-password" className="text-decoration-none">
+          Forgot Password?
+        </Link>
+      </div>
       <button
         className="btn btn-primary btn-lg w-100 mt-2"
         onClick={handleLogin}
       >
         Sign in
       </button>
+
+      
 
       <p className="text-center mt-3">
         Don’t have an account?
