@@ -16,6 +16,13 @@ const VALID_SPORTS = [
   "badminton",
   "netball",
 ];
+
+const isStrongPassword = (password) => {
+  return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(
+    password,
+  );
+};
+
 const getCategoryByYear = (year) => {
   const y = Number(year);
 
@@ -33,6 +40,8 @@ exports.registerUser = async (req, res) => {
       email,
       staffId,
       nric,
+      password,
+      confirmPassword,
       sport,
       classGroup,
       year,
@@ -43,6 +52,25 @@ exports.registerUser = async (req, res) => {
 
     if (!VALID_ROLES.includes(role))
       return res.status(400).json({ message: "Invalid role." });
+
+    if (!password || !confirmPassword) {
+      return res.status(400).json({
+        message: "Password and confirm password are required.",
+      });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({
+        message: "Passwords do not match.",
+      });
+    }
+
+    if (!isStrongPassword(password)) {
+      return res.status(400).json({
+        message:
+          "Password must be at least 8 characters and include uppercase, lowercase, number, and symbol.",
+      });
+    }
 
     if (role === "student") {
       if (!nric) return res.status(400).json({ message: "NRIC is required." });
@@ -67,7 +95,8 @@ exports.registerUser = async (req, res) => {
     if (existing)
       return res.status(400).json({ message: "Email already exists." });
 
-    const hashedStaffId = staffId ? await bcrypt.hash(staffId, 10) : undefined;
+    // const hashedStaffId = staffId ? await bcrypt.hash(staffId, 10) : undefined;
+    const passwordHash = await bcrypt.hash(password, 12);
     const encryptedNRIC = nric ? encrypt(nric) : undefined;
 
     const user = new User({
@@ -75,8 +104,12 @@ exports.registerUser = async (req, res) => {
       firstName,
       lastName,
       email,
-      staffId: hashedStaffId,
+      staffId:
+        role === "coach" || role === "exco"
+          ? staffId.trim().toUpperCase()
+          : undefined,
       nricEncrypted: encryptedNRIC,
+      passwordHash,
       sport: role === "coach" ? sport : undefined,
       classGroup: role === "student" ? classGroup : undefined,
       year: role === "student" ? year : undefined,
