@@ -60,8 +60,11 @@ app.use(
 app.options(/.*/, cors());
 
 /* ================= HELMET ================= */
-app.use(helmet());
-
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  }),
+);
 /* ================= RATE LIMIT ================= */
 /* ================= RATE LIMIT ================= */
 if (process.env.NODE_ENV === "production") {
