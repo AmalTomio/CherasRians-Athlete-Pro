@@ -8,7 +8,7 @@ import HeroBanner from "../components/HeroBanner";
 import { formatSportName } from "../utils/format";
 
 const BACKEND_URL =
-  import.meta.env.VITE_API_BASE?.replace("/api", "") || "http://localhost:5000";
+  import.meta.env.VITE_API_URL?.replace("/api", "") || "http://localhost:5000";
 
 export default function Profile() {
   const [loading, setLoading] = useState(true);
@@ -49,12 +49,7 @@ export default function Profile() {
 
       setRole(user.role);
 
-      const imageUrl = user.profileUrl
-        ? user.profileUrl.startsWith("http")
-          ? user.profileUrl
-          : `${BACKEND_URL}${user.profileUrl}`
-        : "";
-
+      const imageUrl = user.profileUrl || "";
       setForm({
         firstName: user.firstName || "",
         lastName: user.lastName || "",
@@ -89,8 +84,8 @@ export default function Profile() {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      return Swal.fire("Error", "Maximum file size is 2MB", "error");
+    if (file.size > 5 * 1024 * 1024) {
+      return Swal.fire("Error", "Maximum file size is 5MB", "error");
     }
 
     const preview = URL.createObjectURL(file);
@@ -105,20 +100,20 @@ export default function Profile() {
     try {
       const fd = new FormData();
       fd.append("avatar", file);
+
       const res = await api.post("/users/me/avatar", fd);
+
       const updatedUser = res.data.data;
 
-      const imageUrl = updatedUser.profileUrl
-        ? updatedUser.profileUrl.startsWith("http")
-          ? updatedUser.profileUrl
-          : `${BACKEND_URL}${updatedUser.profileUrl}`
-        : "";
+      const imageUrl = updatedUser.profileUrl || "";
 
       setForm((prev) => ({
         ...prev,
         profileUrl: imageUrl,
       }));
+
       setSelectedFile(null);
+
       Swal.fire({
         title: "Success",
         text: "Profile picture updated.",
@@ -319,7 +314,7 @@ export default function Profile() {
           <div className="avatar-container" onClick={handleImageClick}>
             <div className="avatar-wrapper shadow-sm">
               {form.profileUrl ? (
-                <img src={`${form.profileUrl}?t=${Date.now()}`} alt="Profile" />
+                <img src={form.profileUrl} alt="Profile" />
               ) : (
                 <Avatar name={fullName || "User"} size={90} round={true} />
               )}

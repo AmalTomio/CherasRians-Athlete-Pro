@@ -3,8 +3,7 @@ const router = express.Router();
 const User = require("../models/User");
 const { verifyToken } = require("../middleware/authMiddleware");
 const uploadProfile = require("../middleware/uploadProfile");
-const fs = require("fs");
-const path = require("path");
+
 
 /* ================= CONSTANTS ================= */
 const COMMON_EDITABLE = ["firstName", "lastName", "email", "bod"];
@@ -83,9 +82,7 @@ router.put("/me", verifyToken, async (req, res) => {
       });
 
       if (existing) {
-        return res
-          .status(400)
-          .json({ message: "Email is already taken." });
+        return res.status(400).json({ message: "Email is already taken." });
       }
     }
 
@@ -106,11 +103,9 @@ router.put("/me", verifyToken, async (req, res) => {
     }
 
     /* ===== UPDATE ===== */
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      updates,
-      { new: true }
-    );
+    const updatedUser = await User.findByIdAndUpdate(userId, updates, {
+      new: true,
+    });
 
     return res.json({
       data: sanitizeUser(updatedUser),
@@ -130,9 +125,7 @@ router.post(
   async (req, res) => {
     try {
       if (!req.file) {
-        return res
-          .status(400)
-          .json({ message: "No image file provided." });
+        return res.status(400).json({ message: "No image file provided." });
       }
 
       const userId = req.user._id || req.user.userId;
@@ -142,23 +135,7 @@ router.post(
         return res.status(404).json({ message: "User not found." });
       }
 
-      /* ===== DELETE OLD IMAGE ===== */
-      if (user.profileUrl) {
-        const oldPath = user.profileUrl.replace(/^\//, "");
-        const fullPath = path.join(__dirname, "..", oldPath);
-
-        if (fs.existsSync(fullPath)) {
-          try {
-            fs.unlinkSync(fullPath);
-          } catch (err) {
-            console.warn("Failed to delete old avatar:", err.message);
-          }
-        }
-      }
-
-      /* ===== SAVE NEW IMAGE ===== */
-      const profileUrl =
-        "/" + req.file.path.replace(/\\/g, "/");
+      const profileUrl = req.file.path;
 
       user.profileUrl = profileUrl;
       await user.save();
@@ -171,7 +148,7 @@ router.post(
       console.error("POST /users/me/avatar ERROR:", err);
       return res.status(500).json({ message: "Server error." });
     }
-  }
+  },
 );
 
 /* ================= SEARCH USERS ================= */
