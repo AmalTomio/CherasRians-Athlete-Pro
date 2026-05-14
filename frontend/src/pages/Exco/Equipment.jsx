@@ -1,12 +1,14 @@
 import { useEffect, useState, useMemo } from "react";
 import api from "../../api/axios";
-import { successAlert, errorAlert } from "../../utils/swal";
+import { successAlert, errorAlert, confirmAlert } from "../../utils/swal";
+
 import EquipmentModal from "../../components/EquipmentModal";
 import StatCard from "../../components/StatCard";
 import DamageReportDetailsModal from "../../components/exco/DamageReportDetailsModal";
 import Table from "../../components/Table";
 import HeroBanner from "../../components/HeroBanner";
 import SkeletonTableLoader from "../../components/SkeletonTableLoader";
+import { FiEdit2, FiTrash2 } from "react-icons/fi";
 import {
   FiBox,
   FiCheckCircle,
@@ -24,19 +26,36 @@ export default function EquipmentManagement() {
   const [equipment, setEquipment] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
+  const [editingEquipment, setEditingEquipment] = useState(null);
 
-  // Damage Modal State
   const [selectedEquipment, setSelectedEquipment] = useState(null);
   const [showDamageModal, setShowDamageModal] = useState(false);
 
-  // Damage History State
   const [damageHistory, setDamageHistory] = useState([]);
   const [damageTab, setDamageTab] = useState("reported");
 
-  // Filters
   const [search, setSearch] = useState("");
 
   const [pendingReturns, setPendingReturns] = useState([]);
+
+  const handleDelete = async (id) => {
+    const result = await confirmAlert.fire({
+      title: "Delete Equipment?",
+      text: "Are you sure you want to remove this item? This action cannot be undone.",
+      confirmButtonText: "Yes, delete it",
+      confirmButtonColor: "#dc3545",
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      await api.delete(`/equipment/${id}`);
+      successAlert("Equipment deleted successfully");
+      fetchEquipment();
+    } catch (err) {
+      errorAlert(err.response?.data?.message || "Failed to delete equipment");
+    }
+  };
 
   const fetchEquipment = async () => {
     try {
@@ -184,24 +203,48 @@ export default function EquipmentManagement() {
     {
       label: "Action",
       key: "action",
-      className: "text-end px-4",
-      accessor: (row) =>
-        row.quantityDamaged > 0 && (
+      className: "text-center px-4",
+      accessor: (row) => (
+        <div className="d-flex justify-content-center align-items-center gap-2">
           <button
-            className="btn btn-sm btn-outline-danger shadow-sm fw-bold d-inline-flex align-items-center gap-2"
+            className="btn btn-sm btn-light text-primary border shadow-sm d-inline-flex align-items-center justify-content-center"
             onClick={() => {
-              setSelectedEquipment(row);
-              setShowDamageModal(true);
+              setEditingEquipment(row);
+              setShowAdd(true);
             }}
-            style={{ borderRadius: "8px" }}
+            title="Edit"
+            style={{ width: "32px", height: "32px", borderRadius: "8px" }}
           >
-            <FiAlertTriangle /> View Reports
+            <FiEdit2 size={14} />
           </button>
-        ),
+
+          <button
+            className="btn btn-sm btn-light text-danger border shadow-sm d-inline-flex align-items-center justify-content-center"
+            onClick={() => handleDelete(row._id)}
+            title="Delete"
+            style={{ width: "32px", height: "32px", borderRadius: "8px" }}
+          >
+            <FiTrash2 size={14} />
+          </button>
+
+          {row.quantityDamaged > 0 && (
+            <button
+              className="btn btn-sm btn-outline-danger shadow-sm fw-bold d-inline-flex align-items-center gap-2 ms-2"
+              onClick={() => {
+                setSelectedEquipment(row);
+                setShowDamageModal(true);
+              }}
+              style={{ borderRadius: "8px" }}
+            >
+              <FiAlertTriangle /> View Reports
+            </button>
+          )}
+        </div>
+      ),
     },
   ];
 
-// ===== DAMAGE HISTORY COLUMNS =====
+  // ===== DAMAGE HISTORY COLUMNS =====
   const damageColumns = [
     {
       label: "No",
@@ -225,7 +268,9 @@ export default function EquipmentManagement() {
             <FiBox size={18} />
           </div>
           <div className="d-flex flex-column">
-            <span className="fw-bold text-dark">{row.equipmentId?.name || "Unknown Item"}</span>
+            <span className="fw-bold text-dark">
+              {row.equipmentId?.name || "Unknown Item"}
+            </span>
             <span
               className="text-muted text-uppercase fw-medium"
               style={{ fontSize: "0.7rem", letterSpacing: "0.5px" }}
@@ -250,7 +295,8 @@ export default function EquipmentManagement() {
       key: "reporter",
       accessor: (row) => (
         <div className="d-flex align-items-center gap-2 text-muted small fw-medium">
-          <FiUser className="text-secondary" /> {row.reportedBy?.firstName} {row.reportedBy?.lastName}
+          <FiUser className="text-secondary" /> {row.reportedBy?.firstName}{" "}
+          {row.reportedBy?.lastName}
         </div>
       ),
     },
@@ -259,7 +305,12 @@ export default function EquipmentManagement() {
       key: "date",
       accessor: (row) => (
         <div className="d-flex align-items-center gap-2 text-muted small fw-medium">
-          <FiCalendar className="text-secondary" /> {new Date(row.createdAt).toLocaleDateString("en-GB", { day: 'numeric', month: 'short', year: 'numeric' })}
+          <FiCalendar className="text-secondary" />{" "}
+          {new Date(row.createdAt).toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })}
         </div>
       ),
     },
@@ -374,7 +425,7 @@ export default function EquipmentManagement() {
 
   return (
     <div className="px-4 py-4">
-      <HeroBanner 
+      <HeroBanner
         title="Equipment Management"
         subtitle="Manage inventory, track availability, and handle damage reports."
         buttonText="Add Equipment"
@@ -484,19 +535,14 @@ export default function EquipmentManagement() {
             <Table
               columns={damageColumns}
               data={filteredDamage}
-              loading={false} // Assuming fetched on mount
+              loading={false}
               customSkeleton={<SkeletonTableLoader rows={3} />}
+              emptyIcon={FiCheckCircle}
+              emptyIconColor="text-success"
+              emptyTitle="No Issues"
+              emptyMessage={`No ${damageTab} issues found.`}
             />
           </div>
-          {filteredDamage.length === 0 && (
-            <div className="text-center py-5 text-muted">
-              <FiCheckCircle
-                size={40}
-                className="mb-2 opacity-25 text-success"
-              />
-              <p className="m-0">No {damageTab} issues found.</p>
-            </div>
-          )}
         </div>
       </div>
 
@@ -517,37 +563,34 @@ export default function EquipmentManagement() {
           className="card border-0 shadow-sm rounded-4 overflow-hidden"
           style={{ minHeight: "200px" }}
         >
-          {pendingReturns.length === 0 ? (
-            <div className="text-center py-5 text-muted bg-white h-100 d-flex flex-column justify-content-center align-items-center">
-              <FiCheckCircle
-                size={48}
-                className="mb-3 text-success opacity-50"
-              />
-              <h5 className="fw-bold text-dark">All clear!</h5>
-              <p className="m-0 text-secondary">
-                No pending equipment returns to verify at the moment.
-              </p>
-            </div>
-          ) : (
-            <div className="table-responsive">
-              <Table
-                columns={pendingReturnColumns}
-                data={pendingReturns}
-                loading={false}
-              />
-            </div>
-          )}
+          <div className="table-responsive">
+            <Table
+              columns={pendingReturnColumns}
+              data={pendingReturns}
+              loading={false}
+              emptyIcon={FiCheckCircle}
+              emptyIconColor="text-success"
+              emptyTitle="All clear!"
+              emptyMessage="No pending equipment returns to verify at the moment."
+            />
+          </div>
         </div>
       </div>
 
-      {/* MODALS */}
       {showAdd && (
         <EquipmentModal
-          onClose={() => setShowAdd(false)}
+          editData={editingEquipment} // Pass the data if we are editing
+          onClose={() => {
+            setShowAdd(false);
+            setEditingEquipment(null); // Reset on close
+          }}
           onSaved={() => {
             setShowAdd(false);
+            setEditingEquipment(null); // Reset on save
             fetchEquipment();
-            successAlert("Equipment added successfully");
+            successAlert(
+              editingEquipment ? "Equipment updated" : "Equipment added",
+            );
           }}
         />
       )}

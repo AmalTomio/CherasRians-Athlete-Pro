@@ -75,4 +75,18 @@ router.post(
   equipmentController.resolveDamageReport
 );
 
+router.put(
+  "/:id",
+  verifyToken,
+  requireExco,
+  equipmentController.updateEquipment
+);
+
+// Delete equipment
+router.delete(
+  "/:id",
+  verifyToken,
+  requireExco,
+  equipmentController.deleteEquipment
+);
 module.exports = router;

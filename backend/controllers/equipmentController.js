@@ -353,3 +353,62 @@ exports.getDamageReportsByEquipment = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+// EXCO: Update Equipment
+exports.updateEquipment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, category, quantityTotal } = req.body;
+
+    const equipment = await Equipment.findById(id);
+    if (!equipment) {
+      return res.status(404).json({ message: "Equipment not found" });
+    }
+
+    // Secure calculation: Ensure reducing the total doesn't conflict with in-use items
+    const diff = quantityTotal - equipment.quantityTotal;
+    const newAvailable = equipment.quantityAvailable + diff;
+
+    if (newAvailable < 0) {
+      return res.status(400).json({ 
+        message: "Cannot reduce total quantity below the amount currently in-use or damaged." 
+      });
+    }
+
+    equipment.name = name || equipment.name;
+    equipment.category = category || equipment.category;
+    equipment.quantityTotal = quantityTotal;
+    equipment.quantityAvailable = newAvailable;
+
+    await equipment.save();
+
+    res.json({ message: "Equipment updated successfully", item: equipment });
+  } catch (err) {
+    console.error("Update equipment error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// EXCO: Delete Equipment
+exports.deleteEquipment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const equipment = await Equipment.findById(id);
+    
+    if (!equipment) {
+      return res.status(404).json({ message: "Equipment not found" });
+    }
+
+    // Safety Lock: Prevent deletion if items are currently borrowed or damaged
+    if (equipment.quantityAvailable < equipment.quantityTotal) {
+      return res.status(400).json({ 
+        message: "Cannot delete equipment that is currently in-use or has unresolved damage reports." 
+      });
+    }
+
+    await Equipment.findByIdAndDelete(id);
+    res.json({ message: "Equipment deleted successfully" });
+  } catch (err) {
+    console.error("Delete equipment error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};

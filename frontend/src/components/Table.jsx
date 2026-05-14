@@ -1,10 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { Spinner, Pagination } from "react-bootstrap";
+import { FiInbox } from "react-icons/fi"; // Default icon
 
-export default function Table({ columns, data, loading, itemsPerPage = 10 }) {
+export default function Table({ 
+  columns, 
+  data, 
+  loading, 
+  itemsPerPage = 10,
+  emptyIcon: EmptyIcon = FiInbox, 
+  emptyTitle = "No Data Available",
+  emptyMessage = "No records found.",
+  emptyIconColor = "text-secondary"
+}) {
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Reset to page 1 whenever the underlying data changes (e.g., when a user searches/filters)
+  // Reset to page 1 whenever the underlying data changes
   useEffect(() => {
     setCurrentPage(1);
   }, [data]);
@@ -33,22 +43,39 @@ export default function Table({ columns, data, loading, itemsPerPage = 10 }) {
           <thead className="table-light">
             <tr>
               {columns.map((col, index) => (
-                <th key={index} className="text-nowrap text-uppercase text-secondary fw-bold" style={{ fontSize: '0.75rem', letterSpacing: '0.05em' }}>
+                <th 
+                  key={index} 
+                  className={`text-nowrap text-uppercase text-secondary fw-bold ${col.className || ""}`} 
+                  style={{ fontSize: '0.75rem', letterSpacing: '0.05em' }}
+                >
                   {col.label}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {paginatedData.map((row, rowIndex) => (
-              <tr key={row._id || rowIndex}>
-                {columns.map((col, colIndex) => (
-                  <td key={colIndex} className="align-middle">
-                    {col.accessor ? col.accessor(row, startIndex + rowIndex) : row[col.key]}
-                  </td>
-                ))}
+            {(!data || data.length === 0) ? (
+              <tr>
+                <td colSpan={columns.length} className="text-center py-5 bg-white border-bottom-0">
+                  <div className="d-flex flex-column align-items-center justify-content-center text-muted py-4">
+                    {/* Render the dynamic icon and color here */}
+                    <EmptyIcon size={48} className={`mb-3 opacity-50 ${emptyIconColor}`} />
+                    <h5 className="fw-bold text-dark mb-1">{emptyTitle}</h5>
+                    <p className="m-0 text-secondary">{emptyMessage}</p>
+                  </div>
+                </td>
               </tr>
-            ))}
+            ) : (
+              paginatedData.map((row, rowIndex) => (
+                <tr key={row._id || rowIndex}>
+                  {columns.map((col, colIndex) => (
+                    <td key={colIndex} className={`align-middle ${col.className || ""}`}>
+                      {col.accessor ? col.accessor(row, startIndex + rowIndex) : row[col.key]}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -65,7 +92,6 @@ export default function Table({ columns, data, loading, itemsPerPage = 10 }) {
               disabled={currentPage === 1}
             />
             
-            {/* Generate page numbers dynamically */}
             {[...Array(totalPages)].map((_, i) => (
               <Pagination.Item 
                 key={i + 1} 
