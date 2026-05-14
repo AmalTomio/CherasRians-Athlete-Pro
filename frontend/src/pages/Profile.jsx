@@ -106,10 +106,17 @@ export default function Profile() {
       const fd = new FormData();
       fd.append("avatar", file);
       const res = await api.post("/users/me/avatar", fd);
-      const newUrl = res.data.data.profileUrl;
+      const updatedUser = res.data.data;
+
+      const imageUrl = updatedUser.profileUrl
+        ? updatedUser.profileUrl.startsWith("http")
+          ? updatedUser.profileUrl
+          : `${BACKEND_URL}${updatedUser.profileUrl}`
+        : "";
+
       setForm((prev) => ({
         ...prev,
-        profileUrl: `${BACKEND_URL}${newUrl}`,
+        profileUrl: imageUrl,
       }));
       setSelectedFile(null);
       Swal.fire({
@@ -312,7 +319,7 @@ export default function Profile() {
           <div className="avatar-container" onClick={handleImageClick}>
             <div className="avatar-wrapper shadow-sm">
               {form.profileUrl ? (
-                <img src={form.profileUrl} alt="Profile" />
+                <img src={`${form.profileUrl}?t=${Date.now()}`} alt="Profile" />
               ) : (
                 <Avatar name={fullName || "User"} size={90} round={true} />
               )}

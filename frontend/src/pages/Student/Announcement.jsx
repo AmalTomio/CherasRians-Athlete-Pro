@@ -5,6 +5,8 @@ import {
   FiClock
 } from "react-icons/fi";
 import useAnnouncements from "../../hooks/useAnnouncements";
+import HeroBanner from "../../components/HeroBanner";
+
 
 export default function StudentAnnouncements() {
   const { announcements } = useAnnouncements();
@@ -15,13 +17,11 @@ export default function StudentAnnouncements() {
 
   return (
     <div className="px-4 py-4">
-      {/* HEADER */}
-      <div className="mb-4">
-        <h2 className="fw-bold mb-1 text-dark" style={{ letterSpacing: "-0.5px" }}>
-          Announcements
-        </h2>
-        <p className="text-muted">Stay updated with the latest notices from your coaches and Excos.</p>
-      </div>
+      <HeroBanner 
+        title="Announcements" 
+        subtitle="Stay updated with the latest notices from your coaches and Excos."
+      />     
+      
 
       <div className="row">
         {/* Centered column for better readability on large screens */}
