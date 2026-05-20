@@ -115,7 +115,7 @@ exports.deleteStudent = async (req, res) => {
       role: "student",
     });
 
-    if (!deleted) {z
+    if (!deleted) {
       return res.status(404).json({ message: "Student not found." });
     }
 

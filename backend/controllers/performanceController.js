@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const PlayerPerformance = require("../models/PlayerPerformance");
 const Match = require("../models/Match");
+const MatchPlayerStats = require("../models/MatchPlayerStats");
 
 exports.updatePerformance = async (req, res) => {
   try {
@@ -56,16 +57,16 @@ exports.getPlayerPerformance = async (req, res) => {
     const perf = await PlayerPerformance.findOne({ playerId });
 
     if (!perf) {
-      res.json({
-  data: {
-    metrics: {
-      averageRating: perf.rating || 0,
-      score: perf.score || 0,
-      drills: perf.drills || {},
-      history: perf.history || [],
-    },
-  },
-});
+      return res.json({
+        data: {
+          metrics: {
+            averageRating: 0,
+            score: 0,
+            drills: {},
+            history: [],
+          },
+        },
+      });
     }
 
     res.json({
@@ -118,7 +119,7 @@ exports.getTeamPerformance = async (req, res) => {
   }
 };
 
-const MatchPlayerStats = require("../models/MatchPlayerStats");
+
 exports.getStudentMatchPerformance = async (req, res) => {
   try {
     const playerId = req.user._id;

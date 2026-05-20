@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { Form, InputGroup, Dropdown, Pagination } from "react-bootstrap";
-import { 
-  FiCalendar, FiSearch, FiPlus, FiMoreVertical, 
+import {
+  FiCalendar, FiSearch, FiPlus, FiMoreVertical,
   FiMapPin, FiClock, FiCheckCircle, FiXCircle, FiFilter
 } from "react-icons/fi";
 import moment from "moment";
@@ -24,10 +24,10 @@ export default function Schedule() {
   /* ================= FILTER LOGIC ================= */
   const filteredData = useMemo(() => {
     return schedules.filter(item => {
-      const matchesSearch = 
+      const matchesSearch =
         item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.location?.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
       const itemStatus = (item.status || "pending").toLowerCase();
       const matchesTab = activeTab === "All" || itemStatus === activeTab.toLowerCase();
 
@@ -47,11 +47,11 @@ export default function Schedule() {
     const s = (status || "pending").toLowerCase();
     switch (s) {
       case "approved":
-        return <span className="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2 border border-success border-opacity-25"><FiCheckCircle className="me-1"/> Approved</span>;
+        return <span className="badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2 border border-success border-opacity-25"><FiCheckCircle className="me-1" /> Approved</span>;
       case "rejected":
-        return <span className="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-2 border border-danger border-opacity-25"><FiXCircle className="me-1"/> Rejected</span>;
+        return <span className="badge bg-danger bg-opacity-10 text-danger rounded-pill px-3 py-2 border border-danger border-opacity-25"><FiXCircle className="me-1" /> Rejected</span>;
       default:
-        return <span className="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3 py-2 border border-warning border-opacity-25"><FiClock className="me-1"/> Pending</span>;
+        return <span className="badge bg-warning bg-opacity-10 text-warning rounded-pill px-3 py-2 border border-warning border-opacity-25"><FiClock className="me-1" /> Pending</span>;
     }
   };
 
@@ -62,24 +62,21 @@ export default function Schedule() {
       <HeroBanner
         title="Squad Schedule"
         subtitle="Manage session requests, match fixtures, and training times."
-        buttonText="Request Schedule"
-        buttonIcon={FiPlus}
-        onButtonClick={() => {/* Open Modal */}}
+
       />
 
       {/* HEADER CONTROLS (Pill Tabs + Search) */}
       <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mt-4 mb-3">
-        
+
         {/* PILL TABS FROM MEDICAL LEAVE REVIEW */}
         <div className="bg-white p-1 rounded-pill d-inline-flex border shadow-sm flex-wrap gap-1">
           {tabs.map((tab) => (
             <button
               key={tab}
-              className={`btn btn-sm rounded-pill px-4 fw-bold transition-all ${
-                activeTab === tab
+              className={`btn btn-sm rounded-pill px-4 fw-bold transition-all ${activeTab === tab
                   ? "bg-primary text-white shadow-sm"
                   : "bg-transparent text-muted hover-dark"
-              }`}
+                }`}
               onClick={() => { setActiveTab(tab); setCurrentPage(1); }}
             >
               {tab}
@@ -147,7 +144,7 @@ export default function Schedule() {
                         <div>
                           <div className="fw-bold text-dark">{row.title || "Untitled Session"}</div>
                           <div className="text-muted" style={{ fontSize: "0.8rem" }}>
-                            <FiMapPin size={12} className="me-1"/> {row.location || "Sports Center"}
+                            <FiMapPin size={12} className="me-1" /> {row.location || "Sports Center"}
                           </div>
                         </div>
                       </div>
@@ -155,7 +152,7 @@ export default function Schedule() {
                     <td className="py-3">
                       <div className="fw-semibold text-dark">{moment(row.startAt).format("DD MMM YYYY")}</div>
                       <div className="text-muted" style={{ fontSize: "0.8rem" }}>
-                        <FiClock size={12} className="me-1"/> {row.startTime} - {row.endTime}
+                        <FiClock size={12} className="me-1" /> {row.startTime} - {row.endTime}
                       </div>
                     </td>
                     <td className="py-3">
@@ -166,7 +163,7 @@ export default function Schedule() {
                     <td className="py-3">
                       {getStatusBadge(row.status)}
                     </td>
-                  
+
                   </tr>
                 ))
               )}
@@ -180,30 +177,30 @@ export default function Schedule() {
             <span className="text-muted small">
               Showing <span className="fw-bold text-dark">{paginatedData.length}</span> of <span className="fw-bold text-dark">{filteredData.length}</span> results
             </span>
-            
+
             <Pagination className="mb-0 shadow-sm">
-              <Pagination.Prev 
-                disabled={currentPage === 1} 
+              <Pagination.Prev
+                disabled={currentPage === 1}
                 onClick={() => setCurrentPage(p => p - 1)}
               />
               {[...Array(totalPages)].map((_, i) => (
-                <Pagination.Item 
-                  key={i + 1} 
+                <Pagination.Item
+                  key={i + 1}
                   active={i + 1 === currentPage}
                   onClick={() => setCurrentPage(i + 1)}
                 >
                   {i + 1}
                 </Pagination.Item>
               ))}
-              <Pagination.Next 
-                disabled={currentPage === totalPages} 
+              <Pagination.Next
+                disabled={currentPage === totalPages}
                 onClick={() => setCurrentPage(p => p + 1)}
               />
             </Pagination>
           </div>
         )}
       </div>
-      
+
       {/* STYLES FOR TAB HOVER AND PILL SEARCH */}
       <style>{`
         .hover-dark:hover { color: #1e293b !important; }

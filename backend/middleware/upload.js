@@ -31,7 +31,7 @@ const storage = multer.diskStorage({
 
 const fileFilter = (_, file, cb) => {
   if (!file.mimetype.startsWith("image/")) {
-    cb(new Error("Only images allowed"), false);
+    return cb(new Error("Only images allowed"), false);
   }
   cb(null, true);
 };

@@ -5,6 +5,7 @@ const User = require("../models/User");
 const Schedule = require("../models/Schedule");
 const Equipment = require("../models/Equipment");
 const EquipmentBorrow = require("../models/EquipmentBorrow");
+const { sendNotification } = require("../services/notificationService");
 
 const moment = require("moment-timezone");
 const TZ = "Asia/Kuala_Lumpur";
@@ -237,7 +238,7 @@ if (
 
 const schedule = await Schedule.create(scheduleData);
 
-    const { sendNotification } = require("../services/notificationService");
+
 
     await sendNotification({
       io: req.app.get("io"),
