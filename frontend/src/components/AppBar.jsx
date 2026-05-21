@@ -26,6 +26,8 @@ export default function AppBar({ onMenuClick }) { // Added onMenuClick prop
   const socketRef = useRef();
 
   const capitalize = (text) => text?.charAt(0).toUpperCase() + text?.slice(1);
+    const apiUrl = import.meta.env.VITE_API_URL;
+
   const formatSport = (s) =>
     s ? s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : null;
 
@@ -48,7 +50,7 @@ export default function AppBar({ onMenuClick }) { // Added onMenuClick prop
 
     if (!token) return;
 
-    socketRef.current = io("http://localhost:5000", { auth: { token } });
+    socketRef.current = io(apiUrl, { auth: { token } });
     socketRef.current.on("new_notification", (notification) => {
       setNotifications((prev) => [notification, ...prev]);
     });
