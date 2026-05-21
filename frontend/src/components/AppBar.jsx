@@ -92,10 +92,8 @@ export default function AppBar({ onMenuClick }) { // Added onMenuClick prop
     >
       <div className="container-fluid px-0 d-flex align-items-center justify-content-between">
         
-        {/* LEFT SIDE: Hamburger & Welcome Text */}
         <div className="d-flex align-items-center h-100 overflow-hidden gap-3">
           
-          {/* MOBILE HAMBURGER BUTTON */}
           <button
             className="btn d-lg-none d-flex align-items-center justify-content-center flex-shrink-0 shadow-sm"
             onClick={onMenuClick}
