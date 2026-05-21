@@ -429,9 +429,9 @@ export default function Auth({ title, subtitle, children }) {
 
               {children}
 
-              <Link to="https://cherasrians.my/">
+              {/* <Link to="/">
                 <button className="back-btn">← Back to Landing Page</button>
-              </Link>
+              </Link> */}
             </motion.div>
           </div>
         </div>

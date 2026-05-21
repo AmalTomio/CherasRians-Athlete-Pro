@@ -41,22 +41,23 @@ export default function Login() {
   return (
     <Auth title="Log in" subtitle="Welcome back! Please enter your details.">
       <div className="mb-3">
-        //DROPDOWM
-        <label className="form-label">Select Role</label>
-        <select
-          className="form-select"
-          value={role}
-          onChange={(e) => {
-            setRole(e.target.value);
-            setIdentifier("");
-          }}
-        >
-          <option value="">Choose Role</option>
-          <option value="student">Student</option>
-          <option value="coach">Coach3000</option>
-          <option value="exco">Exco</option>
-        </select>
-      </div>
+  <label className="form-label">Select Role</label>
+
+  <select
+    className="form-select custom-select"
+    value={role}
+    onChange={(e) => {
+      setRole(e.target.value);
+      setIdentifier("");
+    }}
+  >
+    <option value="">Choose Role</option>
+    <option value="student">Student</option>
+    <option value="coach">Coach</option>
+    <option value="exco">Exco</option>
+  </select>
+</div>
+
       {/* NRIC / STAFF ID INPUT */}
       {role && (
         <div className="mb-3">

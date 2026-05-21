@@ -1,10 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect } from "react";
-import "bootstrap/dist/css/bootstrap.min.css";
+// import "bootstrap/dist/css/bootstrap.min.css";
 import moment from "moment-timezone";
 import { initSocket } from "./socket";
 
 moment.tz.setDefault("Asia/Kuala_Lumpur");
+
+// import LandingPage from "./pages/LandingPage";
 
 // Auth Pages
 import Login from "./pages/Login";
@@ -49,9 +51,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import WithSidebar from "./layouts/WithSidebar";
 
 export default function App() {
-
   useEffect(() => {
     const token = localStorage.getItem("token");
+
     if (token) {
       initSocket(token);
     }
@@ -61,7 +63,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         {/* Public Routes */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        {/* <Route path="/" element={<LandingPage />} /> */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
@@ -206,7 +208,7 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-       
+
         <Route
           path="/coach/players"
           element={
@@ -350,7 +352,8 @@ export default function App() {
           }
         />
 
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
+        {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
       </Routes>
     </BrowserRouter>
   );

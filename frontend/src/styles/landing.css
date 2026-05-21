@@ -1,0 +1,70 @@
+.landing-page {
+}
+
+.text-volt {
+  color: #ccff00;
+}
+
+.btn-volt {
+  background: #ccff00;
+  color: #000;
+  border: none;
+  font-weight: 700;
+}
+
+.btn-volt:hover {
+  background: #d8ff4d;
+  color: #000;
+}
+
+.glass-nav {
+  background: rgba(5, 5, 5, 0.75);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.glass-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+}
+
+.hero-section {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  padding-top: 120px;
+  background:
+    radial-gradient(circle at top left, rgba(204,255,0,0.18), transparent 35%),
+    radial-gradient(circle at bottom right, rgba(0,240,255,0.12), transparent 35%),
+    #050505;
+}
+
+.hero-badge {
+  background: rgba(204,255,0,0.12);
+  border: 1px solid rgba(204,255,0,0.3);
+  color: #ccff00;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.hero-card {
+  border-radius: 32px;
+}
+
+.cta-section {
+  background:
+    linear-gradient(
+      135deg,
+      rgba(204,255,0,0.1),
+      rgba(0,240,255,0.08)
+    );
+}
+
+section {
+  position: relative;
+  z-index: 2;
+}
