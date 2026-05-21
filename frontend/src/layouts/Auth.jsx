@@ -1,271 +1,441 @@
-import {
-  TrophyIcon,
-  OrganizationIcon,
-  GraphIcon,
-} from "@primer/octicons-react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
-/* ================= ANIMATION VARIANTS ================= */
-const panelFade = {
-  hidden: { opacity: 0, x: -40 },
-  visible: {
-    opacity: 1,
-    x: 0,
-    transition: { duration: 0.8, ease: "easeOut" },
-  },
-};
+import athlete from "../assets/athlete.png";
+// import logo from "public/sys-logo.png";
 
-const formFade = {
-  hidden: { opacity: 0, scale: 0.96 },
-  visible: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.6, ease: "easeOut" },
-  },
-};
-
-const stagger = {
-  hidden: {},
-  visible: {
-    transition: { staggerChildren: 0.15 },
-  },
-};
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.5, ease: "easeOut" },
-  },
-};
-
-export default function AuthLayout({ title, subtitle, children }) {
+export default function Auth({ title, subtitle, children }) {
   return (
+    <>
+      <style>{`
+        .auth-wrapper {
+  height: 100vh;
+  background: #f4f7fc;
+  overflow: hidden;
+}
 
-        
-    <div className="d-flex vh-100 bg-light">
-      
-      {/* ================= LEFT: BRANDING PANEL ================= */}
-      <motion.div
-        className="d-none d-md-flex col-md-6 position-relative text-white overflow-hidden"
-        variants={panelFade}
-        initial="hidden"
-        animate="visible"
-        style={{ position: "relative" }}
-      >
-        {/* ===== IMAGE BACKGROUND ===== */}
-        <div
-          className="position-absolute"
-          style={{
-            inset: 0,
-            backgroundImage: "url('/panel.jpg')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            opacity: 0.4,
-          }}
-        />
+        .auth-grid {
+          min-height: 100vh;
+          display: grid;
+          grid-template-columns: 0.9fr 0.9fr 0.95fr;
+        }
 
-        {/* ===== GRADIENT OVERLAY ===== */}
-        <div
-          className="position-absolute"
-          style={{
-            inset: 0,
-            background:
-              "linear-gradient(135deg, #1e40af 0%, #2563eb 45%, #1e3a8a 100%)",
-            opacity: 0.85,
-          }}
-        />
+        /* LEFT */
 
-        {/* ===== DIAGONAL GLASS PANEL ===== */}
-        <div
-          className="position-absolute"
-          style={{
-            inset: 0,
-            background:
-              "linear-gradient(110deg, rgba(255,255,255,0.1) 0%, transparent 65%)",
-            transform: "skewX(-12deg)",
-            transformOrigin: "top left",
-          }}
-        />
+        .auth-left {
+          padding: 40px 24px;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          position: relative;
+        }
 
-        {/* ===== GRID ===== */}
-        <div
-          className="position-absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.12) 1px, transparent 1px)",
-            backgroundSize: "72px 72px",
-            opacity: 0.18,
-          }}
-        />
+        .brand-wrapper {
+          position: absolute;
+          top: 30px;
+          left: 24px;
+          display: flex;
+          align-items: center;
+          gap: 14px;
+        }
 
-        {/* ===== GLOW SHAPES ===== */}
-        <div
-          className="position-absolute rounded-circle"
-          style={{
-            width: 420,
-            height: 420,
-            top: -160,
-            right: -160,
-            background: "rgba(255,255,255,0.18)",
-            filter: "blur(160px)",
-          }}
-        />
-        <div
-          className="position-absolute rounded-circle"
-          style={{
-            width: 360,
-            height: 360,
-            bottom: -160,
-            left: -160,
-            background: "rgba(96,165,250,0.35)",
-            filter: "blur(180px)",
-          }}
-        />
+        .brand-wrapper img {
+          width: 58px;
+          height: 58px;
+          object-fit: contain;
+        }
 
-        {/* ===== CONTENT ===== */}
-        <motion.div
-          className="position-relative z-2 d-flex flex-column justify-content-center px-4 px-lg-5 w-100"
-          variants={stagger}
-          initial="hidden"
-          animate="visible"
-        >
-          <div style={{ maxWidth: 520 }}>
-            {/* BRAND */}
-            <motion.div
-              variants={fadeUp}
-              className="d-flex align-items-center gap-3 mb-4"
-            >
-              <div
-                className="d-flex align-items-center justify-content-center rounded-4"
-                style={{
-                  width: 68,
-                  height: 68,
-                  background: "rgba(255,255,255,0.22)",
-                  backdropFilter: "blur(14px)",
-                }}
-              >
-                <TrophyIcon size={36} />
+        .brand-text h2 {
+          margin: 0;
+          font-size: 18px;
+          font-weight: 800;
+          letter-spacing: 1px;
+          color: #0d2463;
+        }
+
+        .brand-text p {
+          margin: 0;
+          font-size: 11px;
+          letter-spacing: 4px;
+          color: #506080;
+        }
+
+        .hero-title {
+          font-size: 78px;
+          font-weight: 900;
+          line-height: 0.9;
+          color: #081f63;
+          margin-bottom: 28px;
+        }
+
+        .hero-title span {
+          color: #4d72ff;
+        }
+
+        .hero-subtitle {
+  max-width: 400px;
+  font-size: 18px;
+  line-height: 1.5;
+  margin-bottom: 28px;
+}
+
+        .feature-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+        .feature-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 18px;
+        }
+
+        .feature-icon {
+          width: 52px;
+          height: 52px;
+          border-radius: 18px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          color: white;
+          font-size: 20px;
+          font-weight: 700;
+        }
+
+        .feature-item h5 {
+          margin: 0;
+          font-weight: 800;
+          color: #081f63;
+          font-size: 20px;
+        }
+
+        .feature-item p {
+          margin-top: 4px;
+          color: #5f6f90;
+          font-size: 17px;
+          line-height: 1.5;
+        }
+
+        .copyright {
+          position: absolute;
+          bottom: 24px;
+          left: 24px;
+          color: #7182a5;
+          font-size: 14px;
+        }
+
+        /* CENTER */
+
+        .auth-center {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+        .athlete-wrapper {
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 100%;
+}
+
+        .athlete-image {
+  width: 135%;
+  max-height: 98vh;
+  object-fit: contain;
+  object-position: bottom;
+  transform: translateY(40px);
+}
+
+        /* RIGHT */
+
+        .auth-right {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 28px;
+        }
+
+        .auth-card {
+  width: 100%;
+  max-width: 520px;
+  background: white;
+  border-radius: 32px;
+  padding: 30px 32px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.06);
+}
+
+        .auth-title {
+ font-size: 42px;
+  line-height: 1;
+            font-weight: 900;
+          text-align: center;
+          color: #081f63;
+          margin-bottom: 8px;
+        }
+
+        .auth-subtitle {
+  text-align: center;
+  color: #68789a;
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+        .form-label {
+  font-weight: 700;
+  color: #0d2463;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+        .form-control,
+        .form-select {
+          height: 52px;
+          border-radius: 20px;
+          border: 1px solid #dce5f4;
+          background: #fbfcff;
+          padding: 0 20px;
+          font-size: 16px;
+          color: #0d2463;
+          box-shadow: none !important;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+          border-color: #4d72ff;
+        }
+
+        .btn-auth {
+          height: 54px;
+          border: none;
+          border-radius: 20px;
+          width: 100%;
+          font-size: 20px;
+          font-weight: 800;
+          color: white;
+          background: linear-gradient(
+            135deg,
+            #5b7cff,
+            #3158ff
+          );
+          box-shadow: 0 18px 35px rgba(49,88,255,.28);
+          transition: .25s ease;
+        }
+
+        .btn-auth:hover {
+          transform: translateY(-2px);
+        }
+
+        .auth-footer {
+          text-align: center;
+          margin-top: 20px;
+          color: #68789a;
+          font-size: 16px;
+        }
+
+        .auth-footer a {
+          font-weight: 800;
+          text-decoration: none;
+        }
+
+        .back-btn {
+          margin-top: 28px;
+          width: 100%;
+          height: 58px;
+          border-radius: 18px;
+          border: 1px solid #dce5f4;
+          background: white;
+          color: #081f63;
+          font-weight: 700;
+          transition: .25s ease;
+        }
+
+        .back-btn:hover {
+          background: #f5f8ff;
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 1400px) {
+          .hero-title {
+            font-size: 76px;
+          }
+
+          .auth-title {
+            font-size: 46px;
+          }
+        }
+
+        @media (max-width: 1200px) {
+          .auth-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .auth-left,
+          .auth-center {
+            display: none;
+          }
+
+          .auth-right {
+            padding: 24px;
+          }
+
+          .auth-card {
+            max-width: 100%;
+            padding: 32px 24px;
+          }
+
+          .auth-title {
+            font-size: 42px;
+          }
+
+          .auth-subtitle {
+            font-size: 17px;
+          }
+        }
+
+        @media (max-width: 576px) {
+          .auth-card {
+            border-radius: 28px;
+            padding: 26px 20px;
+          }
+
+          .auth-title {
+            font-size: 34px;
+          }
+
+          .form-control,
+          .form-select,
+          .btn-auth {
+            height: 56px;
+          }
+        }
+      `}</style>
+
+      <div className="auth-wrapper">
+        <div className="auth-grid">
+          {/* LEFT */}
+          <div className="auth-left">
+            {/* <div className="brand-wrapper">
+              <img src={logo} alt="logo" />
+
+              <div className="brand-text">
+                <h2>CHERASRIANS</h2>
+                <p>ATHLETES PRO</p>
               </div>
-              <div>
-                <h1 className="fw-bold mb-1 fs-3">CherasRians Atheletes Pro</h1>
-                <div className="fs-6 text-white-75">
-                  Athletic Excellence Management
+            </div> */}
+
+            <motion.div
+              initial={{ opacity: 0, x: -40 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="hero-title">
+                Manage.
+                <br />
+                Train.
+                <br />
+                <span>Excel.</span>
+              </div>
+
+              <p className="hero-subtitle">
+                All-in-one platform for athletes, coaches and administrators.
+              </p>
+
+              <div className="feature-list">
+                <div className="feature-item">
+                  <div
+                    className="feature-icon"
+                    style={{
+                      background: "linear-gradient(135deg,#5b7cff,#3f5fff)",
+                    }}
+                  >
+                    ✦
+                  </div>
+
+                  <div>
+                    <h5>Performance Tracking</h5>
+                    <p>Monitor progress and achieve peak performance.</p>
+                  </div>
+                </div>
+
+                <div className="feature-item">
+                  <div
+                    className="feature-icon"
+                    style={{
+                      background: "linear-gradient(135deg,#42d392,#34c985)",
+                    }}
+                  >
+                    ✦
+                  </div>
+
+                  <div>
+                    <h5>Training Management</h5>
+                    <p>Plan, organize and optimize every training session.</p>
+                  </div>
+                </div>
+
+                <div className="feature-item">
+                  <div
+                    className="feature-icon"
+                    style={{
+                      background: "linear-gradient(135deg,#9b5cff,#7c4dff)",
+                    }}
+                  >
+                    ✦
+                  </div>
+
+                  <div>
+                    <h5>Team Collaboration</h5>
+                    <p>Stay connected and achieve more together.</p>
+                  </div>
                 </div>
               </div>
             </motion.div>
 
-            {/* HEADLINE */}
-            <motion.h1
-              variants={fadeUp}
-              className="fw-bold lh-tight mb-3"
-              style={{ fontSize: "2.75rem" }}
-            >
-              Elevate Your
-              <br />
-              Sports Management
-              <br />
-              Experience
-            </motion.h1>
+            <div className="copyright">© 2026 CherasRians Athletes Pro.</div>
+          </div>
 
-            {/* DESCRIPTION */}
-            <motion.p
-              variants={fadeUp}
-              className="fs-6 text-white-75 mb-4"
-              style={{ maxWidth: 480 }}
-            >
-              A comprehensive platform designed for coaches, players, and
-              administrators to streamline sports operations.
-            </motion.p>
-
-            {/* FEATURES */}
+          {/* CENTER */}
+          <div className="auth-center">
             <motion.div
-              variants={stagger}
-              className="d-flex flex-column gap-3"
+              className="athlete-wrapper"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
             >
-              <Feature
-                icon={<OrganizationIcon size={22} />}
-                title="Team Management"
-                desc="Organize players, schedules, and training sessions"
-              />
-              <Feature
-                icon={<GraphIcon size={22} />}
-                title="Performance Tracking"
-                desc="Monitor attendance, results, and achievements"
-              />
-              <Feature
-                icon={<TrophyIcon size={22} />}
-                title="Multi-Role Access"
-                desc="Tailored dashboards for players, coaches, and staff"
-              />
+              <img src={athlete} alt="athlete" className="athlete-image" />
             </motion.div>
           </div>
-        </motion.div>
-      </motion.div>
 
-      {/* ================= RIGHT: AUTH FORM ================= */}
-      <div className="col-12 col-md-6 d-flex flex-column justify-content-center px-4 px-md-5">
-        <motion.div
-          className="card shadow-lg border-0 rounded-4 p-4 p-md-5 mx-auto w-100"
-          style={{ maxWidth: 560 }}
-          variants={formFade}
-          initial="hidden"
-          animate="visible"
-        >
-          <h2
-            className="fw-bold text-center mb-2"
-            style={{ fontSize: "2rem" }}
-          >
-            {title}
-          </h2>
-          <p className="text-muted mb-4 text-center">{subtitle}</p>
-          {children}
-        </motion.div>
+          {/* RIGHT */}
+          <div className="auth-right">
+            <motion.div
+              className="auth-card"
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <h1 className="auth-title">{title}</h1>
 
-        {/* COPYRIGHT */}
-        <motion.div
-          className="text-center text-muted small mt-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-        >
-          © {new Date().getFullYear()} CherasRians Athletes Sport System
-        </motion.div>
-      </div>
-    </div>
-  );
-}
+              <p className="auth-subtitle">{subtitle}</p>
 
-/* ================= FEATURE CARD ================= */
-function Feature({ icon, title, desc }) {
-  return (
-    <motion.div
-      variants={fadeUp}
-      className="d-flex gap-3 align-items-start p-3 rounded-3"
-      style={{
-        background: "rgba(255,255,255,0.18)",
-        border: "1px solid rgba(255,255,255,0.25)",
-        backdropFilter: "blur(12px)",
-      }}
-    >
-      <div
-        className="d-flex align-items-center justify-content-center rounded-3"
-        style={{
-          width: 46,
-          height: 46,
-          background: "rgba(255,255,255,0.3)",
-        }}
-      >
-        {icon}
-      </div>
+              {children}
 
-      <div>
-        <div className="fw-bold fs-6">{title}</div>
-        <div className="text-white-75" style={{ fontSize: "0.875rem" }}>
-          {desc}
+              <Link to="https://cherasrians.my/">
+                <button className="back-btn">← Back to Landing Page</button>
+              </Link>
+            </motion.div>
+          </div>
         </div>
       </div>
-    </motion.div>
+    </>
   );
 }
