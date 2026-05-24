@@ -1,12 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+
 import api from "../api/axios";
+
 import { successAlert, errorAlert } from "../utils/swal";
+
 import { getClassOptionsForYear } from "../config/classGroups";
+import { SPORT_META } from "../config/sportMeta";
+import { formatSportName } from "../utils/format";
 
 import Auth from "../layouts/Auth";
 
+const FORM_OPTIONS = [1, 2, 3, 4, 5];
+
 export default function Register() {
+  const navigate = useNavigate();
+
   const [role, setRole] = useState("student");
 
   const [firstName, setFirstName] = useState("");
@@ -14,41 +23,126 @@ export default function Register() {
   const [email, setEmail] = useState("");
 
   const [nric, setNric] = useState("");
+  const [staffId, setStaffId] = useState("");
+
+  const [sport, setSport] = useState("");
+
   const [year, setYear] = useState("");
   const [classGroup, setClassGroup] = useState("");
 
-  useEffect(() => {
-    const validOptions = getClassOptionsForYear(year);
+  const [loading, setLoading] = useState(false);
 
-    if (!validOptions.includes(classGroup)) {
+  const classOptions = useMemo(() => {
+    return getClassOptionsForYear(year);
+  }, [year]);
+
+  const sportOptions = useMemo(() => {
+    return Object.keys(SPORT_META);
+  }, []);
+
+  useEffect(() => {
+    if (!classOptions.includes(classGroup)) {
       setClassGroup("");
     }
-  }, [year, classGroup]);
+  }, [year, classGroup, classOptions]);
 
-  const navigate = useNavigate();
+  useEffect(() => {
+    if (role === "student") {
+      setStaffId("");
+      setSport("");
+    }
+
+    if (role === "coach") {
+      setNric("");
+      setYear("");
+      setClassGroup("");
+    }
+
+    if (role === "exco") {
+      setNric("");
+      setYear("");
+      setClassGroup("");
+      setSport("");
+    }
+  }, [role]);
+
+  const validateForm = () => {
+    if (!firstName || !lastName || !email) {
+      errorAlert("Please fill all required fields.");
+      return false;
+    }
+
+    if (role === "student") {
+      if (!/^[0-9]{12}$/.test(nric)) {
+        errorAlert("NRIC must be exactly 12 digits.");
+        return false;
+      }
+
+      if (!year) {
+        errorAlert("Please select form.");
+        return false;
+      }
+
+      if (!classGroup) {
+        errorAlert("Please select class.");
+        return false;
+      }
+    }
+
+    if (role === "coach" || role === "exco") {
+      if (!staffId.trim()) {
+        errorAlert("Staff ID is required.");
+        return false;
+      }
+    }
+
+    if (role === "coach" && !sport) {
+      errorAlert("Please select sport.");
+      return false;
+    }
+
+    return true;
+  };
+
+  const buildPayload = () => ({
+    role,
+    firstName: firstName.trim(),
+    lastName: lastName.trim(),
+    email: email.trim().toLowerCase(),
+
+    nric: role === "student" ? nric : undefined,
+
+    year: role === "student" ? year : undefined,
+
+    classGroup: role === "student" ? classGroup : undefined,
+
+    staffId: role === "coach" || role === "exco" ? staffId.trim() : undefined,
+
+    sport: role === "coach" ? sport : undefined,
+  });
 
   const handleRegister = async () => {
+    if (!validateForm()) return;
+
     try {
-      await api.post("/auth/register", {
-        role,
-        firstName,
-        lastName,
-        email,
-        nric,
-        year,
-        classGroup,
-      });
+      setLoading(true);
+
+      await api.post("/auth/register", buildPayload());
 
       successAlert("Registration successful!");
+
       navigate("/login");
     } catch (err) {
       errorAlert(err.response?.data?.message || "Registration failed.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <Auth title="Create Account" subtitle="Fill the form to continue.">
       <div className="row g-2">
+        {/* ROLE */}
         <div className="col-12">
           <label className="form-label">Register As</label>
 
@@ -65,6 +159,7 @@ export default function Register() {
           </select>
         </div>
 
+        {/* FIRST NAME */}
         <div className="col-6">
           <label className="form-label">First Name</label>
 
@@ -76,6 +171,7 @@ export default function Register() {
           />
         </div>
 
+        {/* LAST NAME */}
         <div className="col-6">
           <label className="form-label">Last Name</label>
 
@@ -87,6 +183,7 @@ export default function Register() {
           />
         </div>
 
+        {/* EMAIL */}
         <div className="col-12">
           <label className="form-label">Email</label>
 
@@ -98,60 +195,102 @@ export default function Register() {
           />
         </div>
 
-        <div className="col-12">
-          <label className="form-label">NRIC (12 digits)</label>
+        {/* STUDENT */}
+        {role === "student" && (
+          <>
+            <div className="col-12">
+              <label className="form-label">NRIC (12 digits)</label>
 
-          <input
-            type="text"
-            maxLength={12}
-            className="form-control"
-            value={nric}
-            onChange={(e) => setNric(e.target.value.replace(/\D/g, ""))}
-          />
-        </div>
+              <input
+                type="text"
+                maxLength={12}
+                className="form-control"
+                value={nric}
+                onChange={(e) => setNric(e.target.value.replace(/\D/g, ""))}
+              />
+            </div>
 
-        <div className="col-6">
-          <label className="form-label ">Form</label>
+            <div className="col-6">
+              <label className="form-label">Form</label>
 
-          <select
-            className="form-select custom-select"
-            value={year}
-            onChange={(e) => setYear(e.target.value)}
-          >
-            <option value="">Select</option>
+              <select
+                className="form-select custom-select"
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+              >
+                <option value="">Select</option>
 
-            <option value="1">Form 1</option>
+                {FORM_OPTIONS.map((form) => (
+                  <option key={form} value={form}>
+                    Form {form}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            <option value="2">Form 2</option>
+            <div className="col-6">
+              <label className="form-label">Class</label>
 
-            <option value="3">Form 3</option>
+              <select
+                className="form-select custom-select"
+                value={classGroup}
+                onChange={(e) => setClassGroup(e.target.value)}
+              >
+                <option value="">Select</option>
 
-            <option value="4">Form 4</option>
+                {classOptions.map((group) => (
+                  <option key={group} value={group}>
+                    {group}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </>
+        )}
 
-            <option value="5">Form 5</option>
-          </select>
-        </div>
+        {/* STAFF ID */}
+        {(role === "coach" || role === "exco") && (
+          <div className="col-12">
+            <label className="form-label">Staff ID</label>
 
-        <div className="col-6">
-          <label className="form-label">Class</label>
+            <input
+              type="text"
+              className="form-control"
+              value={staffId}
+              onChange={(e) => setStaffId(e.target.value)}
+            />
+          </div>
+        )}
 
-          <select
-            className="form-select custom-select"
-            value={classGroup}
-            onChange={(e) => setClassGroup(e.target.value)}
-          >
-            <option value="">Select</option>
+        {/* SPORT */}
+        {role === "coach" && (
+          <div className="col-12">
+            <label className="form-label">Sport</label>
 
-            {getClassOptionsForYear(year).map((group) => (
-              <option key={group} value={group}>
-                {group}
-              </option>
-            ))}
-          </select>
-        </div>
+            <select
+              className="form-select custom-select"
+              value={sport}
+              onChange={(e) => setSport(e.target.value)}
+            >
+              <option value="">Select Sport</option>
+
+              {sportOptions.map((sportKey) => (
+                <option key={sportKey} value={sportKey}>
+                  {formatSportName(sportKey)}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* SUBMIT */}
         <div className="col-12 mt-2">
-          <button className="btn-auth" onClick={handleRegister}>
-            Register
+          <button
+            className="btn-auth"
+            onClick={handleRegister}
+            disabled={loading}
+          >
+            {loading ? "Registering..." : "Register"}
           </button>
         </div>
       </div>
