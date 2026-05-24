@@ -155,7 +155,7 @@ export default function Register() {
 
             <option value="coach">Coach</option>
 
-            <option value="exco">Sport Exco Teacher</option>
+            <option value="exco">Sport Exco</option>
           </select>
         </div>
 
