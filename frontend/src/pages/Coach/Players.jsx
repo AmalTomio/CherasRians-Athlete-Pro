@@ -57,7 +57,7 @@ export default function Players() {
 
         setPlayers(students);
         setTotalPages(
-          res.data.totalPages || Math.ceil((res.data.total || 0) / limit) || 1
+          res.data.totalPages || Math.ceil((res.data.total || 0) / limit) || 1,
         );
 
         if (isInitialLoad) {
@@ -72,7 +72,7 @@ export default function Players() {
         setIsLoading(false);
       }
     },
-    [page, search, year, classGroup, limit, isInitialLoad]
+    [page, search, year, classGroup, limit, isInitialLoad],
   );
 
   // Initial fetch on mount
@@ -80,24 +80,21 @@ export default function Players() {
     fetchPlayers();
   }, []);
 
-  // Debounced fetch when filters change
   useEffect(() => {
     if (isInitialLoad) return;
 
     const timeoutId = setTimeout(() => {
       setPage(1);
-      fetchPlayers({ page: 1 });
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [search, year, classGroup, fetchPlayers, isInitialLoad]);
+  }, [search, year, classGroup]);
 
-  // Fetch when page changes
   useEffect(() => {
     if (!isInitialLoad) {
       fetchPlayers();
     }
-  }, [page, fetchPlayers, isInitialLoad]);
+  }, [page]);
 
   const handleFilter = () => {
     setPage(1);
@@ -162,7 +159,7 @@ export default function Players() {
           title="My Players"
           subtitle="Manage athlete profiles and statuses"
         />
-      </div>     
+      </div>
 
       {/* FILTERS */}
       <FiltersCard
@@ -347,7 +344,7 @@ export default function Players() {
                   page * limit -
                     players.length +
                     players.length +
-                    (page - 1) * limit
+                    (page - 1) * limit,
                 )}
               </span>{" "}
               of <span className="fw-bold text-dark">{totalPages * limit}</span>{" "}

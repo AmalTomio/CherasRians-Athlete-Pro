@@ -1,4 +1,3 @@
-
 const mongoose = require("mongoose");
 
 const User = require("../models/User");
@@ -31,14 +30,23 @@ exports.getPlayers = async (req, res) => {
   try {
     const coachSport = req.user.sport;
 
-    let { page = 1, limit = 10, search = "", year = "", classGroup = "" } =
-      req.query;
+    let {
+      page = 1,
+      limit = 10,
+      search = "",
+      year = "",
+      classGroup = "",
+    } = req.query;
 
     page = Number(page);
     limit = Number(limit);
+
     const skip = (page - 1) * limit;
 
-    const filter = { role: "student", sport: coachSport };
+    const filter = {
+      role: "student",
+      sport: coachSport,
+    };
 
     if (search.trim() !== "") {
       filter.$or = [
@@ -56,14 +64,16 @@ exports.getPlayers = async (req, res) => {
     }
 
     const [students, total] = await Promise.all([
-      User.find(filter)
-        .sort({ firstName: 1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
+      User.find(filter).sort({ firstName: 1 }).skip(skip).limit(limit).lean(),
 
       User.countDocuments(filter),
     ]);
+
+    console.log("PAGE:", page);
+    console.log("LIMIT:", limit);
+    console.log("SKIP:", skip);
+    console.log("RETURNED:", students.length);
+    console.log("TOTAL:", total);
 
     const formatted = students.map((s) => ({
       _id: s._id,
@@ -86,7 +96,45 @@ exports.getPlayers = async (req, res) => {
     });
   } catch (err) {
     console.error("getPlayers error:", err);
-    return res.status(500).json({ message: "Server error" });
+    return res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
+
+exports.getAllPlayers = async (req, res) => {
+  try {
+    const coachSport = req.user.sport;
+
+    const students = await User.find({
+      role: "student",
+      sport: coachSport,
+    })
+      .sort({ firstName: 1 })
+      .lean();
+
+    const formatted = students.map((s) => ({
+      _id: s._id,
+      firstName: s.firstName,
+      lastName: s.lastName,
+      year: s.year,
+      classGroup: s.classGroup,
+      sport: s.sport,
+      category: s.category || "",
+      position: s.position || "",
+      badmintonCategory: s.badmintonCategory || "",
+      status: formatStatus(s.status),
+    }));
+
+    return res.json({
+      students: formatted,
+      total: formatted.length,
+    });
+  } catch (err) {
+    console.error("getAllPlayers error:", err);
+    return res.status(500).json({
+      message: "Server error",
+    });
   }
 };
 
@@ -98,7 +146,7 @@ exports.updatePlayer = async (req, res) => {
     const updated = await User.findOneAndUpdate(
       { _id: id, role: "student" },
       updates,
-      { new: true }
+      { new: true },
     );
 
     if (!updated) {
@@ -117,7 +165,7 @@ exports.updatePlayer = async (req, res) => {
 
 exports.getCoachDashboard = async (req, res) => {
   try {
-const coachId = new mongoose.Types.ObjectId(req.user._id);
+    const coachId = new mongoose.Types.ObjectId(req.user._id);
     const now = moment().tz(TZ);
 
     const todayStart = now.clone().startOf("day").toDate();
@@ -128,32 +176,28 @@ const coachId = new mongoose.Types.ObjectId(req.user._id);
     const coach = await User.findById(coachId).select("sport").lean();
     const coachSport = coach?.sport;
 
-    const [
-      upcomingSessions,
-      totalPlayers,
-      pendingBookings,
-      injuryCount,
-    ] = await Promise.all([
-      Schedule.countDocuments({
-        coachId,
-        sessionDate: { $gte: new Date() },
-        status: "approved",
-      }),
-      User.countDocuments({
-        role: "student",
-        sport: coachSport,
-        status: "active",
-      }),
-      Booking.countDocuments({
-        coachId,
-        status: "pending",
-      }),
-      User.countDocuments({
-        role: "student",
-        sport: coachSport,
-        status: "injured",
-      }),
-    ]);
+    const [upcomingSessions, totalPlayers, pendingBookings, injuryCount] =
+      await Promise.all([
+        Schedule.countDocuments({
+          coachId,
+          sessionDate: { $gte: new Date() },
+          status: "approved",
+        }),
+        User.countDocuments({
+          role: "student",
+          sport: coachSport,
+          status: "active",
+        }),
+        Booking.countDocuments({
+          coachId,
+          status: "pending",
+        }),
+        User.countDocuments({
+          role: "student",
+          sport: coachSport,
+          status: "injured",
+        }),
+      ]);
 
     const todaySession = await Schedule.findOne({
       coachId,
@@ -163,22 +207,22 @@ const coachId = new mongoose.Types.ObjectId(req.user._id);
       .populate("facilityId", "name")
       .lean();
 
-   const categoryAgg = await Schedule.aggregate([
-  {
-    $match: {
-      coachId,
-      status: "approved",
-      playerCategory: { $exists: true, $ne: null }, 
-      sessionType: { $in: ["training", "practice", "tryout"] }, 
-    },
-  },
-  {
-    $group: {
-      _id: "$playerCategory",
-      count: { $sum: 1 },
-    },
-  },
-]);
+    const categoryAgg = await Schedule.aggregate([
+      {
+        $match: {
+          coachId,
+          status: "approved",
+          playerCategory: { $exists: true, $ne: null },
+          sessionType: { $in: ["training", "practice", "tryout"] },
+        },
+      },
+      {
+        $group: {
+          _id: "$playerCategory",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
 
     const categories = {
       U15: categoryAgg.find((c) => c._id === "U-15")?.count || 0,
@@ -224,18 +268,16 @@ const coachId = new mongoose.Types.ObjectId(req.user._id);
 
     const totalPresent = attendanceTrendRaw.reduce(
       (sum, a) => sum + a.present,
-      0
+      0,
     );
 
     const totalRecords = attendanceTrendRaw.reduce(
       (sum, a) => sum + a.total,
-      0
+      0,
     );
 
     const attendanceRate =
-      totalRecords === 0
-        ? 0
-        : Math.round((totalPresent / totalRecords) * 100);
+      totalRecords === 0 ? 0 : Math.round((totalPresent / totalRecords) * 100);
 
     const weeklyAgg = await Schedule.aggregate([
       {
@@ -303,10 +345,7 @@ const coachId = new mongoose.Types.ObjectId(req.user._id);
       isActive: true,
       $and: [
         {
-          $or: [
-            { expiryDate: null },
-            { expiryDate: { $gte: nowDate } },
-          ],
+          $or: [{ expiryDate: null }, { expiryDate: { $gte: nowDate } }],
         },
         {
           $or: [

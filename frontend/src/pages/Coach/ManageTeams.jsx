@@ -70,11 +70,33 @@ export default function ManageTeams() {
 
   const fetchPlayers = useCallback(async () => {
     try {
-      const res = await api.get("/coach/players", {
-        params: { search, year, classGroup },
-      });
-      setPlayers(res.data.students || []);
-    } catch {
+      const res = await api.get("/coach/players/all");
+
+      let filteredPlayers = res.data.students || [];
+
+      if (search.trim()) {
+        const keyword = search.toLowerCase();
+
+        filteredPlayers = filteredPlayers.filter((p) =>
+          `${p.firstName} ${p.lastName}`.toLowerCase().includes(keyword),
+        );
+      }
+
+      if (year) {
+        filteredPlayers = filteredPlayers.filter(
+          (p) => String(p.year) === String(year),
+        );
+      }
+
+      if (classGroup) {
+        filteredPlayers = filteredPlayers.filter(
+          (p) => p.classGroup === classGroup,
+        );
+      }
+
+      setPlayers(filteredPlayers);
+    } catch (err) {
+      console.error(err);
       errorAlert("Failed to load players");
     }
   }, [search, year, classGroup]);
