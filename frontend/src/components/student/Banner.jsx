@@ -56,7 +56,6 @@ export default function Banner({ student }) {
             Track your performance and stay updated with your teams
           </p>
 
-          {/* ✅ REAL STATUS BADGE */}
           <div
             style={{
               display: "inline-flex",

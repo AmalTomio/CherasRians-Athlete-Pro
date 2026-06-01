@@ -52,7 +52,7 @@ export default function Sidebar({ onToggle, isOpen, onClose }) {
         ["Attendance", FiClipboard, "/student/attendance"],
         ["Medical", FiActivity, "/student/medical"],
         ["Performance", FiStar, "/student/performance"],
-        ["Notices", FiBell, "/student/announcements"],
+        ["Announcement", FiBell, "/student/announcements"],
         ["Profile", FiUser, "/profile"],
       ],
       coach: [

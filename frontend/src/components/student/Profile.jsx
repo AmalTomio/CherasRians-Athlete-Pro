@@ -35,7 +35,6 @@ export default function Profile({ student, coach }) {
       >
         {/* Left: Avatar + Name */}
         <div style={{ display: "flex", gap: "1.25rem", alignItems: "center" }}>
-          {/* ✅ Reused Avatar */}
           <Avatar name={fullName} />
 
           <div>

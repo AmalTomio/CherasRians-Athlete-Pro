@@ -36,14 +36,14 @@ router.get(
   "/student/stats/me",
   verifyToken,
   requireStudent,
-  getStudentStats // ✅ FIXED (no more undefined)
+  getStudentStats
 );
 
 router.delete(
   "/student/:leaveId",
   verifyToken,
   requireStudent,
-  deleteStudentLeave // ✅ clean handler
+  deleteStudentLeave 
 );
 
 /* ================= FILE ================= */
