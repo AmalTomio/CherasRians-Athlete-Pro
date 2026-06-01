@@ -1,10 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { Spinner, Row, Col, Card, Badge } from "react-bootstrap";
-import { 
-  FiUser, FiAward, FiMail, FiPhone, FiActivity, 
-  FiCalendar, FiTrendingUp, FiCheckCircle, FiHeart 
+import {
+  FiUser,
+  FiAward,
+  FiMail,
+  FiPhone,
+  FiActivity,
+  FiCalendar,
+  FiTrendingUp,
+  FiCheckCircle,
+  FiHeart,
 } from "react-icons/fi";
 import api from "../../api/axios";
+import { formatSportName, formatLabel } from "../../utils/format";
 
 export default function StudentDashboard() {
   const [data, setData] = useState(null);
@@ -25,8 +33,11 @@ export default function StudentDashboard() {
 
   if (loading) {
     return (
-      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
-        <Spinner animation="border" style={{ color: '#114232' }} />
+      <div
+        className="d-flex justify-content-center align-items-center"
+        style={{ minHeight: "60vh" }}
+      >
+        <Spinner animation="border" style={{ color: "#114232" }} />
       </div>
     );
   }
@@ -35,13 +46,14 @@ export default function StudentDashboard() {
 
   const { student, coach } = data;
   const firstName = student?.firstName || "Athlete";
-  const fullName = `${student?.firstName || ""} ${student?.lastName || ""}`.trim();
-  const coachName = coach ? `${coach.firstName || ""} ${coach.lastName || ""}`.trim() : "Not Assigned";
+  const fullName =
+    `${student?.firstName || ""} ${student?.lastName || ""}`.trim();
+  const coachName = coach
+    ? `${coach.firstName || ""} ${coach.lastName || ""}`.trim()
+    : "Not Assigned";
 
   return (
     <div className="container-fluid px-3 px-md-4 py-4 bg-light min-vh-100">
-      
-      {/* Scoped CSS for responsive, enterprise-grade styling */}
       <style>{`
         .dash-card {
           background: #ffffff;
@@ -91,18 +103,26 @@ export default function StudentDashboard() {
         .bg-red-soft { background-color: rgba(220, 53, 69, 0.1); color: #dc3545; }
       `}</style>
 
-      {/* ================= WELCOME BANNER ================= */}
       <div className="welcome-banner p-4 p-md-5 mb-4 position-relative overflow-hidden">
-        <Row className="align-items-center position-relative" style={{ zIndex: 2 }}>
+        <Row
+          className="align-items-center position-relative"
+          style={{ zIndex: 2 }}
+        >
           <Col lg={8}>
-            <Badge bg="light" text="dark" className="mb-3 px-3 py-2 rounded-pill fw-bold shadow-sm">
-              <FiActivity className="me-1 mb-1" style={{ color: '#e87b1e' }} /> Active Season
+            <Badge
+              bg="light"
+              text="dark"
+              className="mb-3 px-3 py-2 rounded-pill fw-bold shadow-sm"
+            >
+              <FiActivity className="me-1 mb-1" style={{ color: "#e87b1e" }} />{" "}
+              Active Season
             </Badge>
             <h2 className="fw-bolder mb-2 text-truncate" title={fullName}>
               Welcome back, {firstName}!
             </h2>
             <p className="mb-0 text-white-50 fs-6">
-              Here is what's happening with your athletic profile today. Stay on top of your game.
+              Here is what's happening with your athletic profile today. Stay on
+              top of your game.
             </p>
           </Col>
         </Row>
@@ -112,9 +132,14 @@ export default function StudentDashboard() {
       <h6 className="fw-bold text-dark mb-3">Quick Access</h6>
       <Row className="g-3 mb-4">
         <Col xs={6} lg={3}>
-          <Card className="dash-card dash-card-hoverable p-3" onClick={() => window.location.href='/student/schedule'}>
+          <Card
+            className="dash-card dash-card-hoverable p-3"
+            onClick={() => (window.location.href = "/student/schedule")}
+          >
             <div className="d-flex align-items-center gap-3">
-              <div className="dash-icon-box bg-blue-soft"><FiCalendar /></div>
+              <div className="dash-icon-box bg-blue-soft">
+                <FiCalendar />
+              </div>
               <div>
                 <h6 className="fw-bold mb-0 text-dark">Schedule</h6>
                 <small className="text-muted fw-medium">View fixtures</small>
@@ -122,11 +147,16 @@ export default function StudentDashboard() {
             </div>
           </Card>
         </Col>
-        
+
         <Col xs={6} lg={3}>
-          <Card className="dash-card dash-card-hoverable p-3" onClick={() => window.location.href='/student/performance'}>
+          <Card
+            className="dash-card dash-card-hoverable p-3"
+            onClick={() => (window.location.href = "/student/performance")}
+          >
             <div className="d-flex align-items-center gap-3">
-              <div className="dash-icon-box bg-orange-soft"><FiTrendingUp /></div>
+              <div className="dash-icon-box bg-orange-soft">
+                <FiTrendingUp />
+              </div>
               <div>
                 <h6 className="fw-bold mb-0 text-dark">Stats</h6>
                 <small className="text-muted fw-medium">Track ratings</small>
@@ -135,12 +165,15 @@ export default function StudentDashboard() {
           </Card>
         </Col>
 
-        
-
         <Col xs={6} lg={3}>
-          <Card className="dash-card dash-card-hoverable p-3" onClick={() => window.location.href='/student/medical'}>
+          <Card
+            className="dash-card dash-card-hoverable p-3"
+            onClick={() => (window.location.href = "/student/medical")}
+          >
             <div className="d-flex align-items-center gap-3">
-              <div className="dash-icon-box bg-red-soft"><FiHeart /></div>
+              <div className="dash-icon-box bg-red-soft">
+                <FiHeart />
+              </div>
               <div>
                 <h6 className="fw-bold mb-0 text-dark">Medical</h6>
                 <small className="text-muted fw-medium">Report injuries</small>
@@ -152,7 +185,6 @@ export default function StudentDashboard() {
 
       {/* ================= PROFILE & COACH GRID ================= */}
       <Row className="g-4">
-        
         {/* ATHLETE PROFILE CARD */}
         <Col xs={12} lg={6}>
           <Card className="dash-card p-2 p-md-3">
@@ -163,41 +195,58 @@ export default function StudentDashboard() {
                 </div>
                 <div>
                   <h5 className="fw-bold mb-0 text-dark">Athlete Profile</h5>
-                  <small className="text-muted">Your registered system details</small>
+                  <small className="text-muted">
+                    Your registered system details
+                  </small>
                 </div>
               </div>
 
               <Row className="g-4">
                 <Col xs={12} sm={6}>
                   <div className="dash-label">Full Name</div>
-                  <div className="dash-value text-truncate" title={fullName}>{fullName || "N/A"}</div>
+                  <div className="dash-value text-truncate" title={fullName}>
+                    {fullName || "N/A"}
+                  </div>
                 </Col>
                 <Col xs={12} sm={6}>
                   <div className="dash-label">Sport</div>
                   <div className="dash-value d-flex align-items-center gap-2">
-                    <FiActivity style={{ color: '#e87b1e' }} /> {student?.sport || "Unassigned"}
+                    <FiActivity style={{ color: "#e87b1e" }} />
+                    {student?.sport
+                      ? formatSportName(student.sport)
+                      : "Unassigned"}
                   </div>
                 </Col>
                 <Col xs={6}>
                   <div className="dash-label">Category</div>
                   <div className="dash-value">
                     {student?.category ? (
-                      <Badge bg="light" text="dark" className="border px-3 py-1 rounded-pill">
-                        {student.category}
+                      <Badge
+                        bg="light"
+                        text="dark"
+                        className="border px-3 py-1 rounded-pill"
+                      >
+                        {formatLabel(student.category)}
                       </Badge>
-                    ) : "N/A"}
+                    ) : (
+                      "N/A"
+                    )}
                   </div>
                 </Col>
                 <Col xs={6}>
                   <div className="dash-label">Form & Class</div>
-                  <div className="dash-value">{student?.classGroup || "N/A"}</div>
+                  <div className="dash-value">
+                    {student?.year && student?.classGroup
+                      ? `Form ${student.year} | ${student.classGroup}`
+                      : student?.classGroup || "N/A"}
+                  </div>
                 </Col>
               </Row>
             </Card.Body>
           </Card>
         </Col>
 
-        {/* ASSIGNED COACH CARD */}
+        {/* ASSIGNED COACH CARD
         <Col xs={12} lg={6}>
           <Card className="dash-card p-2 p-md-3">
             <Card.Body>
@@ -240,8 +289,7 @@ export default function StudentDashboard() {
               )}
             </Card.Body>
           </Card>
-        </Col>
-
+        </Col> */}
       </Row>
     </div>
   );
