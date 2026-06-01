@@ -69,11 +69,6 @@ exports.getPlayers = async (req, res) => {
       User.countDocuments(filter),
     ]);
 
-    console.log("PAGE:", page);
-    console.log("LIMIT:", limit);
-    console.log("SKIP:", skip);
-    console.log("RETURNED:", students.length);
-    console.log("TOTAL:", total);
 
     const formatted = students.map((s) => ({
       _id: s._id,

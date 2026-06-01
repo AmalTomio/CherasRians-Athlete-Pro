@@ -219,7 +219,6 @@ export default function FacilityList() {
         </div>
       </div>
 
-      <hr className="my-5 opacity-25" />
 
       {/* 2. KPI STATS */}
       <h6 className="fw-bold text-muted text-uppercase letter-spacing-1 mb-3">Your Requests Overview</h6>
