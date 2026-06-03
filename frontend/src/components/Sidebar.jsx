@@ -2,8 +2,19 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
 import { FaRegBuilding } from "react-icons/fa";
 import {
-  FiHome, FiUsers, FiUser, FiClipboard, FiBell, FiCalendar, FiTool,
-  FiMenu, FiLogOut, FiActivity, FiGrid, FiStar, FiX, FiTarget
+  FiHome,
+  FiUsers,
+  FiUser,
+  FiClipboard,
+  FiBell,
+  FiCalendar,
+  FiTool,
+  FiMenu,
+  FiLogOut,
+  FiActivity,
+  FiGrid,
+  FiStar,
+  FiX,
 } from "react-icons/fi";
 
 import "./Sidebar.css";
@@ -92,8 +103,8 @@ export default function Sidebar({ onToggle, isOpen, onClose }) {
     navigate("/login");
   };
 
-  const sidebarClass = isMobile 
-    ? `sidebar ${isOpen ? "mobile-open" : "mobile-closed"}` 
+  const sidebarClass = isMobile
+    ? `sidebar ${isOpen ? "mobile-open" : "mobile-closed"}`
     : `sidebar ${collapsed ? "collapsed" : ""}`;
 
   return (
@@ -104,23 +115,30 @@ export default function Sidebar({ onToggle, isOpen, onClose }) {
 
       <div className={sidebarClass}>
         <div className="sidebar-header">
-          
           {(!collapsed || isMobile) && (
             <div className="brand-wrapper">
               {/* Replaced specific logo with a generic icon */}
-              <div className="brand-logo shadow-sm" style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)' }}>
-                <FiTarget size={22} className="text-white" />
+              <div className="brand-logo">
+                <img
+                  src="/sys-logo.png"
+                  alt="CherasRians Logo"
+                  className="brand-logo-img"
+                />
               </div>
               <div className="brand-text">
                 {/* Replaced Brand Name */}
-                <h4 className="m-0">Athlete Portal</h4>
-                <span className="brand-subtitle">Management System</span>
+                <h4 className="m-0">CherasRians</h4>
+
+                <span className="brand-subtitle">Athletes Pro</span>
               </div>
             </div>
           )}
 
           {!isMobile && (
-            <button className="toggle-btn" onClick={() => setCollapsed(!collapsed)}>
+            <button
+              className="toggle-btn"
+              onClick={() => setCollapsed(!collapsed)}
+            >
               <FiMenu />
             </button>
           )}
@@ -133,7 +151,9 @@ export default function Sidebar({ onToggle, isOpen, onClose }) {
         </div>
 
         <div className="sidebar-menu-wrapper">
-          <p className="menu-label">{!collapsed || isMobile ? "Main Menu" : "..."}</p>
+          <p className="menu-label">
+            {!collapsed || isMobile ? "Main Menu" : "..."}
+          </p>
           <ul className="sidebar-menu">
             {menu.map(([label, Icon, path], idx) => {
               const isActive = location.pathname === path;
@@ -149,8 +169,12 @@ export default function Sidebar({ onToggle, isOpen, onClose }) {
                     <div className="sb-icon">
                       <Icon />
                     </div>
-                    {(!collapsed || isMobile) && <span className="label">{label}</span>}
-                    {isActive && (!collapsed || isMobile) && <div className="active-glow" />}
+                    {(!collapsed || isMobile) && (
+                      <span className="label">{label}</span>
+                    )}
+                    {isActive && (!collapsed || isMobile) && (
+                      <div className="active-glow" />
+                    )}
                   </Link>
                 </li>
               );
