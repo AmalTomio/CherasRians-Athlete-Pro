@@ -153,7 +153,7 @@ app.use("/api/performance", require("./routes/performanceRoutes"));
 app.use("/api/reports", require("./routes/reportRoutes"));
 app.use("/api/disciplinary", disciplinaryRoutes);
 
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+// app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.get("/healthz", (req, res) => {
   res.status(200).json({ status: "OK" });

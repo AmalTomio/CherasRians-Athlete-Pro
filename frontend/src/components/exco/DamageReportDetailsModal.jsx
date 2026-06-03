@@ -3,14 +3,11 @@ import api from "../../api/axios";
 import { successAlert, errorAlert } from "../../utils/swal";
 import { formatStatus } from "../../utils/format";
 
-// const API_BASE_URL = api.defaults.baseURL.replace("/api", "");
-
 export default function DamageReportDetailsModal({
   equipment,
   onClose,
   onResolved,
 }) {
-  const API_BASE_URL = import.meta.env.VITE_API_URL?.replace("/api", "");
   if (!equipment) return null;
 
   const [reports, setReports] = useState([]);
@@ -18,8 +15,10 @@ export default function DamageReportDetailsModal({
   const [resolvingId, setResolvingId] = useState(null);
 
   useEffect(() => {
+    if (!equipment?._id) return;
+
     fetchReports();
-  }, [equipment._id]);
+  }, [equipment?._id]);
 
   const fetchReports = async () => {
     try {
@@ -95,9 +94,7 @@ export default function DamageReportDetailsModal({
                       {reports.map((r) => {
                         const imageUrl = r.images?.[0]?.startsWith("http")
                           ? r.images[0]
-                          : r.images?.[0]
-                            ? `${API_BASE_URL}${r.images[0]}`
-                            : null;
+                          : null;
 
                         return (
                           <tr key={r._id}>
@@ -132,19 +129,8 @@ export default function DamageReportDetailsModal({
                                         imageUrl,
                                       );
 
-                                      e.target.style.display = "none";
-
-                                      const fallback =
-                                        document.createElement("span");
-
-                                      fallback.className = "text-muted small";
-
-                                      fallback.textContent =
-                                        "Legacy image unavailable";
-
-                                      e.target.parentNode?.appendChild(
-                                        fallback,
-                                      );
+                                      e.target.src =
+                                        "https://via.placeholder.com/72?text=N%2FA";
                                     }}
                                   />
                                 </a>
@@ -156,7 +142,9 @@ export default function DamageReportDetailsModal({
                             </td>
 
                             <td>
-                              {r.damageDescription || (
+                              {r.damageDescription ? (
+                                r.damageDescription
+                              ) : (
                                 <span className="text-muted">—</span>
                               )}
                             </td>
