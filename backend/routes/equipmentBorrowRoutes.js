@@ -1,8 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const controller = require("../controllers/equipmentBorrowController");
-const upload = require("../middleware/upload");
+const createCloudinaryUpload = require("../middleware/uploadCloudinary");
 
+const returnUpload = createCloudinaryUpload("cherasrians/returns");
 const setReturnUpload = (req, res, next) => {
   req.uploadType = "return";
   next();
@@ -20,7 +21,7 @@ router.post(
   verifyToken,
   requireCoach,
   setReturnUpload,
-  upload.single("proof"),
+  returnUpload.single("proof"),
   controller.submitReturn,
 );
 // Exco releases equipment

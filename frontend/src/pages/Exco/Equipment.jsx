@@ -402,7 +402,7 @@ export default function EquipmentManagement() {
           <div className="d-flex gap-2 justify-content-end">
             {row.returnProof && (
               <a
-                href={`http://localhost:5000/uploads/returns/${row.returnProof}`}
+                href={row.returnProof}
                 target="_blank"
                 rel="noreferrer"
                 className="btn btn-sm btn-outline-primary shadow-sm fw-bold d-inline-flex align-items-center gap-2"

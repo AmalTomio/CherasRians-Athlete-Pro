@@ -1,9 +1,10 @@
 // backend/routes/equipmentRoutes.js
 const express = require("express");
 const router = express.Router();
-const upload = require("../middleware/upload");
-
+const createCloudinaryUpload = require("../middleware/uploadCloudinary");
+const damageUpload = createCloudinaryUpload("cherasrians/equipment-damage");
 const equipmentController = require("../controllers/equipmentController");
+
 const {
   verifyToken,
   requireCoach,
@@ -17,7 +18,7 @@ router.get("/", verifyToken, equipmentController.getEquipmentList);
 router.get(
   "/available",
   verifyToken,
-  equipmentController.getAvailableEquipment
+  equipmentController.getAvailableEquipment,
 );
 
 // EXCO
@@ -28,19 +29,19 @@ router.post(
   "/requests",
   verifyToken,
   requireCoach,
-  equipmentController.requestEquipment
+  equipmentController.requestEquipment,
 );
 router.get(
   "/requests",
   verifyToken,
   requireExco,
-  equipmentController.listRequests
+  equipmentController.listRequests,
 );
 router.post(
   "/requests/:id/process",
   verifyToken,
   requireExco,
-  equipmentController.processRequest
+  equipmentController.processRequest,
 );
 
 // ===== Damage =====
@@ -48,8 +49,8 @@ router.post(
   "/report-damage",
   verifyToken,
   requireCoach,
-  upload.array("images", 3),
-  equipmentController.reportDamage
+  damageUpload.array("images", 3),
+  equipmentController.reportDamage,
 );
 
 // EXCO – All damage history
@@ -57,7 +58,7 @@ router.get(
   "/damage-reports",
   verifyToken,
   requireExco,
-  equipmentController.getAllDamageReports
+  equipmentController.getAllDamageReports,
 );
 
 // EXCO – Damage reports
@@ -65,21 +66,21 @@ router.get(
   "/:equipmentId/damage-reports",
   verifyToken,
   requireExco,
-  equipmentController.getDamageReportsByEquipment
+  equipmentController.getDamageReportsByEquipment,
 );
 
 router.post(
   "/damage-reports/:id/resolve",
   verifyToken,
   requireExco,
-  equipmentController.resolveDamageReport
+  equipmentController.resolveDamageReport,
 );
 
 router.put(
   "/:id",
   verifyToken,
   requireExco,
-  equipmentController.updateEquipment
+  equipmentController.updateEquipment,
 );
 
 // Delete equipment
@@ -87,6 +88,6 @@ router.delete(
   "/:id",
   verifyToken,
   requireExco,
-  equipmentController.deleteEquipment
+  equipmentController.deleteEquipment,
 );
 module.exports = router;

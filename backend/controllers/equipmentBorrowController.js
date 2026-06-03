@@ -51,9 +51,13 @@ exports.submitReturn = async (req, res) => {
     borrow.status = "return_submitted";
     borrow.returnedAt = new Date();
 
-    if (req.file) {
-      borrow.returnProof = req.file.filename;
+    if (!req.file) {
+      return res.status(400).json({
+        message: "Return proof image is required",
+      });
     }
+    console.log("RETURN FILE:", req.file);
+    borrow.returnProof = req.file.path;
 
     await borrow.save();
 

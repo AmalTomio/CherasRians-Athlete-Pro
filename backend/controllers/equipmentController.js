@@ -148,8 +148,7 @@ exports.reportDamage = async (req, res) => {
       });
     }
 
-    const images =
-      req.files?.map((f) => `/uploads/equipment-damage/${f.filename}`) || [];
+    const images = req.files?.map((f) => f.path) || [];
 
     const report = await DamageReport.create({
       equipmentId,
@@ -216,7 +215,7 @@ exports.processRequest = async (req, res) => {
 
       const qtyToApprove = Math.min(
         reqDoc.quantityRequested,
-        approvedQuantity || reqDoc.quantityRequested
+        approvedQuantity || reqDoc.quantityRequested,
       );
       if (qtyToApprove > equip.quantityAvailable) {
         return res
@@ -264,7 +263,6 @@ exports.processRequest = async (req, res) => {
         request: reqDoc,
       });
     } else {
-      
       reqDoc.status = "rejected";
       reqDoc.processedBy = excoId;
       reqDoc.processedAt = new Date();
@@ -277,7 +275,6 @@ exports.processRequest = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 exports.getAllDamageReports = async (req, res) => {
   try {
@@ -293,7 +290,6 @@ exports.getAllDamageReports = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 exports.resolveDamageReport = async (req, res) => {
   try {
@@ -369,8 +365,9 @@ exports.updateEquipment = async (req, res) => {
     const newAvailable = equipment.quantityAvailable + diff;
 
     if (newAvailable < 0) {
-      return res.status(400).json({ 
-        message: "Cannot reduce total quantity below the amount currently in-use or damaged." 
+      return res.status(400).json({
+        message:
+          "Cannot reduce total quantity below the amount currently in-use or damaged.",
       });
     }
 
@@ -393,15 +390,16 @@ exports.deleteEquipment = async (req, res) => {
   try {
     const { id } = req.params;
     const equipment = await Equipment.findById(id);
-    
+
     if (!equipment) {
       return res.status(404).json({ message: "Equipment not found" });
     }
 
     // Safety Lock: Prevent deletion if items are currently borrowed or damaged
     if (equipment.quantityAvailable < equipment.quantityTotal) {
-      return res.status(400).json({ 
-        message: "Cannot delete equipment that is currently in-use or has unresolved damage reports." 
+      return res.status(400).json({
+        message:
+          "Cannot delete equipment that is currently in-use or has unresolved damage reports.",
       });
     }
 
