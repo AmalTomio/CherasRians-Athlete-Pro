@@ -10,7 +10,6 @@ const { sendNotification } = require("../services/notificationService");
 const moment = require("moment-timezone");
 const TZ = "Asia/Kuala_Lumpur";
 
-
 exports.checkAvailability = async (req, res) => {
   try {
     const { facilityId, slots } = req.body;
@@ -71,7 +70,6 @@ exports.checkAvailability = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 exports.createBooking = async (req, res) => {
   try {
@@ -171,7 +169,6 @@ exports.createBooking = async (req, res) => {
   }
 };
 
-
 exports.approveBooking = async (req, res) => {
   try {
     const { id } = req.params;
@@ -217,28 +214,27 @@ exports.approveBooking = async (req, res) => {
 
     const sessionDate = moment(booking.startAt).tz(TZ).startOf("day").toDate();
 
-   const scheduleData = {
-  coachId: booking.coachId,
-  sport: coach.sport,
-  facilityId: booking.facilityId,
-  title: booking.sessionTitle,
-  sessionType: booking.sessionType,
-  sessionDate,
-  startTime: moment(booking.startAt).tz(TZ).format("HH:mm"),
-  endTime: moment(booking.endAt).tz(TZ).format("HH:mm"),
-  status: "approved",
-};
+    const scheduleData = {
+      bookingId: booking._id,
+      coachId: booking.coachId,
+      sport: coach.sport,
+      facilityId: booking.facilityId,
+      title: booking.sessionTitle,
+      sessionType: booking.sessionType,
+      sessionDate,
+      startTime: moment(booking.startAt).tz(TZ).format("HH:mm"),
+      endTime: moment(booking.endAt).tz(TZ).format("HH:mm"),
+      status: "approved",
+    };
 
-if (
-  booking.sessionType === "training" ||
-  booking.sessionType === "tryout"
-) {
-  scheduleData.playerCategory = booking.playerCategory;
-}
+    if (
+      booking.sessionType === "training" ||
+      booking.sessionType === "tryout"
+    ) {
+      scheduleData.playerCategory = booking.playerCategory;
+    }
 
-const schedule = await Schedule.create(scheduleData);
-
-
+    const schedule = await Schedule.create(scheduleData);
 
     await sendNotification({
       io: req.app.get("io"),
@@ -258,7 +254,6 @@ const schedule = await Schedule.create(scheduleData);
   }
 };
 
-
 exports.getCoachBookings = async (req, res) => {
   try {
     const coachId = req.user._id;
@@ -274,7 +269,6 @@ exports.getCoachBookings = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 exports.getPendingBookings = async (req, res) => {
   try {
