@@ -138,3 +138,32 @@ exports.getStudentMatchPerformance = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+exports.getStudentTrainingPerformance = async (req, res) => {
+  try {
+    const playerId = req.user._id;
+
+    const performance = await PlayerPerformance.findOne({ playerId });
+
+    if (!performance) {
+      return res.json({
+        training: null,
+      });
+    }
+
+    res.json({
+      training: {
+        averageRating: performance.rating,
+        score: performance.score,
+        drills: performance.drills,
+        history: performance.history,
+        updatedAt: performance.updatedAt,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      message: "Failed to fetch training performance",
+    });
+  }
+};

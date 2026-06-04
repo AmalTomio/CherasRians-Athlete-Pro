@@ -11,7 +11,13 @@ router.get(
   "/student",
   verifyToken,
   requireStudent,
-  ctrl.getStudentMatchPerformance
+  ctrl.getStudentMatchPerformance,
+);
+router.get(
+  "/student-training",
+  verifyToken,
+  requireStudent,
+  ctrl.getStudentTrainingPerformance,
 );
 
 module.exports = router;
