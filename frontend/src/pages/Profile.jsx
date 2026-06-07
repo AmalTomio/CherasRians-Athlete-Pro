@@ -337,10 +337,25 @@ export default function Profile() {
             </h5>
             <div className="text-muted small text-capitalize mb-1">{role}</div>
             <div className="text-muted small">
-              {form.sport !== "-"
-                ? formatSportName(form.sport)
-                : "No Sport Assigned"}{" "}
-              {form.formClass !== "-" ? `, ${form.formClass}` : ""}
+              {role === "student" && (
+                <>
+                  {form.sport !== "-"
+                    ? formatSportName(form.sport)
+                    : "No Sport Assigned"}
+                  {form.formClass !== "-" ? `, ${form.formClass}` : ""}
+                </>
+              )}
+
+              {role === "coach" && (
+                <>
+                  {form.sport !== "-"
+                    ? formatSportName(form.sport)
+                    : "No Sport Assigned"}
+                  {form.category !== "-" ? ` • ${form.category}` : ""}
+                </>
+              )}
+
+              {role === "exco" && <>Sports Administration</>}
             </div>
           </div>
         </div>
@@ -530,37 +545,86 @@ export default function Profile() {
             <h5 className="section-title mb-0">System Details</h5>
           </div>
 
-          <Row>
-            <Col md={4}>
-              <div className="info-label">Sport</div>
-              <div className="info-value mb-md-0">
-                {form.sport !== "-"
-                  ? formatSportName(form.sport)
-                  : "Not Assigned"}{" "}
-              </div>
-            </Col>
-            <Col md={4}>
-              <div className="info-label">Category</div>
-              <div className="info-value mb-md-0">
-                {form.category !== "-" ? form.category : "N/A"}
-              </div>
-            </Col>
-            <Col md={4}>
-              <div className="info-label">Position</div>
-              <div className="info-value mb-md-0">
-                {form.position !== "-" ? form.position : "N/A"}
-              </div>
-            </Col>
+          {/* ================= STUDENT ================= */}
+          {role === "student" && (
+            <Row>
+              <Col md={3}>
+                <div className="info-label">Sport</div>
+                <div className="info-value">
+                  {form.sport !== "-"
+                    ? formatSportName(form.sport)
+                    : "Not Assigned"}
+                </div>
+              </Col>
 
-            {role === "student" && (
-              <Col md={4} className="mt-md-4">
+              <Col md={3}>
+                <div className="info-label">Category</div>
+                <div className="info-value">
+                  {form.category !== "-" ? form.category : "N/A"}
+                </div>
+              </Col>
+
+              <Col md={3}>
+                <div className="info-label">Position</div>
+                <div className="info-value">
+                  {form.position !== "-" ? form.position : "N/A"}
+                </div>
+              </Col>
+
+              <Col md={3}>
                 <div className="info-label">Form Class</div>
-                <div className="info-value mb-0">
+                <div className="info-value">
                   {form.formClass !== "-" ? form.formClass : "N/A"}
                 </div>
               </Col>
-            )}
-          </Row>
+            </Row>
+          )}
+
+          {/* ================= COACH ================= */}
+          {role === "coach" && (
+            <Row>
+              <Col md={4}>
+                <div className="info-label">Assigned Sport</div>
+                <div className="info-value">
+                  {form.sport !== "-"
+                    ? formatSportName(form.sport)
+                    : "Not Assigned"}
+                </div>
+              </Col>
+
+              <Col md={4}>
+                <div className="info-label">Assigned Category</div>
+                <div className="info-value">
+                  {form.category !== "-" ? form.category : "N/A"}
+                </div>
+              </Col>
+
+              <Col md={4}>
+                <div className="info-label">Account Status</div>
+                <div className="info-value text-success">Active</div>
+              </Col>
+            </Row>
+          )}
+
+          {/* ================= EXCO ================= */}
+          {role === "exco" && (
+            <Row>
+              <Col md={4}>
+                <div className="info-label">Role</div>
+                <div className="info-value">Sports Exco</div>
+              </Col>
+
+              <Col md={4}>
+                <div className="info-label">Access Level</div>
+                <div className="info-value">Administrator</div>
+              </Col>
+
+              <Col md={4}>
+                <div className="info-label">Account Status</div>
+                <div className="info-value text-success">Active</div>
+              </Col>
+            </Row>
+          )}
         </div>
       </div>
     </div>
